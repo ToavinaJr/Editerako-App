@@ -52,6 +52,9 @@ private slots:
     // Line numbers toggle
     void onShowLinesToggled(bool checked);
 
+    // Find section
+    void onActionFindReplace();
+
 private:
     Ui::MainWindow *ui;
     CodeEditor *codeEditor;

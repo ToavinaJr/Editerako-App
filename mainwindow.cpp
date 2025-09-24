@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "finddialog.h"
 #include <QApplication>
 #include <QStandardPaths>
 
@@ -31,6 +32,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Load default directory
     loadDirectoryToTree(currentWorkingDirectory);
+
+    // Adding shortcut
+    ui->actionFindReplace->setShortcut(QKeySequence("Ctrl+F"));
 }
 
 MainWindow::~MainWindow()
@@ -66,6 +70,9 @@ void MainWindow::connectActions()
             updateWindowTitle();
         });
     }
+
+    // Connection to the find dialog
+    connect(ui->actionFindReplace, &QAction::triggered, this, &MainWindow::onActionFindReplace);
 }
 
 void MainWindow::setupCodeEditor()
@@ -459,4 +466,9 @@ void MainWindow::updateWindowTitle()
     }
 
     setWindowTitle(title);
+}
+
+void MainWindow::onActionFindReplace() {
+    FindReplaceDialog dlg(codeEditor, this);
+    dlg.exec();
 }
