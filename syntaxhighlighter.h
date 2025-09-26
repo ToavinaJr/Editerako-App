@@ -28,12 +28,20 @@ private:
     void highlightCpp(const QString &text);
     void highlightHtml(const QString &text);
 
+    void setupFormats();
+
     QTextCharFormat keywordFormat;
     QTextCharFormat typeFormat;
     QTextCharFormat stringFormat;
     QTextCharFormat commentFormat;
-
-    void setupFormats();
+    QTextCharFormat numberFormat;
+    QTextCharFormat preprocFormat;
+    QTextCharFormat functionFormat;
+    QTextCharFormat variableFormat;
+    QTextCharFormat parameterFormat;
+    QTextCharFormat punctuationFormat;
+    QTextCharFormat operatorFormat;
+    QTextCharFormat namespaceFormat; // Ajouté
 };
 
 #endif // SYNTAXHIGHLIGHTER_H
