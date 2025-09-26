@@ -32,8 +32,17 @@ private:
     QTextCharFormat typeFormat;
     QTextCharFormat stringFormat;
     QTextCharFormat commentFormat;
+    QTextCharFormat functionFormat;
+    QTextCharFormat variableFormat;
+    QTextCharFormat preprocessorFormat;
+    QTextCharFormat operatorFormat;
+    QTextCharFormat punctuatorFormat;
+    QTextCharFormat numberFormat;
+    QTextCharFormat classFormat;
+    QTextCharFormat namespaceFormat;
 
     void setupFormats();
+    void highlightNodeRecursive(const TSNode &node, const QString &text);
 };
 
 #endif // SYNTAXHIGHLIGHTER_H

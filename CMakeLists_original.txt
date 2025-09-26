@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(EditerakoSimple VERSION 0.1 LANGUAGES C CXX)
+project(Editerako VERSION 0.1 LANGUAGES C CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -12,6 +12,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 # ---- Tree-sitter libraries ----
+# Utiliser les librairies système si disponibles, sinon construire à partir des sources
 find_library(TREE_SITTER_LIB tree-sitter REQUIRED)
 find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp)
 find_library(TREE_SITTER_HTML_LIB tree-sitter-html)
@@ -40,29 +41,33 @@ if(NOT TREE_SITTER_HTML_LIB)
     set(TREE_SITTER_HTML_LIB tree-sitter-html)
 endif()
 
-# ---- Sources du projet de test ----
+# ---- Sources du projet principal ----
 set(PROJECT_SOURCES
-    main_simple.cpp
-    mainwindow_simple.cpp
-    mainwindow_simple.h
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
     codeeditor.cpp
     codeeditor.h
+    finddialog.cpp
+    finddialog.h
     syntaxhighlighter.cpp
     syntaxhighlighter.h
+    filemanager.cpp
+    filemanager.h
 )
 
-# ---- Exécutable test ----
+# ---- Exécutable principal ----
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(EditerakoSimple
+    qt_add_executable(Editerako
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
 else()
-    add_executable(EditerakoSimple ${PROJECT_SOURCES})
+    add_executable(Editerako ${PROJECT_SOURCES})
 endif()
 
 # ---- Configuration des includes ----
-target_include_directories(EditerakoSimple PRIVATE
+target_include_directories(Editerako PRIVATE
     /usr/include/tree_sitter
     /usr/local/include/tree_sitter
     tree-sitter/tree-sitter-cpp/src/tree_sitter
@@ -72,7 +77,7 @@ target_include_directories(EditerakoSimple PRIVATE
 )
 
 # ---- Linking des librairies ----
-target_link_libraries(EditerakoSimple PRIVATE
+target_link_libraries(Editerako PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
     ${TREE_SITTER_LIB}
@@ -82,10 +87,10 @@ target_link_libraries(EditerakoSimple PRIVATE
 
 # ---- Propriétés bundle ----
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.EditerakoSimple)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Editerako)
 endif()
 
-set_target_properties(EditerakoSimple PROPERTIES
+set_target_properties(Editerako PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -93,6 +98,14 @@ set_target_properties(EditerakoSimple PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+# ---- Installation ----
+include(GNUInstallDirs)
+install(TARGETS Editerako
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(EditerakoSimple)
+    qt_finalize_executable(Editerako)
 endif()
