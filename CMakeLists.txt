@@ -1,61 +1,85 @@
 cmake_minimum_required(VERSION 3.16)
-
-project(Editerako VERSION 0.1 LANGUAGES CXX)
+project(Editerako VERSION 0.1 LANGUAGES C CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ---- Qt ----
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
+# ---- Tree-sitter libraries ----
+# Utiliser les librairies système
+find_library(TREE_SITTER_LIB tree-sitter REQUIRED)
+find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp REQUIRED)
+
+# Si tree-sitter-html n'est pas installée système, utiliser nos sources
+find_library(TREE_SITTER_HTML_LIB tree-sitter-html)
+if(NOT TREE_SITTER_HTML_LIB)
+    # Créer tree-sitter-html depuis nos sources
+    add_library(tree-sitter-html STATIC
+        tree-sitter/tree-sitter-html/src/parser.c
+        tree-sitter/tree-sitter-html/src/scanner.c
+    )
+    target_include_directories(tree-sitter-html PUBLIC
+        tree-sitter/tree-sitter-html/src
+    )
+    set(TREE_SITTER_HTML_LIB tree-sitter-html)
+endif()
+
+# ---- Sources du projet principal ----
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    codeeditor.cpp
+    codeeditor.h
+    finddialog.cpp
+    finddialog.h
+    syntaxhighlighter.cpp
+    syntaxhighlighter.h
+    filemanager.cpp
+    filemanager.h
 )
 
+# ---- Exécutable principal ----
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    find_package(Qt6 REQUIRED COMPONENTS Core)
-
     qt_add_executable(Editerako
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        codeeditor.h codeeditor.cpp
-        finddialog.h finddialog.cpp
-
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET Editerako APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
-    if(ANDROID)
-        add_library(Editerako SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(Editerako
-            ${PROJECT_SOURCES}
-        )
-    endif()
+    add_executable(Editerako ${PROJECT_SOURCES})
 endif()
 
-target_link_libraries(Editerako PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
-target_link_libraries(Editerako PRIVATE Qt6::Core)
+# ---- Configuration des includes ----
+target_include_directories(Editerako PRIVATE
+    /usr/include/tree_sitter
+    /usr/local/include/tree_sitter
+    tree-sitter/tree-sitter-cpp/src/tree_sitter
+    tree-sitter/tree-sitter-html/src/tree_sitter
+    tree-sitter/tree-sitter-cpp/src
+    tree-sitter/tree-sitter-html/src
+)
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
+# ---- Linking des librairies ----
+target_link_libraries(Editerako PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Core
+    ${TREE_SITTER_LIB}
+    ${TREE_SITTER_CPP_LIB}
+    ${TREE_SITTER_HTML_LIB}
+)
+
+# ---- Propriétés bundle ----
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Editerako)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Editerako)
 endif()
+
 set_target_properties(Editerako PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -64,6 +88,7 @@ set_target_properties(Editerako PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+# ---- Installation ----
 include(GNUInstallDirs)
 install(TARGETS Editerako
     BUNDLE DESTINATION .

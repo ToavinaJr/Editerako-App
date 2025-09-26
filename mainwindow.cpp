@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "syntaxhighlighter.h"
 #include "finddialog.h"
 #include <QApplication>
 #include <QStandardPaths>
@@ -103,6 +104,15 @@ void MainWindow::setupCodeEditor()
 
     // Set initial state of line numbers based on checkbox
     codeEditor->setLineNumbersVisible(ui->checkBox->isChecked());
+
+    // Créer le highlighter
+    SyntaxHighlighter *highlighter = new SyntaxHighlighter(codeEditor, SyntaxHighlighter::CPP);
+
+    // Optionnel : basculer sur HTML selon extension
+    connect(ui->fileTreeWidget, &QTreeWidget::itemDoubleClicked, [=](QTreeWidgetItem *item, int){
+        QString ext = getFileExtension(item->text(0));
+        if(ext == "html") highlighter->setDocument(codeEditor->document()); // rebind pour HTML
+    });
 }
 
 void MainWindow::setupFileTree()
