@@ -14,20 +14,15 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 # ---- Tree-sitter libraries ----
 # Utiliser les librairies système
 find_library(TREE_SITTER_LIB tree-sitter REQUIRED)
-find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp REQUIRED)
-
-# Si tree-sitter-html n'est pas installée système, utiliser nos sources
+find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp)
 find_library(TREE_SITTER_HTML_LIB tree-sitter-html)
+
+# Vérifier que nous avons au moins tree-sitter et tree-sitter-cpp
+if(NOT TREE_SITTER_CPP_LIB)
+    message(WARNING "tree-sitter-cpp not found, syntax highlighting will be limited")
+endif()
 if(NOT TREE_SITTER_HTML_LIB)
-    # Créer tree-sitter-html depuis nos sources
-    add_library(tree-sitter-html STATIC
-        tree-sitter/tree-sitter-html/src/parser.c
-        tree-sitter/tree-sitter-html/src/scanner.c
-    )
-    target_include_directories(tree-sitter-html PUBLIC
-        tree-sitter/tree-sitter-html/src
-    )
-    set(TREE_SITTER_HTML_LIB tree-sitter-html)
+    message(WARNING "tree-sitter-html not found, HTML syntax highlighting will be limited")
 endif()
 
 # ---- Sources du projet principal ----
@@ -35,7 +30,6 @@ set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
     mainwindow.h
-    mainwindow.ui
     codeeditor.cpp
     codeeditor.h
     finddialog.cpp
@@ -71,9 +65,13 @@ target_link_libraries(Editerako PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
     ${TREE_SITTER_LIB}
-    ${TREE_SITTER_CPP_LIB}
-    ${TREE_SITTER_HTML_LIB}
 )
+if(TREE_SITTER_CPP_LIB)
+    target_link_libraries(Editerako PRIVATE ${TREE_SITTER_CPP_LIB})
+endif()
+if(TREE_SITTER_HTML_LIB)
+    target_link_libraries(Editerako PRIVATE ${TREE_SITTER_HTML_LIB})
+endif()
 
 # ---- Propriétés bundle ----
 if(${QT_VERSION} VERSION_LESS 6.1.0)
