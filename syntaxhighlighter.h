@@ -41,7 +41,7 @@ private:
     QTextCharFormat parameterFormat;
     QTextCharFormat punctuationFormat;
     QTextCharFormat operatorFormat;
-    QTextCharFormat namespaceFormat; // Ajouté
+    QTextCharFormat namespaceFormat;
 };
 
 #endif // SYNTAXHIGHLIGHTER_H

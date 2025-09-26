@@ -9,18 +9,21 @@ TSLanguage *tree_sitter_cpp();
 TSLanguage *tree_sitter_html();
 }
 
-// Liste des mots-clés C++ (pour surligner explicitement)
-static const QStringList cppKeywords = {
-    "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
-    "case", "catch", "char", "char16_t", "char32_t", "class", "compl", "const", "constexpr",
-    "const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast",
-    "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto",
-    "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq", "nullptr",
-    "operator", "or", "or_eq", "private", "protected", "public", "register", "reinterpret_cast", "return", "short",
-    "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "template", "this", "thread_local",
-    "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual", "void",
-    "volatile", "wchar_t", "while", "xor", "xor_eq"
-};
+// Liste des mots-clés C++ (pattern thread-safe pour éviter le warning non-POD static)
+static const QStringList& cppKeywords() {
+    static const QStringList keywords = {
+        "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
+        "case", "catch", "char", "char16_t", "char32_t", "class", "compl", "const", "constexpr",
+        "const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast",
+        "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto",
+        "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq", "nullptr",
+        "operator", "or", "or_eq", "private", "protected", "public", "register", "reinterpret_cast", "return", "short",
+        "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "template", "this", "thread_local",
+        "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual", "void",
+        "volatile", "wchar_t", "while", "xor", "xor_eq"
+    };
+    return keywords;
+}
 
 SyntaxHighlighter::SyntaxHighlighter(CodeEditor *editor, Language lang)
     : QSyntaxHighlighter(editor ? editor->document() : nullptr), language(lang), parser(nullptr), tree(nullptr)
@@ -135,7 +138,6 @@ void SyntaxHighlighter::highlightCpp(const QString &text) {
                    qtype == "function" || qtype == "function_call") {
             setFormat(start, len, functionFormat);
         } else if (qtype == "identifier") {
-            // Pour les variables et paramètres, Tree-sitter ne distingue pas toujours bien
             setFormat(start, len, variableFormat);
         } else if (qtype == "parameter_declaration") {
             setFormat(start, len, parameterFormat);
@@ -151,7 +153,7 @@ void SyntaxHighlighter::highlightCpp(const QString &text) {
             setFormat(start, len, punctuationFormat);
         }
 
-        // Pour le nom de namespace ou de classe, on regarde les enfants immédiatement après le nœud namespace/class_specifier
+        // Coloration du nom du namespace ou de la classe
         if (qtype == "namespace" || qtype == "namespace_definition" ||
             qtype == "class_specifier" || qtype == "struct_specifier") {
             uint32_t n = ts_node_child_count(node);
@@ -177,13 +179,13 @@ void SyntaxHighlighter::highlightCpp(const QString &text) {
 
     visit(root);
 
-    // Coloration explicite des mots-clés dans la ligne (pour if, return, public, private, while, etc.)
+    // Coloration explicite des mots-clés (if, return, public, ...)
     QRegularExpression wordRegex("\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b");
     auto it = wordRegex.globalMatch(text);
     while (it.hasNext()) {
         auto match = it.next();
         QString word = match.captured(1);
-        if (cppKeywords.contains(word)) {
+        if (cppKeywords().contains(word)) {
             setFormat(match.capturedStart(1), match.capturedLength(1), keywordFormat);
         }
     }

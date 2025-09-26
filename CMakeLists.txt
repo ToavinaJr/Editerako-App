@@ -42,8 +42,8 @@ set(PROJECT_SOURCES
     finddialog.h
     syntaxhighlighter.cpp
     syntaxhighlighter.h
-    filemanager.cpp
-    filemanager.h
+
+
 )
 
 # ---- Exécutable principal ----
