@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     pdfDoc = new QPdfDocument(this);
     pdfView = new QPdfView(this);
     pdfView->setDocument(pdfDoc);
-    pdfView->setZoomFactor(1.0); // Zoom à 100%
+    pdfView->setZoomFactor(1.0);
 
     imageLabel = new QLabel(this);
     imageLabel->setAlignment(Qt::AlignCenter);
