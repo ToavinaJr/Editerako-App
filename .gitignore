@@ -5,5 +5,3 @@ token.save
 token
 
 CMakeLists.txt.user
-
-mainwindow.ui

@@ -13,6 +13,11 @@
 #include <QFileInfo>
 #include <QStatusBar>
 #include <QCheckBox>
+#include <QStackedWidget>
+#include <QPdfDocument>
+#include <QtPdfWidgets/QPdfView>
+#include <QScrollArea>
+#include <QLabel>
 #include "codeeditor.h"
 
 QT_BEGIN_NAMESPACE
@@ -29,6 +34,18 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+private:
+    QPdfDocument *pdfDoc = nullptr;
+    QPdfView *pdfView = nullptr;
+    QLabel *imageLabel = nullptr;
+    QScrollArea *imageScroll = nullptr;
+
+    enum ViewerIndex {
+        CodeViewer = 0,
+        PdfViewer,
+        ImageViewer,
+        UnsupportedViewer
+    };
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();

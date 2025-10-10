@@ -4,6 +4,13 @@
 #include "finddialog.h"
 #include <QApplication>
 #include <QStandardPaths>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QDesktopServices>
+#include <QMessageBox>
+#include <QUrl>
+#include <QFileInfo>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,7 +19,24 @@ MainWindow::MainWindow(QWidget *parent)
     , isModified(false)
     , currentWorkingDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
 {
+
     ui->setupUi(this);
+
+    pdfDoc = new QPdfDocument(this);
+    pdfView = new QPdfView(this);
+    pdfView->setDocument(pdfDoc);
+    pdfView->setZoomFactor(1.0); // Zoom à 100%
+
+    imageLabel = new QLabel(this);
+    imageLabel->setAlignment(Qt::AlignCenter);
+    imageScroll = new QScrollArea(this);
+    imageScroll->setWidget(imageLabel);
+    imageScroll->setWidgetResizable(true);
+
+    // Ajout dans la pile
+    ui->centralStack->insertWidget(PdfViewer, pdfView);
+    ui->centralStack->insertWidget(ImageViewer, imageScroll);
+    ui->centralStack->setCurrentIndex(CodeViewer); // par défaut
 
     // Setup the custom code editor
     setupCodeEditor();
@@ -78,42 +102,36 @@ void MainWindow::connectActions()
 
 void MainWindow::setupCodeEditor()
 {
-    // Create custom code editor
+    // Crée le code editor
     codeEditor = new CodeEditor(this);
-
-    // Apply same styling as the original plainTextEdit
     codeEditor->setStyleSheet(
-        "CodeEditor {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "    border: none;"
-        "    font-family: \"Monaco\", \"Consolas\", monospace;"
-        "    font-size: 13px;"
-        "    line-height: 1.4;"
-        "}"
+        "background-color: #1e1e1e;"
+        "color: #cccccc;"
+        "border: none;"
+        "font-family: 'Monaco', 'Consolas', monospace;"
+        "font-size: 13px;"
         );
 
-    // Replace the original plainTextEdit with our custom editor
-    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(ui->verticalLayout);
-    if (layout) {
-        // Remove the original plainTextEdit and replace it
-        layout->removeWidget(ui->plainTextEdit);
-        ui->plainTextEdit->hide();
-        layout->insertWidget(0, codeEditor);
+    // Remplacer l'ancien QPlainTextEdit
+    QWidget *oldEditor = ui->centralStack->widget(CodeViewer);
+    if (oldEditor) {
+        ui->centralStack->removeWidget(oldEditor);
+        oldEditor->deleteLater();
     }
 
-    // Set initial state of line numbers based on checkbox
-    codeEditor->setLineNumbersVisible(ui->checkBox->isChecked());
+    ui->centralStack->insertWidget(CodeViewer, codeEditor);
+    ui->centralStack->setCurrentIndex(CodeViewer);
 
-    // Créer le highlighter
+    // Highlighter syntaxique
     SyntaxHighlighter *highlighter = new SyntaxHighlighter(codeEditor, SyntaxHighlighter::CPP);
 
-    // Optionnel : basculer sur HTML selon extension
-    connect(ui->fileTreeWidget, &QTreeWidget::itemDoubleClicked, [=](QTreeWidgetItem *item, int){
-        QString ext = getFileExtension(item->text(0));
-        if(ext == "html") highlighter->setDocument(codeEditor->document()); // rebind pour HTML
+    // Connexion du suivi de modification
+    connect(codeEditor, &CodeEditor::textChanged, [this](){
+        isModified = true;
+        updateWindowTitle();
     });
 }
+
 
 void MainWindow::setupFileTree()
 {
@@ -355,6 +373,11 @@ void MainWindow::onFileTreeItemClicked(QTreeWidgetItem *item, int column)
                 statusBar()->showMessage(QString("Selected: %1").arg(fileInfo.fileName()), 2000);
             }
         }
+        if (item->childCount() > 0) {
+            // Si c’est un dossier, on inverse son état
+            item->setExpanded(!item->isExpanded());
+        }
+
     }
 }
 
@@ -386,24 +409,47 @@ void MainWindow::onShowLinesToggled(bool checked)
 
 void MainWindow::openFileInEditor(const QString &filePath)
 {
-    QFile file(filePath);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream in(&file);
-        QString content = in.readAll();
+    QFileInfo info(filePath);
+    QMimeDatabase db;
+    QMimeType mime = db.mimeTypeForFile(info);
+    QString mimeName = mime.name();
 
-        if (codeEditor) {
+    QString ext = info.suffix().toLower();
+
+    if (mimeName.startsWith("text/") || mimeName.contains("json") || mimeName.contains("xml") || mimeName.contains("html") || ext == "tsx") {
+        QFile file(filePath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            QString content = in.readAll();
+            file.close();
+
             codeEditor->setPlainText(content);
-        }
+            ui->centralStack->setCurrentIndex(CodeViewer);
 
-        currentFileName = filePath;
-        isModified = false;
-        updateWindowTitle();
+            // Highlighter selon extension
+            SyntaxHighlighter *highlighter = new SyntaxHighlighter(codeEditor,
+                                                                   (ext == "cpp") ? SyntaxHighlighter::CPP :
+                                                                       (ext == "html") ? SyntaxHighlighter::HTML :
+                                                                       (ext == "tsx") ? SyntaxHighlighter::HTML : SyntaxHighlighter::CPP
+                                                                   );
 
-        if (statusBar()) {
-            statusBar()->showMessage(QString("Opened: %1").arg(QFileInfo(filePath).fileName()), 3000);
+            currentFileName = filePath;
+            isModified = false;
+            updateWindowTitle();
         }
-    } else {
-        QMessageBox::warning(this, tr("Error"), tr("Could not open file: %1").arg(filePath));
+    }
+
+    else if (mimeName == "application/pdf") {
+        pdfDoc->load(filePath);
+        ui->centralStack->setCurrentIndex(PdfViewer);
+    }
+    else if (mimeName.startsWith("image/")) {
+        QPixmap pix(filePath);
+        imageLabel->setPixmap(pix); // taille réelle
+        ui->centralStack->setCurrentIndex(ImageViewer);
+    }
+    else {
+        ui->centralStack->setCurrentIndex(UnsupportedViewer);
     }
 }
 

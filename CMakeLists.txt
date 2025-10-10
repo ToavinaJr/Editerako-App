@@ -11,15 +11,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-# ---- Tree-sitter libraries ----
-# Utiliser les librairies système
-find_library(TREE_SITTER_LIB tree-sitter REQUIRED)
-find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp REQUIRED)
+# ---- Qt PDF (Qt6 seulement) ----
+if(QT_VERSION_MAJOR EQUAL 6)
+    find_package(Qt6 REQUIRED COMPONENTS PdfWidgets)
+endif()
 
-# Si tree-sitter-html n'est pas installée système, utiliser nos sources
+# ---- Tree-sitter libraries ----
+find_library(TREE_SITTER_LIB tree-sitter)
+find_library(TREE_SITTER_CPP_LIB tree-sitter-cpp)
 find_library(TREE_SITTER_HTML_LIB tree-sitter-html)
+
+# ---- Fallback statique pour tree-sitter-cpp ----
+if(NOT TREE_SITTER_CPP_LIB)
+    add_library(tree-sitter-cpp STATIC
+        tree-sitter/tree-sitter-cpp/src/parser.c
+        tree-sitter/tree-sitter-cpp/src/scanner.c
+    )
+    target_include_directories(tree-sitter-cpp PUBLIC
+        tree-sitter/tree-sitter-cpp/src
+    )
+    set(TREE_SITTER_CPP_LIB tree-sitter-cpp)
+endif()
+
+# ---- Fallback statique pour tree-sitter-html ----
 if(NOT TREE_SITTER_HTML_LIB)
-    # Créer tree-sitter-html depuis nos sources
     add_library(tree-sitter-html STATIC
         tree-sitter/tree-sitter-html/src/parser.c
         tree-sitter/tree-sitter-html/src/scanner.c
@@ -30,7 +45,7 @@ if(NOT TREE_SITTER_HTML_LIB)
     set(TREE_SITTER_HTML_LIB tree-sitter-html)
 endif()
 
-# ---- Sources du projet principal ----
+# ---- Sources du projet ----
 set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
@@ -42,12 +57,10 @@ set(PROJECT_SOURCES
     finddialog.h
     syntaxhighlighter.cpp
     syntaxhighlighter.h
-
-
 )
 
 # ---- Exécutable principal ----
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
     qt_add_executable(Editerako
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
@@ -56,14 +69,10 @@ else()
     add_executable(Editerako ${PROJECT_SOURCES})
 endif()
 
-# ---- Configuration des includes ----
+# ---- Include paths ----
 target_include_directories(Editerako PRIVATE
-    /usr/include/tree_sitter
-    /usr/local/include/tree_sitter
     tree-sitter/tree-sitter-cpp/src/tree_sitter
     tree-sitter/tree-sitter-html/src/tree_sitter
-    tree-sitter/tree-sitter-cpp/src
-    tree-sitter/tree-sitter-html/src
 )
 
 # ---- Linking des librairies ----
@@ -75,8 +84,13 @@ target_link_libraries(Editerako PRIVATE
     ${TREE_SITTER_HTML_LIB}
 )
 
-# ---- Propriétés bundle ----
-if(${QT_VERSION} VERSION_LESS 6.1.0)
+# ---- Qt PDF (Qt6) ----
+if(QT_VERSION_MAJOR EQUAL 6)
+    target_link_libraries(Editerako PRIVATE Qt6::PdfWidgets)
+endif()
+
+# ---- Propriétés bundle (macOS et Windows) ----
+if(QT_VERSION_MAJOR VERSION_LESS 6.1)
     set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Editerako)
 endif()
 
@@ -96,6 +110,7 @@ install(TARGETS Editerako
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# ---- Finalisation Qt6 ----
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(Editerako)
 endif()

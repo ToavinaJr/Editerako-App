@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1400</width>
+    <height>900</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Code Editor</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QMainWindow {
+        background-color: #1e1e1e;
+        color: #cccccc;
+    }
+    
+    QToolBar {
+        background-color: #2d2d30;
+        border: 1px solid #3e3e42;
+        spacing: 15px;
+        height: 40px;
+    }
+    
+    QTabWidget::pane {
+        border: 1px solid #3e3e42;
+        background-color: #1e1e1e;
+    }
+    
+    QTabBar::tab {
+        background-color: #2d2d30;
+        color: #cccccc;
+        border: 1px solid #3e3e42;
+        padding: 8px 16px;
+        margin-right: 0px;
+    }
+    
+    QTabBar::tab:selected {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #1e1e1e;
+    }
+    
+    QTreeWidget {
+        background-color: #252526;
+        border: 1px solid #3e3e42;
+        color: #cccccc;
+        alternate-background-color: #2d2d30;
+    }
+    
+    QTreeWidget::item:selected {
+        background-color: #3e3e42;
+    }
+    
+    QTextEdit {
+        background-color: #1e1e1e;
+        color: #cccccc;
+        border: none;
+        font-family: &quot;Monaco&quot;, &quot;Consolas&quot;, monospace;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    QLineEdit {
+        background-color: #3e3e42;
+        border: 1px solid #6f6f6f;
+        border-radius: 4px;
+        color: #cccccc;
+        padding: 6px;
+    }
+    
+    QPushButton {
+        background-color: #3e3e42;
+        border: 1px solid #6f6f6f;
+        border-radius: 4px;
+        color: #cccccc;
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+    
+    QPushButton:hover {
+        background-color: #6f6f6f;
+    }
+    
+    QPushButton#fixButton {
+        background-color: #98c379;
+        color: black;
+        font-weight: bold;
+        border: none;
+    }
+    
+    QPushButton#inviteButton {
+        background-color: #98c379;
+        color: black;
+        font-weight: bold;
+        border: none;
+    }
+    
+    QScrollBar:vertical {
+        background-color: #2d2d30;
+        width: 12px;
+        border-radius: 6px;
+    }
+    
+    QScrollBar::handle:vertical {
+        background-color: #6f6f6f;
+        border-radius: 6px;
+        min-height: 20px;
+    }
+    
+    QComboBox {
+        background-color: #3e3e42;
+        border: 1px solid #6f6f6f;
+        border-radius: 4px;
+        color: #cccccc;
+        padding: 4px 8px;
+    }
+    
+    QComboBox::drop-down {
+        border: none;
+    }
+    
+    QLabel {
+        color: #cccccc;
+    }
+    
+    QStatusBar {
+        background-color: #2d2d30;
+        border-top: 1px solid #3e3e42;
+        color: #cccccc;
+    }
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="leftSidebar">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+        QFrame {
+            background-color: #252526;
+            border-right: 1px solid #3e3e42;
+        }
+       </string>
+      </property>
+      <layout class="QVBoxLayout" name="sidebarLayout">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>10</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="explorerLabel">
+           <property name="styleSheet">
+            <string notr="true">border: none;
+</string>
+           </property>
+           <property name="text">
+            <string>Explorer</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="addFileButton">
+             <property name="styleSheet">
+              <string notr="true">border: none;
+padding: 0 0 0 0 ;</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="newFolderButton">
+             <property name="styleSheet">
+              <string notr="true">padding: 0;</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::FolderNew"/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="closeExplorerButton">
+             <property name="styleSheet">
+              <string notr="true">padding: 0;</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::UserOffline"/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTreeWidget" name="fileTreeWidget">
+         <column>
+          <property name="text">
+           <string notr="true">1</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QStackedWidget" name="centralStack">
+        <widget class="QPlainTextEdit" name="codeEditor"/>
+        <widget class="QWidget" name="pdfViewer"/>
+        <widget class="QWidget" name="imageViewer"/>
+        <widget class="QLabel" name="unsupportedViewer">
+         <property name="text">
+          <string>Unsupported file type.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4"/>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox">
+        <property name="text">
+         <string>Show lignes</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QSplitter" name="mainSplitter">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <widget class="QFrame" name="rightSidebar">
+       <property name="minimumSize">
+        <size>
+         <width>280</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>280</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">
+         QFrame {
+             background-color: #252526;
+             border-left: 1px solid #3e3e42;
+         }
+        </string>
+       </property>
+       <layout class="QVBoxLayout" name="rightSidebarLayout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <property name="leftMargin">
+         <number>10</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>10</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="errorHeader">
+          <property name="styleSheet">
+           <string notr="true">
+            QLabel {
+                font-size: 12px;
+                color: #cccccc;
+                padding: 5px;
+            }
+           </string>
+          </property>
+          <property name="text">
+           <string>✓ Errors are being searched... 16</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="errorItem1">
+          <property name="styleSheet">
+           <string notr="true">
+            QFrame {
+                background-color: #3e3e42;
+                border-radius: 4px;
+                padding: 10px;
+            }
+           </string>
+          </property>
+          <layout class="QHBoxLayout" name="errorItem1Layout">
+           <item>
+            <widget class="QLabel" name="errorIcon1">
+             <property name="maximumSize">
+              <size>
+               <width>16</width>
+               <height>16</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>🔴</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="errorText1">
+             <property name="styleSheet">
+              <string notr="true">
+               QLabel {
+                   font-size: 11px;
+                   color: #cccccc;
+               }
+              </string>
+             </property>
+             <property name="text">
+              <string>Error Line 1
+Fix line</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="errorArrow1">
+             <property name="text">
+              <string>⌄</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="errorItem2">
+          <property name="styleSheet">
+           <string notr="true">
+            QFrame {
+                background-color: #3e3e42;
+                border-radius: 4px;
+                padding: 10px;
+            }
+           </string>
+          </property>
+          <layout class="QHBoxLayout" name="errorItem2Layout">
+           <item>
+            <widget class="QLabel" name="errorIcon2">
+             <property name="maximumSize">
+              <size>
+               <width>16</width>
+               <height>16</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>🔴</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="errorText2">
+             <property name="styleSheet">
+              <string notr="true">
+               QLabel {
+                   font-size: 11px;
+                   color: #cccccc;
+               }
+              </string>
+             </property>
+             <property name="text">
+              <string>Error Line 5
+Fix line</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="errorArrow2">
+             <property name="text">
+              <string>⌄</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="errorDescription">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>120</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>120</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QTextEdit {
+                background-color: #1e1e1e;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                font-size: 11px;
+                padding: 10px;
+            }
+           </string>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="plainText">
+           <string>In Python, the return statement is used to return a value from a function. To use the return statement, you need to have an issue corrected. You should use the proper return statement, and add the correct variable name for the list. The old code used the variable name 'list', which is the correct variable name.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="fixButtonsLayout">
+          <item>
+           <widget class="QPushButton" name="suggestionButton1">
+            <property name="text">
+             <string>list2</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="fixButton">
+            <property name="text">
+             <string>list2</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="fixButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Fix all issues</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="rightSidebarSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1400</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionFile"/>
+    <addaction name="actionNew_Document"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen_File"/>
+    <addaction name="actionOpen_Folder"/>
+   </widget>
+   <widget class="QMenu" name="menuFind">
+    <property name="title">
+     <string>Find</string>
+    </property>
+    <addaction name="actionFindReplace"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuFind"/>
+  </widget>
+  <action name="actionDebug">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Debug</string>
+   </property>
+  </action>
+  <action name="actionOptimize">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Optimize</string>
+   </property>
+  </action>
+  <action name="actionTranslate">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Translate</string>
+   </property>
+  </action>
+  <action name="actionDocumentation">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Documentation</string>
+   </property>
+  </action>
+  <action name="actionGenerate_Code">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Generate code</string>
+   </property>
+  </action>
+  <action name="actionHome">
+   <property name="icon">
+    <iconset>
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>🏠</string>
+   </property>
+  </action>
+  <action name="actionNew_File">
+   <property name="text">
+    <string>New File</string>
+   </property>
+  </action>
+  <action name="actionFile">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ContactNew"/>
+   </property>
+   <property name="text">
+    <string>New file</string>
+   </property>
+  </action>
+  <action name="actionNew_Document">
+   <property name="text">
+    <string>New Folder</string>
+   </property>
+  </action>
+  <action name="actionOpen_File">
+   <property name="text">
+    <string>Open File</string>
+   </property>
+  </action>
+  <action name="actionOpen_Folder">
+   <property name="text">
+    <string>Open Folder</string>
+   </property>
+  </action>
+  <action name="actionFindReplace">
+   <property name="text">
+    <string>FindReplace</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
