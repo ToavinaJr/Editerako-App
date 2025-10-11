@@ -539,7 +539,7 @@ Fix line</string>
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -559,6 +559,9 @@ Fix line</string>
     <addaction name="actionOpen_Folder"/>
    </widget>
    <widget class="QMenu" name="menuFind">
+    <property name="styleSheet">
+     <string notr="true">background-color: #2d2d30;</string>
+    </property>
     <property name="title">
      <string>Find</string>
     </property>

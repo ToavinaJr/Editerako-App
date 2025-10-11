@@ -271,25 +271,68 @@ void MainWindow::newFile()
 {
     if (askToSaveChanges()) {
         bool ok;
-        QString fileName = QInputDialog::getText(this,
-                                                 tr("New File"),
-                                                 tr("Enter file name:"),
-                                                 QLineEdit::Normal,
-                                                 tr("untitled.txt"), &ok);
+
+        // Create styled input dialog
+        QInputDialog dialog(this);
+        dialog.setWindowTitle(tr("New File"));
+        dialog.setLabelText(tr("Enter file name:"));
+        dialog.setTextValue(tr("untitled.txt"));
+        dialog.setInputMode(QInputDialog::TextInput);
+
+        // Set minimum size for the dialog
+        dialog.setMinimumWidth(800);
+        dialog.setMinimumHeight(150);
+
+        // Apply dark theme stylesheet
+        dialog.setStyleSheet(
+            "QInputDialog {"
+            "    background-color: #1e1e1e;"
+            "    color: #cccccc;"
+            "}"
+            "QLabel {"
+            "    color: #cccccc;"
+            "    font-size: 12px;"
+            "}"
+            "QLineEdit {"
+            "    background-color: #3e3e42;"
+            "    border: 1px solid #6f6f6f;"
+            "    border-radius: 4px;"
+            "    color: #cccccc;"
+            "    padding: 8px;"
+            "    font-size: 12px;"
+            "}"
+            "QLineEdit:focus {"
+            "    border: 1px solid #98c379;"
+            "}"
+            "QPushButton {"
+            "    background-color: #3e3e42;"
+            "    border: 1px solid #6f6f6f;"
+            "    border-radius: 4px;"
+            "    color: #cccccc;"
+            "    padding: 6px 16px;"
+            "    font-size: 11px;"
+            "    min-width: 60px;"
+            "}"
+            "QPushButton:hover {"
+            "    background-color: #6f6f6f;"
+            "}"
+            "QPushButton:pressed {"
+            "    background-color: #98c379;"
+            "    color: #1e1e1e;"
+            "}"
+            );
+
+        ok = dialog.exec();
+        QString fileName = dialog.textValue();
 
         if (ok && !fileName.isEmpty()) {
-            // Create new file in current directory
             QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(fileName);
             QFile file(fullPath);
+
             if (file.open(QIODevice::WriteOnly)) {
                 file.close();
-
-                // Refresh tree view
                 loadDirectoryToTree(currentWorkingDirectory);
-
-                // Open the file in editor
                 openFileInEditor(fullPath);
-
                 QMessageBox::information(this, tr("Success"), tr("File created successfully!"));
             } else {
                 QMessageBox::warning(this, tr("Error"), tr("Could not create file!"));
@@ -301,11 +344,58 @@ void MainWindow::newFile()
 void MainWindow::newFolder()
 {
     bool ok;
-    QString folderName = QInputDialog::getText(this,
-                                               tr("New Folder"),
-                                               tr("Enter folder name:"),
-                                               QLineEdit::Normal,
-                                               tr("New Folder"), &ok);
+
+    // Create styled input dialog
+    QInputDialog dialog(this);
+    dialog.setWindowTitle(tr("New Folder"));
+    dialog.setLabelText(tr("Enter folder name:"));
+    dialog.setTextValue(tr("New Folder"));
+    dialog.setInputMode(QInputDialog::TextInput);
+
+    // Set minimum size for the dialog
+    dialog.setMinimumWidth(400);
+    dialog.setMinimumHeight(150);
+    // Apply dark theme stylesheet
+    dialog.setStyleSheet(
+        "QInputDialog {"
+        "    background-color: #1e1e1e;"
+        "    color: #cccccc;"
+        "}"
+        "QLabel {"
+        "    color: #cccccc;"
+        "    font-size: 12px;"
+        "}"
+        "QLineEdit {"
+        "    background-color: #3e3e42;"
+        "    border: 1px solid #6f6f6f;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    padding: 8px;"
+        "    font-size: 12px;"
+        "}"
+        "QLineEdit:focus {"
+        "    border: 1px solid #98c379;"
+        "}"
+        "QPushButton {"
+        "    background-color: #3e3e42;"
+        "    border: 1px solid #6f6f6f;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    padding: 6px 16px;"
+        "    font-size: 11px;"
+        "    min-width: 60px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #6f6f6f;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #98c379;"
+        "    color: #1e1e1e;"
+        "}"
+        );
+
+    ok = dialog.exec();
+    QString folderName = dialog.textValue();
 
     if (ok && !folderName.isEmpty()) {
         QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(folderName);
@@ -318,6 +408,7 @@ void MainWindow::newFolder()
         }
     }
 }
+
 
 void MainWindow::openFile()
 {
