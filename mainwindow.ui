@@ -539,10 +539,16 @@ Fix line</string>
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: #cccccc;</string>
+   </property>
    <widget class="QMenu" name="menuFile">
+    <property name="styleSheet">
+     <string notr="true">background-color: #2d2d30;</string>
+    </property>
     <property name="title">
      <string>File</string>
     </property>
