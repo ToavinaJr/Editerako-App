@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\CMakeFiles\412f96d7637a2b6ce8c4816419020d97\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{05B981FC-E5CD-3AA4-8694-454630A4B5B4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

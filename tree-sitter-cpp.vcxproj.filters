@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter\tree-sitter-cpp\src\parser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter\tree-sitter-cpp\src\scanner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\include_Debug\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\include_Release\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\include_MinSizeRel\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\include_RelWithDebInfo\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\CMakeFiles\e30abca515f8ee0cf93b500bfd607c58\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\autouic_Debug.stamp" />
+    <None Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\autouic_Release.stamp" />
+    <None Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\autouic_MinSizeRel.stamp" />
+    <None Include="C:\Users\PRODIGY\Documents\projets\Editerako-App\tree-sitter-cpp_autogen\autouic_RelWithDebInfo.stamp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{05B981FC-E5CD-3AA4-8694-454630A4B5B4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{5C651D53-F00D-3F90-9E61-D38E75247657}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{46AC3239-6E54-3F6A-BF47-411732653361}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

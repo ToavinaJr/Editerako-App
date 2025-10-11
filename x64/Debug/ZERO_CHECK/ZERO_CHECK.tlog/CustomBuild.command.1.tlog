@@ -1,0 +1,10 @@
+^C:\USERS\PRODIGY\DOCUMENTS\PROJETS\EDITERAKO-APP\CMAKEFILES\412F96D7637A2B6CE8C4816419020D97\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/PRODIGY/Documents/projets/Editerako-App -BC:/Users/PRODIGY/Documents/projets/Editerako-App --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/PRODIGY/Documents/projets/Editerako-App/Editerako.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

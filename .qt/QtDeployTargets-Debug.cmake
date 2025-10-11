@@ -1,0 +1,5 @@
+set(__QT_DEPLOY_TARGET_tree_sitter_FILE C:/Users/PRODIGY/Documents/projets/Editerako-App/Debug/tree_sitter.lib)
+set(__QT_DEPLOY_TARGET_tree_sitter_TYPE STATIC_LIBRARY)
+set(__QT_DEPLOY_TARGET_Editerako_FILE C:/Users/PRODIGY/Documents/projets/Editerako-App/Debug/Editerako.exe)
+set(__QT_DEPLOY_TARGET_Editerako_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_Editerako_RUNTIME_DLLS C:/Qt/6.9.3/mingw_64/bin/Qt6PdfWidgets.dll;C:/Qt/6.9.3/mingw_64/bin/Qt6Widgets.dll;C:/Qt/6.9.3/mingw_64/bin/Qt6Pdf.dll;C:/Qt/6.9.3/mingw_64/bin/Qt6Gui.dll;C:/Qt/6.9.3/mingw_64/bin/Qt6Network.dll;C:/Qt/6.9.3/mingw_64/bin/Qt6Core.dll)
