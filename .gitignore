@@ -9,3 +9,11 @@ token
 
 CMakeLists.txt.user
 CMakeCache.txt
+
+tree-sitter_autogen/
+tree-sitter_autogen/*
+
+tree-sitter-html.dir/
+tree-sitter-html.dir/*
+
+tree-sitter.dir
