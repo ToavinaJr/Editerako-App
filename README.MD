@@ -16,6 +16,7 @@ Il intègre un explorateur de fichiers, un éditeur de texte avec **numéros de 
   * Mise en surbrillance de la ligne courante.
 * 💾 Sauvegarde des fichiers ouverts/modifiés.
 * ⚠️ Avertissement en cas de fermeture avec des modifications non sauvegardées.
+* Integration de terminal
 
 ## 📂 Structure du projet
 
