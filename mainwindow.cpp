@@ -60,6 +60,27 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Adding shortcut
     ui->actionFindReplace->setShortcut(QKeySequence("Ctrl+F"));
+
+    // Setup terminal
+    terminal = new Terminal(this);
+    terminal->setVisible(false);
+    isTerminalVisible = false;
+
+    // Add terminal to the bottom of the layout
+    QWidget *centralWidget = ui->centralwidget;
+    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(centralWidget->layout());
+    if (mainLayout) {
+        mainLayout->addWidget(terminal);
+        terminal->setMinimumHeight(250);
+        terminal->setMaximumHeight(400);
+    }
+
+    // Setup Ctrl+J shortcut for terminal
+    terminalShortcut = new QShortcut(QKeySequence("Ctrl+J"), this);
+    connect(terminalShortcut, &QShortcut::activated, this, &MainWindow::toggleTerminal);
+
+    // Connect terminal closed signal
+    connect(terminal, &Terminal::terminalClosed, this, &MainWindow::onTerminalClosed);
 }
 
 MainWindow::~MainWindow()
@@ -618,4 +639,32 @@ void MainWindow::updateWindowTitle()
 void MainWindow::onActionFindReplace() {
     FindReplaceDialog dlg(codeEditor, this);
     dlg.exec();
+}
+
+void MainWindow::toggleTerminal()
+{
+    isTerminalVisible = !isTerminalVisible;
+    terminal->setVisible(isTerminalVisible);
+
+    if (isTerminalVisible) {
+        // Set terminal working directory to current file's directory or project directory
+        if (!currentFileName.isEmpty()) {
+            QFileInfo fileInfo(currentFileName);
+            terminal->setWorkingDirectory(fileInfo.absolutePath());
+        } else {
+            terminal->setWorkingDirectory(currentWorkingDirectory);
+        }
+        terminal->focusTerminal();
+    }
+}
+
+void MainWindow::onTerminalClosed()
+{
+    isTerminalVisible = false;
+    terminal->setVisible(false);
+
+    // Return focus to code editor
+    if (codeEditor) {
+        codeEditor->setFocus();
+    }
 }

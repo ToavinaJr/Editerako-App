@@ -18,6 +18,8 @@
 #include <QtPdfWidgets/QPdfView>
 #include <QScrollArea>
 #include <QLabel>
+#include <QShortcut>
+#include "terminal.h"
 #include "codeeditor.h"
 
 QT_BEGIN_NAMESPACE
@@ -72,11 +74,18 @@ private slots:
     // Find section
     void onActionFindReplace();
 
+    // Ouvrir terminal
+    void toggleTerminal();
+    void onTerminalClosed();
+
 private:
     Ui::MainWindow *ui;
     CodeEditor *codeEditor;
     QString currentFileName;
     QString currentWorkingDirectory;
+    Terminal *terminal;
+    QShortcut *terminalShortcut;
+    bool isTerminalVisible;
     bool isModified;
 
     void connectActions();
