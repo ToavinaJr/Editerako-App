@@ -216,7 +216,7 @@ void Terminal::displayPrompt()
     cursor.movePosition(QTextCursor::End);
 
     QTextCharFormat format;
-    format.setForeground(QColor(152, 195, 121)); // Green color for prompt
+    format.setForeground(QColor(152, 195, 121)); 
     cursor.setCharFormat(format);
     cursor.insertText(prompt);
 

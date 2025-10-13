@@ -1,6 +1,9 @@
 build/
 build/*
 
+Debug/
+Debug/*
+
 token.save
 token
 
