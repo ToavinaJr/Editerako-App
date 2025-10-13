@@ -1,0 +1,72 @@
+name: Build Qt C++ App (macOS)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build and Package macOS App
+    runs-on: macos-latest
+
+    steps:
+      # 1️⃣ - Récupérer ton code source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ - Installer Qt avec aqtinstall
+      - name: Install Qt
+        run: |
+          python3 -m pip install aqtinstall
+          aqt install-qt mac desktop 6.7.2 clang_64
+          echo "QT_DIR=$(pwd)/6.7.2/macos/clang_64" >> $GITHUB_ENV
+
+      # 3️⃣ - Installer les dépendances
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja create-dmg
+
+      # 4️⃣ - Configurer le projet
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_PREFIX_PATH="$QT_DIR/lib/cmake" \
+            -DCMAKE_BUILD_TYPE=Release
+
+      # 5️⃣ - Compiler l'application
+      - name: Build Qt Application
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      # 6️⃣ - Trouver et empaqueter l'application .app
+      - name: Package into DMG
+        run: |
+          cd build
+          APP_NAME=$(find . -type d -name "*.app" | head -n 1)
+          if [ -z "$APP_NAME" ]; then
+            echo "Erreur : aucune application .app trouvée !"
+            exit 1
+          fi
+          mkdir dmg
+          create-dmg \
+            --volname "QtApp Installer" \
+            --window-size 500 300 \
+            --icon-size 100 \
+            --app-drop-link 400 150 \
+            "dmg/QtApp.dmg" "$APP_NAME"
+          echo "DMG_PATH=$(pwd)/dmg/QtApp.dmg" >> $GITHUB_ENV
+
+      # 7️⃣ - Sauvegarder les artefacts (.app et .dmg)
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QtApp-macos
+          path: |
+            build/*.app
+            build/dmg/*.dmg
