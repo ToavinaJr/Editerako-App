@@ -1,0 +1,68 @@
+name: Build Qt C++ App (macOS)
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build and Package macOS App
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Qt using aqtinstall
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt mac desktop 6.7.2 clang_64
+          aqt install-qt mac desktop 6.7.2 clang_64 -m qtpdf
+          echo "QT_DIR=$(pwd)/6.7.2/macos" >> $GITHUB_ENV
+      
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja create-dmg
+      
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_PREFIX_PATH="$QT_DIR" \
+            -DCMAKE_BUILD_TYPE=Release
+      
+      - name: Build Qt Application
+        run: |
+          cd build
+          cmake --build . --config Release
+      
+      - name: Package into DMG
+        run: |
+          cd build
+          APP_NAME=$(find . -type d -name "*.app" | head -n 1)
+          if [ -z "$APP_NAME" ]; then
+            echo "Erreur : aucune application .app trouvée !"
+            exit 1
+          fi
+          mkdir -p dmg
+          create-dmg \
+            --volname "Editerako Installer" \
+            --window-size 500 300 \
+            --icon-size 100 \
+            --app-drop-link 400 150 \
+            "dmg/Editerako.dmg" "$APP_NAME"
+          echo "DMG_PATH=$(pwd)/dmg/Editerako.dmg" >> $GITHUB_ENV
+      
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Editerako-macos
+          path: |
+            build/*.app
+            build/dmg/*.dmg
