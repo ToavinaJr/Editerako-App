@@ -13,11 +13,9 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1️⃣ - Récupérer ton code source
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ - Créer un environnement virtuel Python et installer aqtinstall
       - name: Install Qt using aqtinstall
         run: |
           python3 -m venv venv
@@ -27,27 +25,24 @@ jobs:
           aqt install-qt mac desktop 6.7.2 clang_64
           echo "QT_DIR=$(pwd)/6.7.2/macos/clang_64" >> $GITHUB_ENV
 
-      # 3️⃣ - Installer les dépendances via Homebrew
       - name: Install dependencies
         run: |
           brew install cmake ninja create-dmg
 
-      # 4️⃣ - Configurer CMake
+      # ✅ Correction ici
       - name: Configure CMake project
         run: |
           mkdir build
           cd build
           cmake .. \
-            -DCMAKE_PREFIX_PATH="$QT_DIR/lib/cmake" \
+            -DCMAKE_PREFIX_PATH="$QT_DIR/lib/cmake/Qt6" \
             -DCMAKE_BUILD_TYPE=Release
 
-      # 5️⃣ - Compiler ton application
       - name: Build Qt Application
         run: |
           cd build
           cmake --build . --config Release
 
-      # 6️⃣ - Créer un fichier DMG
       - name: Package into DMG
         run: |
           cd build
@@ -65,7 +60,6 @@ jobs:
             "dmg/QtApp.dmg" "$APP_NAME"
           echo "DMG_PATH=$(pwd)/dmg/QtApp.dmg" >> $GITHUB_ENV
 
-      # 7️⃣ - Sauvegarder les artefacts (.app et .dmg)
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
