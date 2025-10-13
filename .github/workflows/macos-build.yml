@@ -17,19 +17,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ - Installer Qt avec aqtinstall
-      - name: Install Qt
+      # 2️⃣ - Créer un environnement virtuel Python et installer aqtinstall
+      - name: Install Qt using aqtinstall
         run: |
-          python3 -m pip install aqtinstall
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install aqtinstall
           aqt install-qt mac desktop 6.7.2 clang_64
           echo "QT_DIR=$(pwd)/6.7.2/macos/clang_64" >> $GITHUB_ENV
 
-      # 3️⃣ - Installer les dépendances
+      # 3️⃣ - Installer les dépendances via Homebrew
       - name: Install dependencies
         run: |
           brew install cmake ninja create-dmg
 
-      # 4️⃣ - Configurer le projet
+      # 4️⃣ - Configurer CMake
       - name: Configure CMake project
         run: |
           mkdir build
@@ -38,13 +41,13 @@ jobs:
             -DCMAKE_PREFIX_PATH="$QT_DIR/lib/cmake" \
             -DCMAKE_BUILD_TYPE=Release
 
-      # 5️⃣ - Compiler l'application
+      # 5️⃣ - Compiler ton application
       - name: Build Qt Application
         run: |
           cd build
           cmake --build . --config Release
 
-      # 6️⃣ - Trouver et empaqueter l'application .app
+      # 6️⃣ - Créer un fichier DMG
       - name: Package into DMG
         run: |
           cd build
