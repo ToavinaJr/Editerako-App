@@ -82,7 +82,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     }
 
     QPainter painter(lineNumberArea);
-    painter.fillRect(event->rect(), QColor(45, 45, 48)); // Dark background
+    painter.fillRect(event->rect(), QColor(45, 45, 48)); 
 
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
@@ -92,7 +92,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1);
-            painter.setPen(QColor(128, 128, 128)); // Gray color for line numbers
+            painter.setPen(QColor(128, 128, 128)); 
             painter.drawText(0, top, lineNumberArea->width() - 3, fontMetrics().height(),
                              Qt::AlignRight, number);
         }
