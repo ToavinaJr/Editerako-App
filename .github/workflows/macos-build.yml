@@ -22,6 +22,7 @@ jobs:
           pip install --upgrade pip
           pip install aqtinstall
           aqt install-qt mac desktop 6.7.2 clang_64
+          aqt install-qt mac desktop 6.7.2 clang_64 -m qtpdf
           echo "QT_DIR=$(pwd)/6.7.2/macos" >> $GITHUB_ENV
       
       - name: Install dependencies
@@ -51,17 +52,17 @@ jobs:
           fi
           mkdir -p dmg
           create-dmg \
-            --volname "QtApp Installer" \
+            --volname "Editerako Installer" \
             --window-size 500 300 \
             --icon-size 100 \
             --app-drop-link 400 150 \
-            "dmg/QtApp.dmg" "$APP_NAME"
-          echo "DMG_PATH=$(pwd)/dmg/QtApp.dmg" >> $GITHUB_ENV
+            "dmg/Editerako.dmg" "$APP_NAME"
+          echo "DMG_PATH=$(pwd)/dmg/Editerako.dmg" >> $GITHUB_ENV
       
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: QtApp-macos
+          name: Editerako-macos
           path: |
             build/*.app
             build/dmg/*.dmg
