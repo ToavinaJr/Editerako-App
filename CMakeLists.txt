@@ -13,7 +13,7 @@ find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    find_package(Qt6 REQUIRED COMPONENTS PdfWidgets)
+    find_package(Qt6 REQUIRED COMPONENTS PdfWidgets Network)
 endif()
 
 # ---- Tree-sitter statique (SANS ICU) ----
@@ -53,6 +53,8 @@ set(PROJECT_SOURCES
     syntaxhighlighter.cpp
     syntaxhighlighter.h
     terminal.cpp
+    chatwidget.cpp
+    chatwidget.h
 )
 
 # ---- Exécutable principal ----
@@ -79,6 +81,7 @@ target_link_libraries(Editerako PRIVATE
     tree_sitter
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Network
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
@@ -110,3 +113,9 @@ install(TARGETS Editerako
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(Editerako)
 endif()
+
+# If Qt Creator requests `all_qmllint` but the project has no QML modules,
+# provide a no-op placeholder target so the build step doesn't fail.
+add_custom_target(all_qmllint
+    COMMENT "No QML files detected — placeholder target to satisfy Qt Creator"
+)

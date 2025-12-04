@@ -22,6 +22,8 @@
 #include "terminal.h"
 #include "codeeditor.h"
 
+class ChatWidget;
+
 QT_BEGIN_NAMESPACE
 class QAction;
 class QMenuBar;
@@ -85,6 +87,7 @@ private:
     QString currentWorkingDirectory;
     Terminal *terminal;
     QShortcut *terminalShortcut;
+    ChatWidget *chatWidget = nullptr;
     bool isTerminalVisible;
     bool isModified;
 

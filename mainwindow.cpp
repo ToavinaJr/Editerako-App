@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "syntaxhighlighter.h"
 #include "finddialog.h"
+#include "chatwidget.h"
 #include <QApplication>
 #include <QStandardPaths>
 #include <QMimeDatabase>
@@ -84,6 +85,52 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Connect terminal closed signal
     connect(terminal, &Terminal::terminalClosed, this, &MainWindow::onTerminalClosed);
+
+    // Replace right sidebar placeholder with ChatWidget (Gemini chat)
+    chatWidget = new ChatWidget(this);
+    if (ui->rightChatPlaceholder) {
+        // parent the chat widget into the placeholder's parent layout
+        QWidget *ph = ui->rightChatPlaceholder;
+        QLayout *parentLayout = ph->parentWidget() ? ph->parentWidget()->layout() : nullptr;
+        if (parentLayout) {
+            // find the index of placeholder and replace it
+            for (int i = 0; i < parentLayout->count(); ++i) {
+                QLayoutItem *item = parentLayout->itemAt(i);
+                if (item && item->widget() == ph) {
+                    // remove placeholder
+                    QLayoutItem *removed = parentLayout->takeAt(i);
+                    if (removed) {
+                        if (removed->widget()) removed->widget()->deleteLater();
+                        delete removed;
+                    }
+                    // Try to insert at same index if the layout is a box layout
+                    QBoxLayout *box = qobject_cast<QBoxLayout*>(parentLayout);
+                    if (box) {
+                        box->insertWidget(i, chatWidget);
+                    } else {
+                        parentLayout->addWidget(chatWidget);
+                    }
+                    break;
+                }
+            }
+        } else {
+            // fallback: add to rightSidebar layout
+            if (ui->rightSidebar && ui->rightSidebar->layout()) {
+                ui->rightSidebar->layout()->addWidget(chatWidget);
+            } else if (ui->rightSidebar) {
+                QVBoxLayout *newLayout = new QVBoxLayout(ui->rightSidebar);
+                newLayout->setContentsMargins(6,6,6,6);
+                newLayout->addWidget(chatWidget);
+            }
+        }
+    } else if (ui->rightSidebar) {
+        if (ui->rightSidebar->layout()) ui->rightSidebar->layout()->addWidget(chatWidget);
+        else {
+            QVBoxLayout *newLayout = new QVBoxLayout(ui->rightSidebar);
+            newLayout->setContentsMargins(6,6,6,6);
+            newLayout->addWidget(chatWidget);
+        }
+    }
 }
 
 MainWindow::~MainWindow()
