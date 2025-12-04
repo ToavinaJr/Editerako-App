@@ -19,8 +19,10 @@
 #include <QScrollArea>
 #include <QLabel>
 #include <QShortcut>
+#include <QCloseEvent>
 #include "terminal.h"
 #include "codeeditor.h"
+#include <QTabWidget>
 
 class ChatWidget;
 
@@ -54,6 +56,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     // File menu operations
     void newFile();
@@ -82,7 +87,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    CodeEditor *codeEditor;
+    QTabWidget *editorTabs;
     QString currentFileName;
     QString currentWorkingDirectory;
     Terminal *terminal;
@@ -90,6 +95,16 @@ private:
     ChatWidget *chatWidget = nullptr;
     bool isTerminalVisible;
     bool isModified;
+
+    CodeEditor *currentEditor();
+private slots:
+    void onEditorTabChanged(int index);
+    void closeTab(int index);
+
+private:
+    bool saveEditor(CodeEditor *editor);
+    void updateTabModifiedState(CodeEditor *editor);
+    void updateTabLabel(CodeEditor *editor);
 
     void connectActions();
     void updateWindowTitle();

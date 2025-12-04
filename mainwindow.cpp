@@ -16,7 +16,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , codeEditor(nullptr)
+    , editorTabs(nullptr)
     , isModified(false)
     , currentWorkingDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
 {
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->centralStack->insertWidget(ImageViewer, imageScroll);
     ui->centralStack->setCurrentIndex(CodeViewer); // par défaut
 
-    // Setup the custom code editor
+    // Setup the tabbed code editor area
     setupCodeEditor();
 
     // Connect all actions and signals
@@ -51,9 +51,9 @@ MainWindow::MainWindow(QWidget *parent)
     // Set initial window title
     updateWindowTitle();
 
-    // Set focus on the text editor
-    if (codeEditor) {
-        codeEditor->setFocus();
+    // Set focus on the active text editor
+    if (currentEditor()) {
+        currentEditor()->setFocus();
     }
 
     // Load default directory
@@ -159,13 +159,7 @@ void MainWindow::connectActions()
     // Line numbers checkbox
     connect(ui->checkBox, &QCheckBox::toggled, this, &MainWindow::onShowLinesToggled);
 
-    // Text editor modification tracking
-    if (codeEditor) {
-        connect(codeEditor, &CodeEditor::textChanged, [this]() {
-            isModified = true;
-            updateWindowTitle();
-        });
-    }
+    // Text editor modification tracking will be connected per-tab when created
 
     // Connection to the find dialog
     connect(ui->actionFindReplace, &QAction::triggered, this, &MainWindow::onActionFindReplace);
@@ -173,34 +167,42 @@ void MainWindow::connectActions()
 
 void MainWindow::setupCodeEditor()
 {
-    // Crée le code editor
-    codeEditor = new CodeEditor(this);
-    codeEditor->setStyleSheet(
-        "background-color: #1e1e1e;"
-        "color: #cccccc;"
-        "border: none;"
-        "font-family: 'Monaco', 'Consolas', monospace;"
-        "font-size: 13px;"
-        );
+    // Create the tab widget that will hold multiple CodeEditor instances
+    editorTabs = new QTabWidget(this);
+    editorTabs->setTabsClosable(true);
+    editorTabs->setMovable(true);
 
-    // Remplacer l'ancien QPlainTextEdit
+    // Replace the old central widget at CodeViewer with the tab widget
     QWidget *oldEditor = ui->centralStack->widget(CodeViewer);
     if (oldEditor) {
         ui->centralStack->removeWidget(oldEditor);
         oldEditor->deleteLater();
     }
 
-    ui->centralStack->insertWidget(CodeViewer, codeEditor);
+    ui->centralStack->insertWidget(CodeViewer, editorTabs);
     ui->centralStack->setCurrentIndex(CodeViewer);
 
-    // Highlighter syntaxique
-    SyntaxHighlighter *highlighter = new SyntaxHighlighter(codeEditor, SyntaxHighlighter::CPP);
+    // Create an initial untitled editor tab
+    CodeEditor *initial = new CodeEditor(this);
+    initial->setStyleSheet(
+        "background-color: #1e1e1e;"
+        "color: #cccccc;"
+        "border: none;"
+        "font-family: 'Monaco', 'Consolas', monospace;"
+        "font-size: 13px;"
+        );
+    editorTabs->addTab(initial, tr("untitled"));
+    initial->setProperty("filePath", QString());
 
-    // Connexion du suivi de modification
-    connect(codeEditor, &CodeEditor::textChanged, [this](){
-        isModified = true;
-        updateWindowTitle();
+    // Syntax highlighter for the new editor
+    new SyntaxHighlighter(initial, SyntaxHighlighter::CPP);
+
+    connect(initial, &CodeEditor::textChanged, [this, initial](){
+        updateTabModifiedState(initial);
     });
+
+    connect(editorTabs, &QTabWidget::currentChanged, this, &MainWindow::onEditorTabChanged);
+    connect(editorTabs, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
 }
 
 
@@ -564,8 +566,8 @@ void MainWindow::onFileTreeItemDoubleClicked(QTreeWidgetItem *item, int column)
 
 void MainWindow::onShowLinesToggled(bool checked)
 {
-    if (codeEditor) {
-        codeEditor->setLineNumbersVisible(checked);
+    if (currentEditor()) {
+        currentEditor()->setLineNumbersVisible(checked);
     }
 }
 
@@ -585,19 +587,49 @@ void MainWindow::openFileInEditor(const QString &filePath)
             QString content = in.readAll();
             file.close();
 
-            codeEditor->setPlainText(content);
-            ui->centralStack->setCurrentIndex(CodeViewer);
+            // If a tab for this file already exists, switch to it
+            for (int i = 0; i < editorTabs->count(); ++i) {
+                QWidget *w = editorTabs->widget(i);
+                if (w && w->property("filePath").toString() == filePath) {
+                    editorTabs->setCurrentIndex(i);
+                    return;
+                }
+            }
+
+            // Create a new editor tab and load content
+            CodeEditor *ed = new CodeEditor(this);
+            ed->setPlainText(content);
+            ed->setStyleSheet(
+                "background-color: #1e1e1e;"
+                "color: #cccccc;"
+                "border: none;"
+                "font-family: 'Monaco', 'Consolas', monospace;"
+                "font-size: 13px;"
+                );
+
+            editorTabs->addTab(ed, QFileInfo(filePath).fileName());
+            editorTabs->setCurrentWidget(ed);
+            ed->setProperty("filePath", filePath);
 
             // Highlighter selon extension
-            SyntaxHighlighter *highlighter = new SyntaxHighlighter(codeEditor,
-                                                                   (ext == "cpp") ? SyntaxHighlighter::CPP :
-                                                                       (ext == "html") ? SyntaxHighlighter::HTML :
-                                                                       (ext == "tsx") ? SyntaxHighlighter::HTML : SyntaxHighlighter::CPP
-                                                                   );
+            new SyntaxHighlighter(ed,
+                                   (ext == "cpp") ? SyntaxHighlighter::CPP :
+                                   (ext == "html") ? SyntaxHighlighter::HTML :
+                                   (ext == "tsx") ? SyntaxHighlighter::HTML : SyntaxHighlighter::CPP
+                                   );
+
+            // Mark as unmodified after loading
+            ed->document()->setModified(false);
+            updateTabLabel(ed);
+
+            connect(ed, &CodeEditor::textChanged, [this, ed](){
+                updateTabModifiedState(ed);
+            });
 
             currentFileName = filePath;
             isModified = false;
             updateWindowTitle();
+            ui->centralStack->setCurrentIndex(CodeViewer);
         }
     }
 
@@ -617,7 +649,11 @@ void MainWindow::openFileInEditor(const QString &filePath)
 
 void MainWindow::saveCurrentFile()
 {
-    if (currentFileName.isEmpty()) {
+    CodeEditor *ed = currentEditor();
+    if (!ed) return;
+
+    QString path = ed->property("filePath").toString();
+    if (path.isEmpty()) {
         QString fileName = QFileDialog::getSaveFileName(this,
                                                         tr("Save File"),
                                                         currentWorkingDirectory,
@@ -625,21 +661,25 @@ void MainWindow::saveCurrentFile()
         if (fileName.isEmpty()) {
             return;
         }
-        currentFileName = fileName;
+        path = fileName;
+        ed->setProperty("filePath", path);
+        int idx = editorTabs ? editorTabs->indexOf(ed) : -1;
+        if (idx >= 0) editorTabs->setTabText(idx, QFileInfo(path).fileName());
     }
 
-    QFile file(currentFileName);
+    QFile file(path);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&file);
-        if (codeEditor) {
-            out << codeEditor->toPlainText();
-        }
+        out << ed->toPlainText();
 
+        ed->document()->setModified(false);
+        updateTabModifiedState(ed);
+
+        currentFileName = path;
         isModified = false;
         updateWindowTitle();
 
-        // Refresh tree if file is in current directory
-        QFileInfo fileInfo(currentFileName);
+        QFileInfo fileInfo(path);
         if (fileInfo.absolutePath() == currentWorkingDirectory) {
             loadDirectoryToTree(currentWorkingDirectory);
         }
@@ -686,8 +726,127 @@ void MainWindow::updateWindowTitle()
     setWindowTitle(title);
 }
 
+CodeEditor *MainWindow::currentEditor()
+{
+    if (!editorTabs) return nullptr;
+    QWidget *w = editorTabs->currentWidget();
+    return qobject_cast<CodeEditor*>(w);
+}
+
+void MainWindow::onEditorTabChanged(int index)
+{
+    Q_UNUSED(index)
+    if (!editorTabs) return;
+    QWidget *w = editorTabs->currentWidget();
+    if (w) {
+        currentFileName = w->property("filePath").toString();
+    } else {
+        currentFileName.clear();
+    }
+    updateWindowTitle();
+}
+
+bool MainWindow::saveEditor(CodeEditor *editor)
+{
+    if (!editor) return false;
+    QString path = editor->property("filePath").toString();
+    if (path.isEmpty()) {
+        QString fileName = QFileDialog::getSaveFileName(this,
+                                                      tr("Save File"),
+                                                      currentWorkingDirectory,
+                                                      tr("All Files (*.*)"));
+        if (fileName.isEmpty()) return false; // user cancelled
+        path = fileName;
+        editor->setProperty("filePath", path);
+        int idx = editorTabs->indexOf(editor);
+        if (idx >= 0) editorTabs->setTabText(idx, QFileInfo(path).fileName());
+    }
+
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Error"), tr("Could not save file!"));
+        return false;
+    }
+    QTextStream out(&file);
+    out << editor->toPlainText();
+    file.close();
+
+    editor->document()->setModified(false);
+    updateTabModifiedState(editor);
+
+    currentFileName = path;
+    isModified = false;
+    updateWindowTitle();
+
+    QFileInfo fileInfo(path);
+    if (fileInfo.absolutePath() == currentWorkingDirectory) {
+        loadDirectoryToTree(currentWorkingDirectory);
+    }
+
+    if (statusBar()) {
+        statusBar()->showMessage(tr("File saved successfully"), 2000);
+    }
+
+    return true;
+}
+
+void MainWindow::updateTabModifiedState(CodeEditor *editor)
+{
+    if (!editor || !editorTabs) return;
+    bool modified = editor->document()->isModified();
+    editor->setProperty("fileModified", modified);
+    updateTabLabel(editor);
+
+    if (editor == currentEditor()) {
+        isModified = modified;
+        updateWindowTitle();
+    }
+}
+
+void MainWindow::updateTabLabel(CodeEditor *editor)
+{
+    if (!editor || !editorTabs) return;
+    int idx = editorTabs->indexOf(editor);
+    if (idx < 0) return;
+    QString path = editor->property("filePath").toString();
+    QString label = path.isEmpty() ? tr("untitled") : QFileInfo(path).fileName();
+    if (editor->document()->isModified()) label += "*";
+    editorTabs->setTabText(idx, label);
+    editorTabs->setTabToolTip(idx, path);
+}
+
+void MainWindow::closeTab(int index)
+{
+    if (!editorTabs) return;
+    QWidget *w = editorTabs->widget(index);
+    CodeEditor *ed = qobject_cast<CodeEditor*>(w);
+    if (!ed) {
+        editorTabs->removeTab(index);
+        if (w) w->deleteLater();
+        return;
+    }
+
+    if (ed->document()->isModified()) {
+        QMessageBox msg(this);
+        msg.setWindowTitle(tr("Save Changes"));
+        msg.setText(tr("The document has been modified. Do you want to save your changes?"));
+        msg.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        msg.setDefaultButton(QMessageBox::Save);
+        int res = msg.exec();
+        if (res == QMessageBox::Save) {
+            if (!saveEditor(ed)) return; // save cancelled or failed -> do not close
+        } else if (res == QMessageBox::Cancel) {
+            return; // do not close
+        }
+        // if Discard, continue to close
+    }
+
+    editorTabs->removeTab(index);
+    if (w) w->deleteLater();
+}
+
 void MainWindow::onActionFindReplace() {
-    FindReplaceDialog dlg(codeEditor, this);
+    FindReplaceDialog dlg(currentEditor(), this);
     dlg.exec();
 }
 
@@ -714,7 +873,54 @@ void MainWindow::onTerminalClosed()
     terminal->setVisible(false);
 
     // Return focus to code editor
-    if (codeEditor) {
-        codeEditor->setFocus();
+    if (currentEditor()) {
+        currentEditor()->setFocus();
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // Check if any tabs have unsaved changes
+    QList<CodeEditor*> modifiedEditors;
+    if (editorTabs) {
+        for (int i = 0; i < editorTabs->count(); ++i) {
+            CodeEditor *ed = qobject_cast<CodeEditor*>(editorTabs->widget(i));
+            if (ed && ed->document()->isModified()) {
+                modifiedEditors.append(ed);
+            }
+        }
+    }
+
+    if (modifiedEditors.isEmpty()) {
+        event->accept();
+        return;
+    }
+
+    // Ask user what to do with unsaved changes
+    QMessageBox msg(this);
+    msg.setWindowTitle(tr("Unsaved Changes"));
+    msg.setText(tr("You have %1 file(s) with unsaved changes.\nDo you want to save all changes before closing?").arg(modifiedEditors.size()));
+    msg.setStandardButtons(QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel);
+    msg.setDefaultButton(QMessageBox::SaveAll);
+    msg.setIcon(QMessageBox::Warning);
+
+    int res = msg.exec();
+
+    if (res == QMessageBox::SaveAll) {
+        // Save all modified editors
+        for (CodeEditor *ed : modifiedEditors) {
+            if (!saveEditor(ed)) {
+                // Save was cancelled or failed — abort close
+                event->ignore();
+                return;
+            }
+        }
+        event->accept();
+    } else if (res == QMessageBox::Discard) {
+        // Discard all changes and close
+        event->accept();
+    } else {
+        // Cancel — do not close the application
+        event->ignore();
     }
 }

@@ -16,6 +16,8 @@
 #include <QApplication>
 #include <QScrollBar>
 #include <QDateTime>
+#include <QTextDocument>
+#include <QSplitter>
 
 ChatWidget::ChatWidget(QWidget *parent)
     : QWidget(parent)
@@ -28,6 +30,7 @@ ChatWidget::ChatWidget(QWidget *parent)
     
     // Conversation view styling - Design moderne avec dégradé subtil
     conversationView->setReadOnly(true);
+    conversationView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     conversationView->setStyleSheet(
         "QTextEdit {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
@@ -61,6 +64,7 @@ ChatWidget::ChatWidget(QWidget *parent)
 
     // Input field styling - Design plus moderne avec ombre
     inputLine->setPlaceholderText(tr("Posez votre question à Gemini..."));
+    inputLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     inputLine->setStyleSheet(
         "QLineEdit {"
         "  background-color: #2a2a2f;"
@@ -86,6 +90,7 @@ ChatWidget::ChatWidget(QWidget *parent)
 
     // Send button styling - Design gradient moderne
     sendButton->setFixedSize(44, 44);
+    sendButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     sendButton->setCursor(Qt::PointingHandCursor);
     sendButton->setStyleSheet(
         "QPushButton {"
@@ -108,19 +113,37 @@ ChatWidget::ChatWidget(QWidget *parent)
         "}"
     );
 
-    // Input layout avec espacement amélioré
-    QHBoxLayout *inputLayout = new QHBoxLayout();
+    // Input layout encapsulated in a container so it can be placed in a splitter
+    QWidget *inputContainer = new QWidget(this);
+    QHBoxLayout *inputLayout = new QHBoxLayout(inputContainer);
     inputLayout->setContentsMargins(0, 0, 0, 0);
     inputLayout->setSpacing(12);
     inputLayout->addWidget(inputLine);
     inputLayout->addWidget(sendButton);
 
-    // Main layout avec padding optimisé
+    // Use a vertical splitter so the user can stretch the conversation area (height)
+    QSplitter *split = new QSplitter(Qt::Vertical, this);
+    split->addWidget(conversationView);
+    split->addWidget(inputContainer);
+    split->setStretchFactor(0, 1);
+    split->setCollapsible(0, false);
+    split->setCollapsible(1, false);
+
+    // Main layout with padding optimized
     QVBoxLayout *main = new QVBoxLayout(this);
     main->setContentsMargins(16, 16, 16, 16);
-    main->setSpacing(16);
-    main->addWidget(conversationView);
-    main->addLayout(inputLayout);
+    main->setSpacing(12);
+    main->addWidget(split);
+
+    // Ensure conversationView expands to fill available space inside splitter
+    main->setStretch(0, 1);
+
+    // Allow the ChatWidget itself to be stretched by parent layouts/splitter
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    // Reduce default minimum width so the chat column is narrower on small screens
+    setMinimumWidth(160);
+    // Optional: cap maximum width to avoid overly large chat column
+    setMaximumWidth(520);
 
     // Widget background avec dégradé sophistiqué
     setStyleSheet(
@@ -138,28 +161,38 @@ void ChatWidget::appendMessage(const QString &who, const QString &text)
 {
     QString html;
     QString escapedText = text.toHtmlEscaped().replace("\n", "<br>");
+    // Render Markdown to HTML for model responses so formatting is preserved
+    QString renderedMarkdownHtml;
+    {
+        QTextDocument mdDoc;
+        mdDoc.setMarkdown(text);
+        renderedMarkdownHtml = mdDoc.toHtml();
+    }
     
     if (who == tr("You")) {
-        // User message - Design moderne avec ombre et gradient
+        // User message - Design moderne avec fond violet solide
         html = QString(
             "<div style='text-align: right; margin: 12px 0;'>"
+            "<div style='"
+            "color: #b8b8c0;"
+            "font-size: 10px;"
+            "margin-bottom: 4px;"
+            "margin-right: 8px;"
             "<span style='"
-            "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4a9eff, stop:1 #357abd);"
             "color: white;"
-            "padding: 12px 18px;"
+            "padding: 14px 18px;"
             "border-radius: 20px 20px 4px 20px;"
             "display: inline-block;"
             "max-width: 75%%;"
             "text-align: left;"
             "font-size: 14px;"
             "line-height: 1.5;"
-            "box-shadow: 0 4px 12px rgba(74, 158, 255, 0.25);"
             "font-weight: 500;"
             "'>%1</span>"
             "</div>"
         ).arg(escapedText);
     } else if (who == tr("Gemini")) {
-        // Gemini response - Design élégant avec bordure subtile
+        // Gemini response - Design élégant avec fond gris foncé solide
         html = QString(
             "<div style='text-align: left; margin: 12px 0;'>"
             "<div style='"
@@ -169,10 +202,8 @@ void ChatWidget::appendMessage(const QString &who, const QString &text)
             "margin-bottom: 6px;"
             "margin-left: 6px;"
             "letter-spacing: 0.5px;"
-            "text-transform: uppercase;"
-            "'>✨ Gemini AI</div>"
+            "'>✨ GEMINI AI</div>"
             "<span style='"
-            "background: linear-gradient(135deg, #2a2a32 0%, #25252d 100%);"
             "color: #e8e8e8;"
             "padding: 14px 18px;"
             "border-radius: 20px 20px 20px 4px;"
@@ -182,24 +213,22 @@ void ChatWidget::appendMessage(const QString &who, const QString &text)
             "text-align: left;"
             "font-size: 14px;"
             "line-height: 1.6;"
-            "box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);"
             "'>%1</span>"
             "</div>"
-        ).arg(escapedText);
+        ).arg(renderedMarkdownHtml);
     } else {
         // System message - Design discret mais visible
         html = QString(
             "<div style='text-align: center; margin: 16px 0;'>"
             "<span style='"
-            "background: rgba(244, 135, 113, 0.15);"
+            "background-color: #3a2a2a;"
             "color: #f48771;"
             "padding: 10px 16px;"
             "border-radius: 16px;"
-            "border: 1px solid rgba(244, 135, 113, 0.3);"
+            "border: 1px solid #f48771;"
             "display: inline-block;"
             "font-size: 12px;"
             "font-weight: 500;"
-            "letter-spacing: 0.3px;"
             "'>⚠️ %1</span>"
             "</div>"
         ).arg(escapedText);

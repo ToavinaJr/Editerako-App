@@ -17,3 +17,5 @@ tree-sitter-html.dir/
 tree-sitter-html.dir/*
 
 tree-sitter.dir
+
+.env
