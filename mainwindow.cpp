@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , editorTabs(nullptr)
     , isModified(false)
-    , currentWorkingDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+    , currentWorkingDirectory(QString()) // Will be set after user selects folder
 {
 
     ui->setupUi(this);
@@ -56,8 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
         currentEditor()->setFocus();
     }
 
-    // Load default directory
-    loadDirectoryToTree(currentWorkingDirectory);
+    // Ask user to select a folder/file to open at startup
+    promptOpenFolderOrFile();
 
     // Adding shortcut
     ui->actionFindReplace->setShortcut(QKeySequence("Ctrl+F"));
@@ -88,6 +88,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Replace right sidebar placeholder with ChatWidget (Gemini chat)
     chatWidget = new ChatWidget(this);
+    // Set project directory for chat history (will be updated when folder changes)
+    if (!currentWorkingDirectory.isEmpty()) {
+        chatWidget->setProjectDirectory(currentWorkingDirectory);
+    }
     if (ui->rightChatPlaceholder) {
         // parent the chat widget into the placeholder's parent layout
         QWidget *ph = ui->rightChatPlaceholder;
@@ -501,10 +505,12 @@ void MainWindow::openFolder()
 {
     QString folderPath = QFileDialog::getExistingDirectory(this,
                                                            tr("Open Folder"),
-                                                           currentWorkingDirectory);
+                                                           currentWorkingDirectory.isEmpty() 
+                                                               ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+                                                               : currentWorkingDirectory);
 
     if (!folderPath.isEmpty()) {
-        loadDirectoryToTree(folderPath);
+        setProjectDirectory(folderPath);
     }
 }
 
@@ -915,12 +921,100 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 return;
             }
         }
+        // Save chat history before closing
+        if (chatWidget) {
+            chatWidget->saveChatHistory();
+        }
         event->accept();
     } else if (res == QMessageBox::Discard) {
         // Discard all changes and close
+        // Still save chat history
+        if (chatWidget) {
+            chatWidget->saveChatHistory();
+        }
         event->accept();
     } else {
         // Cancel — do not close the application
         event->ignore();
     }
+}
+
+void MainWindow::promptOpenFolderOrFile()
+{
+    // Show a dialog asking user to open a folder or file
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Welcome to Editerako"));
+    msgBox.setText(tr("What would you like to open?"));
+    msgBox.setIcon(QMessageBox::Question);
+    
+    QPushButton *folderBtn = msgBox.addButton(tr("Open Folder"), QMessageBox::AcceptRole);
+    QPushButton *fileBtn = msgBox.addButton(tr("Open File"), QMessageBox::AcceptRole);
+    msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    
+    msgBox.setStyleSheet(
+        "QMessageBox {"
+        "    background-color: #1e1e1e;"
+        "    color: #cccccc;"
+        "}"
+        "QLabel {"
+        "    color: #cccccc;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton {"
+        "    background-color: #3e3e42;"
+        "    border: 1px solid #6f6f6f;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    padding: 8px 16px;"
+        "    min-width: 100px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #6f6f6f;"
+        "}"
+    );
+    
+    msgBox.exec();
+    
+    if (msgBox.clickedButton() == folderBtn) {
+        QString folderPath = QFileDialog::getExistingDirectory(this,
+                                                               tr("Open Folder"),
+                                                               QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        if (!folderPath.isEmpty()) {
+            setProjectDirectory(folderPath);
+        } else {
+            // User cancelled, use Documents as fallback
+            setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        }
+    } else if (msgBox.clickedButton() == fileBtn) {
+        QString fileName = QFileDialog::getOpenFileName(this,
+                                                        tr("Open File"),
+                                                        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+                                                        tr("All Files (*.*)"));
+        if (!fileName.isEmpty()) {
+            // Set project directory to the file's parent folder
+            QFileInfo fileInfo(fileName);
+            setProjectDirectory(fileInfo.absolutePath());
+            openFileInEditor(fileName);
+        } else {
+            // User cancelled, use Documents as fallback
+            setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        }
+    } else {
+        // Cancel clicked, use Documents as default
+        setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    }
+}
+
+void MainWindow::setProjectDirectory(const QString &path)
+{
+    currentWorkingDirectory = path;
+    loadDirectoryToTree(path);
+    
+    // Update chat widget with new project directory
+    if (chatWidget) {
+        chatWidget->setProjectDirectory(path);
+    }
+    
+    // Update window title
+    updateWindowTitle();
 }

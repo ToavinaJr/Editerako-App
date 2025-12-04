@@ -18,6 +18,8 @@
 #include <QDateTime>
 #include <QTextDocument>
 #include <QSplitter>
+#include <QDir>
+#include <QFile>
 
 ChatWidget::ChatWidget(QWidget *parent)
     : QWidget(parent)
@@ -157,8 +159,13 @@ ChatWidget::ChatWidget(QWidget *parent)
     connect(inputLine, &QLineEdit::returnPressed, this, &ChatWidget::sendMessage);
 }
 
-void ChatWidget::appendMessage(const QString &who, const QString &text)
+void ChatWidget::appendMessage(const QString &who, const QString &text, bool addToHistory)
 {
+    // Store in history if requested
+    if (addToHistory) {
+        m_chatHistory.append(qMakePair(who, text));
+    }
+    
     QString html;
     QString escapedText = text.toHtmlEscaped().replace("\n", "<br>");
     // Render Markdown to HTML for model responses so formatting is preserved
@@ -340,6 +347,105 @@ void ChatWidget::callGeminiApi(const QString &prompt)
         }
 
         appendMessage(tr("Gemini"), outText);
+        // Auto-save chat history after each response
+        saveChatHistory();
         reply->deleteLater();
     });
+}
+
+void ChatWidget::setProjectDirectory(const QString &projectDir)
+{
+    // Save current history before switching
+    if (!m_projectDir.isEmpty()) {
+        saveChatHistory();
+    }
+    
+    m_projectDir = projectDir;
+    
+    // Clear current view and load new project's history
+    clearChat();
+    loadChatHistory();
+}
+
+QString ChatWidget::chatHistoryFilePath() const
+{
+    if (m_projectDir.isEmpty()) return QString();
+    return QDir(m_projectDir).filePath(".editerako/chat_history.json");
+}
+
+void ChatWidget::saveChatHistory()
+{
+    if (m_projectDir.isEmpty() || m_chatHistory.isEmpty()) return;
+    
+    // Ensure .editerako directory exists
+    QDir dir(m_projectDir);
+    if (!dir.exists(".editerako")) {
+        dir.mkdir(".editerako");
+    }
+    
+    // Build JSON array of messages
+    QJsonArray messagesArr;
+    for (const auto &msg : m_chatHistory) {
+        QJsonObject msgObj;
+        msgObj["sender"] = msg.first;
+        msgObj["text"] = msg.second;
+        messagesArr.append(msgObj);
+    }
+    
+    QJsonObject root;
+    root["messages"] = messagesArr;
+    root["projectDir"] = m_projectDir;
+    root["lastModified"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    
+    QJsonDocument doc(root);
+    
+    QFile file(chatHistoryFilePath());
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        file.write(doc.toJson());
+        file.close();
+    }
+}
+
+void ChatWidget::loadChatHistory()
+{
+    QString path = chatHistoryFilePath();
+    if (path.isEmpty()) return;
+    
+    QFile file(path);
+    if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return;
+    }
+    
+    QByteArray data = file.readAll();
+    file.close();
+    
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+        return;
+    }
+    
+    QJsonObject root = doc.object();
+    if (!root.contains("messages") || !root["messages"].isArray()) {
+        return;
+    }
+    
+    QJsonArray messagesArr = root["messages"].toArray();
+    for (const QJsonValue &val : messagesArr) {
+        if (!val.isObject()) continue;
+        QJsonObject msgObj = val.toObject();
+        QString sender = msgObj["sender"].toString();
+        QString text = msgObj["text"].toString();
+        if (!sender.isEmpty() && !text.isEmpty()) {
+            m_chatHistory.append(qMakePair(sender, text));
+            // Add to view without re-adding to history
+            appendMessage(sender, text, false);
+        }
+    }
+}
+
+void ChatWidget::clearChat()
+{
+    m_chatHistory.clear();
+    conversationView->clear();
 }

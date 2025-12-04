@@ -118,6 +118,8 @@ private:
     QString getFileIcon(const QString &fileName);
     void openFileInEditor(const QString &filePath);
     void saveCurrentFile();
+    void promptOpenFolderOrFile();
+    void setProjectDirectory(const QString &path);
 };
 
 #endif // MAINWINDOW_H
