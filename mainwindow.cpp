@@ -66,11 +66,14 @@ MainWindow::MainWindow(QWidget *parent)
     terminal->setVisible(false);
     isTerminalVisible = false;
 
-    // Add terminal to the bottom of the layout
-    QWidget *centralWidget = ui->centralwidget;
-    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(centralWidget->layout());
-    if (mainLayout) {
-        mainLayout->addWidget(terminal);
+    // Add terminal below the central code viewer (use `verticalLayout` from ui)
+    if (ui->verticalLayout) {
+        ui->verticalLayout->addWidget(terminal);
+        terminal->setMinimumHeight(250);
+        terminal->setMaximumHeight(400);
+    } else {
+        // Fallback: parent to central widget so it shows (not managed by layout)
+        terminal->setParent(ui->centralwidget);
         terminal->setMinimumHeight(250);
         terminal->setMaximumHeight(400);
     }
