@@ -20,6 +20,10 @@
 #include <QSplitter>
 #include <QDir>
 #include <QFile>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QUuid>
 
 ChatWidget::ChatWidget(QWidget *parent)
     : QWidget(parent)
@@ -27,6 +31,7 @@ ChatWidget::ChatWidget(QWidget *parent)
     , inputLine(new QLineEdit(this))
     , sendButton(new QPushButton(tr("➤"), this))
     , networkManager(new QNetworkAccessManager(this))
+    , m_dbConnectionName(QUuid::createUuid().toString())
 {
     QString time = QDateTime::currentDateTime().toString("HH:mm");
     
@@ -252,6 +257,8 @@ void ChatWidget::sendMessage()
     if (text.isEmpty()) return;
 
     appendMessage(tr("You"), text);
+    // Save user message to database
+    saveMessageToDb(tr("You"), text);
     inputLine->clear();
 
     callGeminiApi(text);
@@ -347,35 +354,41 @@ void ChatWidget::callGeminiApi(const QString &prompt)
         }
 
         appendMessage(tr("Gemini"), outText);
-        // Auto-save chat history after each response
-        saveChatHistory();
+        // Save message to database immediately
+        saveMessageToDb(tr("Gemini"), outText);
         reply->deleteLater();
     });
 }
 
+ChatWidget::~ChatWidget()
+{
+    closeDatabase();
+}
+
 void ChatWidget::setProjectDirectory(const QString &projectDir)
 {
-    // Save current history before switching
-    if (!m_projectDir.isEmpty()) {
-        saveChatHistory();
-    }
+    // Close previous database connection
+    closeDatabase();
     
     m_projectDir = projectDir;
     
     // Clear current view and load new project's history
     clearChat();
+    
+    // Initialize database for new project and load history
+    initDatabase();
     loadChatHistory();
 }
 
-QString ChatWidget::chatHistoryFilePath() const
+QString ChatWidget::databaseFilePath() const
 {
     if (m_projectDir.isEmpty()) return QString();
-    return QDir(m_projectDir).filePath(".editerako/chat_history.json");
+    return QDir(m_projectDir).filePath(".editerako/chat_history.db");
 }
 
-void ChatWidget::saveChatHistory()
+void ChatWidget::initDatabase()
 {
-    if (m_projectDir.isEmpty() || m_chatHistory.isEmpty()) return;
+    if (m_projectDir.isEmpty()) return;
     
     // Ensure .editerako directory exists
     QDir dir(m_projectDir);
@@ -383,62 +396,71 @@ void ChatWidget::saveChatHistory()
         dir.mkdir(".editerako");
     }
     
-    // Build JSON array of messages
-    QJsonArray messagesArr;
-    for (const auto &msg : m_chatHistory) {
-        QJsonObject msgObj;
-        msgObj["sender"] = msg.first;
-        msgObj["text"] = msg.second;
-        messagesArr.append(msgObj);
+    // Create database connection with unique name
+    m_db = QSqlDatabase::addDatabase("QSQLITE", m_dbConnectionName);
+    m_db.setDatabaseName(databaseFilePath());
+    
+    if (!m_db.open()) {
+        qWarning() << "Failed to open chat history database:" << m_db.lastError().text();
+        return;
     }
     
-    QJsonObject root;
-    root["messages"] = messagesArr;
-    root["projectDir"] = m_projectDir;
-    root["lastModified"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-    
-    QJsonDocument doc(root);
-    
-    QFile file(chatHistoryFilePath());
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        file.write(doc.toJson());
-        file.close();
+    // Create table if not exists
+    QSqlQuery query(m_db);
+    query.exec(
+        "CREATE TABLE IF NOT EXISTS chat_messages ("
+        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "  sender TEXT NOT NULL,"
+        "  message TEXT NOT NULL,"
+        "  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP"
+        ")"
+    );
+}
+
+void ChatWidget::closeDatabase()
+{
+    if (m_db.isOpen()) {
+        m_db.close();
     }
+    // Remove connection
+    if (QSqlDatabase::contains(m_dbConnectionName)) {
+        QSqlDatabase::removeDatabase(m_dbConnectionName);
+    }
+}
+
+void ChatWidget::saveMessageToDb(const QString &sender, const QString &text)
+{
+    if (!m_db.isOpen() || m_projectDir.isEmpty()) return;
+    
+    QSqlQuery query(m_db);
+    query.prepare("INSERT INTO chat_messages (sender, message) VALUES (:sender, :message)");
+    query.bindValue(":sender", sender);
+    query.bindValue(":message", text);
+    
+    if (!query.exec()) {
+        qWarning() << "Failed to save chat message:" << query.lastError().text();
+    }
+}
+
+void ChatWidget::saveChatHistory()
+{
+    // With SQLite, messages are saved immediately via saveMessageToDb
+    // This method is kept for compatibility but doesn't need to do anything
 }
 
 void ChatWidget::loadChatHistory()
 {
-    QString path = chatHistoryFilePath();
-    if (path.isEmpty()) return;
+    if (!m_db.isOpen() || m_projectDir.isEmpty()) return;
     
-    QFile file(path);
-    if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return;
-    }
+    QSqlQuery query(m_db);
+    query.exec("SELECT sender, message FROM chat_messages ORDER BY id ASC");
     
-    QByteArray data = file.readAll();
-    file.close();
-    
-    QJsonParseError err;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &err);
-    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
-        return;
-    }
-    
-    QJsonObject root = doc.object();
-    if (!root.contains("messages") || !root["messages"].isArray()) {
-        return;
-    }
-    
-    QJsonArray messagesArr = root["messages"].toArray();
-    for (const QJsonValue &val : messagesArr) {
-        if (!val.isObject()) continue;
-        QJsonObject msgObj = val.toObject();
-        QString sender = msgObj["sender"].toString();
-        QString text = msgObj["text"].toString();
+    while (query.next()) {
+        QString sender = query.value(0).toString();
+        QString text = query.value(1).toString();
         if (!sender.isEmpty() && !text.isEmpty()) {
             m_chatHistory.append(qMakePair(sender, text));
-            // Add to view without re-adding to history
+            // Add to view without re-adding to history/db
             appendMessage(sender, text, false);
         }
     }

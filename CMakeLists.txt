@@ -13,7 +13,7 @@ find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    find_package(Qt6 REQUIRED COMPONENTS PdfWidgets Network)
+    find_package(Qt6 REQUIRED COMPONENTS PdfWidgets Network Sql)
 endif()
 
 # ---- Tree-sitter statique (SANS ICU) ----
@@ -82,6 +82,7 @@ target_link_libraries(Editerako PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Sql
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
