@@ -5,6 +5,109 @@
 #include <QScrollBar>
 #include <QDateTime>
 #include <QStandardPaths>
+#include <QAbstractItemView>
+#include <QApplication>
+
+// ============================================================================
+// AutoCompletePopup Implementation
+// ============================================================================
+
+AutoCompletePopup::AutoCompletePopup(QWidget *parent)
+    : QListWidget(parent)
+{
+    setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
+    setFocusPolicy(Qt::NoFocus);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    
+    // Modern dark theme styling
+    setStyleSheet(
+        "QListWidget {"
+        "    background-color: #252526;"
+        "    border: 1px solid #454545;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    font-family: 'Consolas', 'Monaco', monospace;"
+        "    font-size: 12px;"
+        "    padding: 4px;"
+        "    outline: none;"
+        "}"
+        "QListWidget::item {"
+        "    padding: 6px 12px;"
+        "    border-radius: 3px;"
+        "    margin: 1px 2px;"
+        "}"
+        "QListWidget::item:hover {"
+        "    background-color: #2a2d2e;"
+        "}"
+        "QListWidget::item:selected {"
+        "    background-color: #094771;"
+        "    color: #ffffff;"
+        "}"
+    );
+    
+    connect(this, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
+        if (item) {
+            emit suggestionSelected(item->text());
+            hide();
+        }
+    });
+}
+
+void AutoCompletePopup::showSuggestions(const QStringList &suggestions, const QPoint &position)
+{
+    clear();
+    
+    if (suggestions.isEmpty()) {
+        hide();
+        return;
+    }
+    
+    addItems(suggestions);
+    setCurrentRow(0);
+    
+    // Calculate optimal size
+    int maxWidth = 300;
+    int itemHeight = 30;
+    int totalHeight = qMin(suggestions.count() * itemHeight + 10, 250);
+    
+    setFixedSize(maxWidth, totalHeight);
+    move(position);
+    show();
+    raise();
+}
+
+QString AutoCompletePopup::currentSuggestion() const
+{
+    QListWidgetItem *item = currentItem();
+    return item ? item->text() : QString();
+}
+
+void AutoCompletePopup::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        emit cancelled();
+        hide();
+        return;
+    }
+    
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter || event->key() == Qt::Key_Tab) {
+        QString suggestion = currentSuggestion();
+        if (!suggestion.isEmpty()) {
+            emit suggestionSelected(suggestion);
+            hide();
+        }
+        return;
+    }
+    
+    QListWidget::keyPressEvent(event);
+}
+
+void AutoCompletePopup::focusOutEvent(QFocusEvent *event)
+{
+    Q_UNUSED(event);
+    hide();
+}
 
 // ============================================================================
 // TerminalTextEdit Implementation
@@ -15,6 +118,13 @@ TerminalTextEdit::TerminalTextEdit(QWidget *parent)
 {
     setAcceptRichText(false);
     setUndoRedoEnabled(false);
+    
+    // Create autocomplete popup
+    autoCompletePopup = new AutoCompletePopup(this);
+    connect(autoCompletePopup, &AutoCompletePopup::suggestionSelected,
+            this, &TerminalTextEdit::acceptSuggestion);
+    connect(autoCompletePopup, &AutoCompletePopup::cancelled,
+            this, &TerminalTextEdit::hideAutoComplete);
 }
 
 void TerminalTextEdit::setPrompt(const QString &prompt)
@@ -42,8 +152,39 @@ void TerminalTextEdit::clearCurrentCommand()
 
 void TerminalTextEdit::keyPressEvent(QKeyEvent *event)
 {
+    // Handle autocomplete popup navigation (only intercept navigation keys)
+    if (autoCompletePopup->isVisible()) {
+        if (event->key() == Qt::Key_Up) {
+            int currentRow = autoCompletePopup->currentRow();
+            if (currentRow > 0) {
+                autoCompletePopup->setCurrentRow(currentRow - 1);
+            }
+            return;
+        }
+        if (event->key() == Qt::Key_Down) {
+            int currentRow = autoCompletePopup->currentRow();
+            if (currentRow < autoCompletePopup->count() - 1) {
+                autoCompletePopup->setCurrentRow(currentRow + 1);
+            }
+            return;
+        }
+        if (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+            QString suggestion = autoCompletePopup->currentSuggestion();
+            if (!suggestion.isEmpty()) {
+                acceptSuggestion(suggestion);
+            }
+            return;
+        }
+        if (event->key() == Qt::Key_Escape) {
+            hideAutoComplete();
+            return;
+        }
+        // Allow other keys to pass through for normal typing
+    }
+    
     // Handle special keys
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        hideAutoComplete();
         QString command = getCurrentCommand();
         moveCursor(QTextCursor::End);
         append("");
@@ -51,17 +192,17 @@ void TerminalTextEdit::keyPressEvent(QKeyEvent *event)
         return;
     }
 
-    if (event->key() == Qt::Key_Up) {
+    if (event->key() == Qt::Key_Up && !autoCompletePopup->isVisible()) {
         emit upPressed();
         return;
     }
 
-    if (event->key() == Qt::Key_Down) {
+    if (event->key() == Qt::Key_Down && !autoCompletePopup->isVisible()) {
         emit downPressed();
         return;
     }
 
-    if (event->key() == Qt::Key_Tab) {
+    if (event->key() == Qt::Key_Tab && !autoCompletePopup->isVisible()) {
         emit tabPressed();
         return;
     }
@@ -91,6 +232,9 @@ void TerminalTextEdit::keyPressEvent(QKeyEvent *event)
     }
 
     QTextEdit::keyPressEvent(event);
+    
+    // Trigger autocomplete update after text changes
+    emit textChangedForAutoComplete();
 }
 
 void TerminalTextEdit::mousePressEvent(QMouseEvent *event)
@@ -119,6 +263,48 @@ int TerminalTextEdit::getPromptPosition() const
     return promptPosition;
 }
 
+void TerminalTextEdit::showAutoComplete(const QStringList &suggestions)
+{
+    if (suggestions.isEmpty()) {
+        hideAutoComplete();
+        return;
+    }
+    
+    // Calculate popup position below the cursor
+    QTextCursor cursor = textCursor();
+    QRect cursorRectangle = cursorRect(cursor);
+    QPoint globalPos = mapToGlobal(cursorRectangle.bottomLeft());
+    
+    autoCompletePopup->showSuggestions(suggestions, globalPos);
+}
+
+void TerminalTextEdit::hideAutoComplete()
+{
+    autoCompletePopup->hide();
+}
+
+void TerminalTextEdit::acceptSuggestion(const QString &suggestion)
+{
+    // Get current command and find the word being completed
+    QString cmd = getCurrentCommand();
+    QStringList parts = cmd.split(' ', Qt::SkipEmptyParts);
+    
+    if (parts.isEmpty()) {
+        insertPlainText(suggestion + " ");
+    } else {
+        // Replace the last partial word with the suggestion
+        QString lastWord = parts.last();
+        for (int i = 0; i < lastWord.length(); ++i) {
+            QTextCursor cursor = textCursor();
+            cursor.deletePreviousChar();
+            setTextCursor(cursor);
+        }
+        insertPlainText(suggestion + " ");
+    }
+    
+    hideAutoComplete();
+}
+
 // ============================================================================
 // Terminal Implementation
 // ============================================================================
@@ -133,6 +319,7 @@ Terminal::Terminal(QWidget *parent)
     ui->setupUi(this);
     setupTerminal();
     initializeShell();
+    initializeCommandDatabase();
 
     // Set default working directory
     workingDirectory = QDir::currentPath();
@@ -164,6 +351,8 @@ void Terminal::setupTerminal()
             this, &Terminal::onUpPressed);
     connect(ui->terminalOutput, &TerminalTextEdit::downPressed,
             this, &Terminal::onDownPressed);
+    connect(ui->terminalOutput, &TerminalTextEdit::textChangedForAutoComplete,
+            this, &Terminal::onTextChangedForAutoComplete);
 
     // Connect toolbar buttons
     connect(ui->clearButton, &QPushButton::clicked,
@@ -315,7 +504,7 @@ void Terminal::executeCommand(const QString &command)
 #endif
 
     if (!process->waitForStarted(3000)) {
-        appendOutput("Failed to start command\n", QColor(224, 108, 117));
+        appendError("Failed to start command");
         isProcessRunning = false;
         displayPrompt();
     }
@@ -327,11 +516,11 @@ void Terminal::onProcessReadyRead()
     QByteArray error = process->readAllStandardError();
 
     if (!output.isEmpty()) {
-        appendOutput(QString::fromLocal8Bit(output), QColor(204, 204, 204));
+        appendOutput(QString::fromLocal8Bit(output), QColor(204, 204, 204)); // Default color for stdout
     }
 
     if (!error.isEmpty()) {
-        appendOutput(QString::fromLocal8Bit(error), QColor(224, 108, 117));
+        appendOutput(QString::fromLocal8Bit(error), QColor(224, 108, 117)); // Red for stderr
     }
 }
 
@@ -441,5 +630,217 @@ void Terminal::focusTerminal()
 {
     ui->terminalOutput->setFocus();
     ui->terminalOutput->moveCursor(QTextCursor::End);
+}
+
+void Terminal::initializeCommandDatabase()
+{
+#ifdef Q_OS_WIN
+    // Common Windows commands
+    commonCommands << "cd" << "dir" << "cls" << "copy" << "move" << "del" << "mkdir"
+                   << "rmdir" << "type" << "echo" << "set" << "path" << "exit"
+                   << "help" << "start" << "tasklist" << "taskkill" << "ipconfig"
+                   << "ping" << "netstat" << "systeminfo" << "chkdsk" << "diskpart"
+                   << "format" << "attrib" << "xcopy" << "robocopy" << "findstr"
+                   << "tree" << "fc" << "more" << "sort" << "find";
+    
+    // Git commands (common on Windows too)
+    commonCommands << "git" << "npm" << "node" << "python" << "pip" << "cargo"
+                   << "rustc" << "cmake" << "make" << "gcc" << "g++" << "clang";
+    
+    // Command arguments
+    commandArguments["cd"] = QStringList() << ".." << "." << "/d";
+    commandArguments["dir"] = QStringList() << "/a" << "/b" << "/s" << "/p" << "/w";
+    commandArguments["copy"] = QStringList() << "/y" << "/v" << "/z";
+    commandArguments["del"] = QStringList() << "/p" << "/f" << "/s" << "/q";
+    commandArguments["git"] = QStringList() << "clone" << "pull" << "push" << "commit"
+                                            << "add" << "status" << "log" << "branch"
+                                            << "checkout" << "merge" << "rebase" << "init";
+    commandArguments["npm"] = QStringList() << "install" << "run" << "start" << "build"
+                                            << "test" << "init" << "update" << "uninstall";
+    commandArguments["pip"] = QStringList() << "install" << "uninstall" << "list" << "show"
+                                            << "freeze" << "search" << "upgrade";
+#else
+    // Common Unix/Linux commands
+    commonCommands << "ls" << "cd" << "pwd" << "mkdir" << "rmdir" << "rm" << "cp"
+                   << "mv" << "touch" << "cat" << "grep" << "find" << "chmod"
+                   << "chown" << "ps" << "kill" << "top" << "df" << "du" << "tar"
+                   << "gzip" << "gunzip" << "wget" << "curl" << "ssh" << "scp"
+                   << "git" << "npm" << "node" << "python" << "pip" << "make"
+                   << "gcc" << "g++" << "sudo" << "apt" << "yum" << "systemctl";
+    
+    commandArguments["ls"] = QStringList() << "-l" << "-a" << "-h" << "-R" << "-t";
+    commandArguments["rm"] = QStringList() << "-r" << "-f" << "-i" << "-v";
+    commandArguments["cp"] = QStringList() << "-r" << "-i" << "-v" << "-p";
+    commandArguments["chmod"] = QStringList() << "755" << "644" << "777" << "-R";
+    commandArguments["git"] = QStringList() << "clone" << "pull" << "push" << "commit"
+                                            << "add" << "status" << "log" << "branch"
+                                            << "checkout" << "merge" << "rebase" << "init";
+#endif
+}
+
+QStringList Terminal::getCommandSuggestions(const QString &partial)
+{
+    QStringList suggestions;
+    QString lowerPartial = partial.toLower();
+    
+    // Search in common commands
+    for (const QString &cmd : commonCommands) {
+        if (cmd.startsWith(lowerPartial, Qt::CaseInsensitive)) {
+            suggestions << cmd;
+        }
+    }
+    
+    // Search in command history
+    for (const QString &histCmd : commandHistory) {
+        QString firstWord = histCmd.split(' ').first();
+        if (firstWord.startsWith(lowerPartial, Qt::CaseInsensitive) && !suggestions.contains(firstWord)) {
+            suggestions << firstWord;
+        }
+    }
+    
+    suggestions.sort(Qt::CaseInsensitive);
+    return suggestions;
+}
+
+QStringList Terminal::getArgumentSuggestions(const QString &command, const QString &partial)
+{
+    QStringList suggestions;
+    
+    if (commandArguments.contains(command)) {
+        const QStringList &args = commandArguments[command];
+        for (const QString &arg : args) {
+            if (arg.startsWith(partial, Qt::CaseInsensitive)) {
+                suggestions << arg;
+            }
+        }
+    }
+    
+    return suggestions;
+}
+
+QStringList Terminal::getPathSuggestions(const QString &partial)
+{
+    QStringList suggestions;
+    
+    QString basePath = partial;
+    QString searchPattern = "*";
+    
+    // Extract directory and filename pattern
+    int lastSlash = partial.lastIndexOf('/');
+    if (lastSlash == -1) {
+        lastSlash = partial.lastIndexOf('\\');
+    }
+    
+    if (lastSlash != -1) {
+        basePath = partial.left(lastSlash + 1);
+        searchPattern = partial.mid(lastSlash + 1) + "*";
+    } else {
+        basePath = "";
+        searchPattern = partial + "*";
+    }
+    
+    // Determine search directory
+    QDir searchDir;
+    if (basePath.isEmpty()) {
+        searchDir = QDir(workingDirectory);
+    } else if (QDir::isAbsolutePath(basePath)) {
+        searchDir = QDir(basePath);
+    } else {
+        searchDir = QDir(workingDirectory + "/" + basePath);
+    }
+    
+    if (!searchDir.exists()) {
+        return suggestions;
+    }
+    
+    // Get matching entries
+    QStringList entries = searchDir.entryList(
+        QStringList() << searchPattern,
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
+        QDir::Name
+    );
+    
+    for (const QString &entry : entries) {
+        QString fullPath = basePath + entry;
+        QFileInfo info(searchDir.absoluteFilePath(entry));
+        if (info.isDir()) {
+            fullPath += "/";
+        }
+        suggestions << fullPath;
+    }
+    
+    return suggestions;
+}
+
+void Terminal::updateAutoComplete()
+{
+    QString currentCmd = ui->terminalOutput->getCurrentCommand().trimmed();
+    
+    if (currentCmd.isEmpty()) {
+        ui->terminalOutput->hideAutoComplete();
+        return;
+    }
+    
+    QStringList parts = currentCmd.split(' ', Qt::SkipEmptyParts);
+    QStringList suggestions;
+    
+    if (parts.isEmpty()) {
+        ui->terminalOutput->hideAutoComplete();
+        return;
+    }
+    
+    // First word - suggest commands
+    if (parts.size() == 1) {
+        suggestions = getCommandSuggestions(parts[0]);
+    }
+    // Subsequent words - suggest arguments or paths
+    else {
+        QString command = parts[0];
+        QString lastPart = parts.last();
+        
+        // Try argument suggestions first
+        suggestions = getArgumentSuggestions(command, lastPart);
+        
+        // If no argument matches, try path suggestions
+        if (suggestions.isEmpty()) {
+            suggestions = getPathSuggestions(lastPart);
+        }
+    }
+    
+    // Limit suggestions to avoid overwhelming the user
+    if (suggestions.size() > 15) {
+        suggestions = suggestions.mid(0, 15);
+    }
+    
+    if (!suggestions.isEmpty()) {
+        ui->terminalOutput->showAutoComplete(suggestions);
+    } else {
+        ui->terminalOutput->hideAutoComplete();
+    }
+}
+
+void Terminal::onTextChangedForAutoComplete()
+{
+    updateAutoComplete();
+}
+
+void Terminal::onSuggestionSelected(const QString &suggestion)
+{
+    // Handled by TerminalTextEdit::acceptSuggestion
+}
+
+void Terminal::appendError(const QString &text)
+{
+    appendOutput(text, QColor(224, 108, 117)); // Red color for errors
+}
+
+void Terminal::appendSuccess(const QString &text)
+{
+    appendOutput(text, QColor(152, 195, 121)); // Green color for success
+}
+
+void Terminal::appendInfo(const QString &text)
+{
+    appendOutput(text, QColor(97, 175, 239)); // Blue color for info
 }
 

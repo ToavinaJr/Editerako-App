@@ -6,10 +6,31 @@
 #include <QTextEdit>
 #include <QString>
 #include <QKeyEvent>
+#include <QListWidget>
+#include <QMap>
+#include <QStringList>
 
 namespace Ui {
 class Terminal;
 }
+
+// Popup widget for autocomplete suggestions
+class AutoCompletePopup : public QListWidget
+{
+    Q_OBJECT
+public:
+    explicit AutoCompletePopup(QWidget *parent = nullptr);
+    void showSuggestions(const QStringList &suggestions, const QPoint &position);
+    QString currentSuggestion() const;
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
+
+signals:
+    void suggestionSelected(const QString &suggestion);
+    void cancelled();
+};
 
 class TerminalTextEdit : public QTextEdit
 {
@@ -20,12 +41,16 @@ public:
     void setPrompt(const QString &prompt);
     QString getCurrentCommand() const;
     void clearCurrentCommand();
+    void showAutoComplete(const QStringList &suggestions);
+    void hideAutoComplete();
+    void acceptSuggestion(const QString &suggestion);
 
 signals:
     void commandEntered(const QString &command);
     void upPressed();
     void downPressed();
     void tabPressed();
+    void textChangedForAutoComplete();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -35,6 +60,7 @@ protected:
 private:
     int promptPosition;
     QString currentPrompt;
+    AutoCompletePopup *autoCompletePopup;
 
     void ensureCursorInEditableArea();
     int getPromptPosition() const;
@@ -68,6 +94,8 @@ private slots:
     void onDownPressed();
     void onClearClicked();
     void onCloseClicked();
+    void onTextChangedForAutoComplete();
+    void onSuggestionSelected(const QString &suggestion);
 
 private:
     Ui::Terminal *ui;
@@ -79,13 +107,28 @@ private:
     bool isProcessRunning;
     bool isDragging;
     QPoint dragStartPosition;
+    
+    // Autocomplete data structures
+    QMap<QString, QStringList> commandArguments;
+    QStringList commonCommands;
+    
     void setupTerminal();
     void displayPrompt();
-    void appendOutput(const QString &text, const QColor &color = QColor(204, 204, 204));
+    void appendOutput(const QString &text, const QColor &color);
+    void appendError(const QString &text);
+    void appendSuccess(const QString &text);
+    void appendInfo(const QString &text);
     void initializeShell();
     QString getSystemShell();
     void navigateHistory(int direction);
     void processInternalCommand(const QString &command);
+    
+    // Autocomplete helper methods
+    void initializeCommandDatabase();
+    QStringList getCommandSuggestions(const QString &partial);
+    QStringList getArgumentSuggestions(const QString &command, const QString &partial);
+    QStringList getPathSuggestions(const QString &partial);
+    void updateAutoComplete();
 };
 
 #endif // TERMINAL_H

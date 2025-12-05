@@ -36,6 +36,8 @@ target_compile_definitions(tree_sitter PRIVATE TREE_SITTER_NO_ICU=1)
 
 if(MSVC)
     target_compile_options(tree_sitter PRIVATE /W0)
+    # Add /Zc:__cplusplus and /permissive- for MSVC to properly detect C++17 and fix Qt 6.10.0 compatibility
+    add_compile_options(/Zc:__cplusplus /permissive-)
 else()
     target_compile_options(tree_sitter PRIVATE -w -Wno-unused-parameter)
 endif()
