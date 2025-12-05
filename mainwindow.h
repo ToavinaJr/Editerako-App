@@ -22,6 +22,9 @@
 #include <QCloseEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QMimeData>
+#include <QList>
+#include <QUrl>
 #include "terminal.h"
 #include "codeeditor.h"
 #include <QTabWidget>

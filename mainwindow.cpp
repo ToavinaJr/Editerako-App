@@ -136,6 +136,9 @@ MainWindow::MainWindow(QWidget *parent)
             newLayout->addWidget(chatWidget);
         }
     }
+
+    // Enable drag and drop for opening files
+    setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow()
@@ -1024,4 +1027,52 @@ void MainWindow::setProjectDirectory(const QString &path)
     
     // Update window title
     updateWindowTitle();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    // Accept drag if it contains URLs (files)
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+
+    if (mimeData->hasUrls()) {
+        QList<QUrl> urlList = mimeData->urls();
+
+        for (const QUrl &url : urlList) {
+            QString filePath = url.toLocalFile();
+
+            // Fix for Windows: if toLocalFile() doesn't work properly, use url.path()
+#ifdef Q_OS_WIN
+            if (filePath.isEmpty() || filePath.startsWith("file://")) {
+                QString path = url.path();
+                if (path.startsWith('/')) {
+                    path = path.mid(1); // Remove leading slash on Windows
+                }
+                filePath = path;
+            }
+#endif
+
+            if (!filePath.isEmpty()) {
+                QFileInfo fileInfo(filePath);
+
+                if (fileInfo.isFile()) {
+                    // Check if we should save current changes before opening new file
+                    if (askToSaveChanges()) {
+                        openFileInEditor(filePath);
+                    }
+                } else if (fileInfo.isDir()) {
+                    // If a directory is dropped, set it as the project directory
+                    setProjectDirectory(filePath);
+                }
+            }
+        }
+
+        event->acceptProposedAction();
+    }
 }
