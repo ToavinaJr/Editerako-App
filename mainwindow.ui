@@ -378,6 +378,7 @@ padding: 0 0 0 0 ;</string>
      <string>Find</string>
     </property>
     <addaction name="actionFindReplace"/>
+    <addaction name="actionGoToLine"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuFind"/>
@@ -467,6 +468,14 @@ padding: 0 0 0 0 ;</string>
   <action name="actionFindReplace">
    <property name="text">
     <string>FindReplace</string>
+   </property>
+  </action>
+  <action name="actionGoToLine">
+   <property name="text">
+    <string>Go to Line</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
    </property>
   </action>
  </widget>

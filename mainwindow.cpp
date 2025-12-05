@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "syntaxhighlighter.h"
 #include "finddialog.h"
+#include "gotolinedialog.h"
 #include "chatwidget.h"
 #include <QApplication>
 #include <QStandardPaths>
@@ -167,6 +168,7 @@ void MainWindow::connectActions()
 
     // Connection to the find dialog
     connect(ui->actionFindReplace, &QAction::triggered, this, &MainWindow::onActionFindReplace);
+    connect(ui->actionGoToLine, &QAction::triggered, this, &MainWindow::onActionGoToLine);
 }
 
 void MainWindow::setupCodeEditor()
@@ -853,6 +855,11 @@ void MainWindow::closeTab(int index)
 
 void MainWindow::onActionFindReplace() {
     FindReplaceDialog dlg(currentEditor(), this);
+    dlg.exec();
+}
+
+void MainWindow::onActionGoToLine() {
+    GoToLineDialog dlg(currentEditor(), this);
     dlg.exec();
 }
 

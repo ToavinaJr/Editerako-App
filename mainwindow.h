@@ -20,6 +20,8 @@
 #include <QLabel>
 #include <QShortcut>
 #include <QCloseEvent>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include "terminal.h"
 #include "codeeditor.h"
 #include <QTabWidget>
@@ -58,6 +60,8 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private slots:
     // File menu operations
@@ -80,6 +84,7 @@ private slots:
 
     // Find section
     void onActionFindReplace();
+    void onActionGoToLine();
 
     // Ouvrir terminal
     void toggleTerminal();

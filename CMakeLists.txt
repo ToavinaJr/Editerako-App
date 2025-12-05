@@ -52,6 +52,8 @@ set(PROJECT_SOURCES
     codeeditor.h
     finddialog.cpp
     finddialog.h
+    gotolinedialog.cpp
+    gotolinedialog.h
     syntaxhighlighter.cpp
     syntaxhighlighter.h
     terminal.cpp
