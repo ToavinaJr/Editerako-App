@@ -641,6 +641,8 @@ void MainWindow::openFileInEditor(const QString &filePath)
             isModified = false;
             updateWindowTitle();
             ui->centralStack->setCurrentIndex(CodeViewer);
+            // Give keyboard focus to the newly opened editor to avoid losing focus after dialogs
+            ed->setFocus();
         }
     }
 
@@ -991,9 +993,16 @@ void MainWindow::promptOpenFolderOrFile()
                                                                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         if (!folderPath.isEmpty()) {
             setProjectDirectory(folderPath);
+            // Restore focus to main window and editor for better UX
+            this->raise();
+            this->activateWindow();
+            if (currentEditor()) currentEditor()->setFocus();
         } else {
             // User cancelled, use Documents as fallback
             setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+            this->raise();
+            this->activateWindow();
+            if (currentEditor()) currentEditor()->setFocus();
         }
     } else if (msgBox.clickedButton() == fileBtn) {
         QString fileName = QFileDialog::getOpenFileName(this,
@@ -1005,13 +1014,23 @@ void MainWindow::promptOpenFolderOrFile()
             QFileInfo fileInfo(fileName);
             setProjectDirectory(fileInfo.absolutePath());
             openFileInEditor(fileName);
+            // Restore focus to main window and editor for better UX
+            this->raise();
+            this->activateWindow();
+            if (currentEditor()) currentEditor()->setFocus();
         } else {
             // User cancelled, use Documents as fallback
             setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+            this->raise();
+            this->activateWindow();
+            if (currentEditor()) currentEditor()->setFocus();
         }
     } else {
         // Cancel clicked, use Documents as default
         setProjectDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        this->raise();
+        this->activateWindow();
+        if (currentEditor()) currentEditor()->setFocus();
     }
 }
 
