@@ -13,6 +13,7 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -647,13 +648,73 @@ void MainWindow::openFileInEditor(const QString &filePath)
     }
 
     else if (mimeName == "application/pdf") {
-        pdfDoc->load(filePath);
-        ui->centralStack->setCurrentIndex(PdfViewer);
+        // Add PDF viewer as a tab instead of switching central stack
+        // If a tab for this file already exists, switch to it
+        for (int i = 0; i < editorTabs->count(); ++i) {
+            QWidget *w = editorTabs->widget(i);
+            if (w && w->property("filePath").toString() == filePath) {
+                editorTabs->setCurrentIndex(i);
+                return;
+            }
+        }
+
+        QWidget *container = new QWidget(this);
+        QVBoxLayout *lay = new QVBoxLayout(container);
+        lay->setContentsMargins(0,0,0,0);
+
+        QPdfDocument *doc = new QPdfDocument(container);
+        // Load and verify by checking pageCount (more portable across Qt versions)
+        doc->load(filePath);
+        if (doc->pageCount() > 0) {
+            QPdfView *pv = new QPdfView(container);
+            pv->setDocument(doc);
+            pv->setZoomFactor(1.0);
+            pv->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            lay->addWidget(pv);
+
+            int idx = editorTabs->addTab(container, QFileInfo(filePath).fileName());
+            container->setProperty("filePath", filePath);
+            container->setProperty("viewerType", "pdf");
+            editorTabs->setCurrentIndex(idx);
+            // keep main window focused
+            this->raise(); this->activateWindow();
+        } else {
+            delete container;
+            // fallback to central stack if loading failed
+            pdfDoc->load(filePath);
+            ui->centralStack->setCurrentIndex(PdfViewer);
+        }
     }
     else if (mimeName.startsWith("image/")) {
+        // Add image viewer as a tab
+        for (int i = 0; i < editorTabs->count(); ++i) {
+            QWidget *w = editorTabs->widget(i);
+            if (w && w->property("filePath").toString() == filePath) {
+                editorTabs->setCurrentIndex(i);
+                return;
+            }
+        }
+
+        QWidget *container = new QWidget(this);
+        QVBoxLayout *lay = new QVBoxLayout(container);
+        lay->setContentsMargins(0,0,0,0);
+
+        QLabel *lbl = new QLabel(container);
+        lbl->setAlignment(Qt::AlignCenter);
         QPixmap pix(filePath);
-        imageLabel->setPixmap(pix); // taille réelle
-        ui->centralStack->setCurrentIndex(ImageViewer);
+        lbl->setPixmap(pix);
+        lbl->setScaledContents(true);
+
+        QScrollArea *scroll = new QScrollArea(container);
+        scroll->setWidget(lbl);
+        scroll->setWidgetResizable(true);
+        lay->addWidget(scroll);
+
+        int idx = editorTabs->addTab(container, QFileInfo(filePath).fileName());
+        container->setProperty("filePath", filePath);
+        container->setProperty("viewerType", "image");
+        editorTabs->setCurrentIndex(idx);
+        this->raise(); this->activateWindow();
     }
     else {
         ui->centralStack->setCurrentIndex(UnsupportedViewer);
