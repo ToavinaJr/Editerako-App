@@ -129,6 +129,14 @@ private:
     QStringList getArgumentSuggestions(const QString &command, const QString &partial);
     QStringList getPathSuggestions(const QString &partial);
     void updateAutoComplete();
+    // Command argument discovery & cache
+    void scanCommandArgumentsAsync(const QString &command);
+    QStringList loadCachedArguments(const QString &command);
+    void saveCachedArguments(const QString &command);
+    // System command scanning & cache
+    void scanSystemCommandsAsync();
+    void loadCommandCache();
+    void saveCommandCache();
 };
 
 #endif // TERMINAL_H

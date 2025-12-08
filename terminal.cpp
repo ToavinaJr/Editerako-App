@@ -7,6 +7,13 @@
 #include <QStandardPaths>
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
+#include <QFile>
+#include <QTextStream>
+#include <QSet>
+#include <QDirIterator>
+#include <QRegularExpression>
 
 // ============================================================================
 // AutoCompletePopup Implementation
@@ -15,11 +22,6 @@
 AutoCompletePopup::AutoCompletePopup(QWidget *parent)
     : QListWidget(parent)
 {
-    // setWindowFlags(Qt::Popup | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-    // setAttribute(Qt::WA_ShowWithoutActivating);
-    // setFocusPolicy(Qt::NoFocus);
-    // setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    // setSelectionMode(QAbstractItemView::SingleSelection);    
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     
     // Ces attributs sont cruciaux pour ne pas voler le focus à l'éditeur
@@ -680,6 +682,11 @@ void Terminal::initializeCommandDatabase()
                                             << "add" << "status" << "log" << "branch"
                                             << "checkout" << "merge" << "rebase" << "init";
 #endif
+    // Load cached commands (if any) for instant suggestions
+    loadCommandCache();
+
+    // Kick off an asynchronous system scan to find all executables in PATH
+    scanSystemCommandsAsync();
 }
 
 QStringList Terminal::getCommandSuggestions(const QString &partial)
@@ -704,6 +711,238 @@ QStringList Terminal::getCommandSuggestions(const QString &partial)
     
     suggestions.sort(Qt::CaseInsensitive);
     return suggestions;
+}
+
+// Load cached commands from a simple cache file to provide instant suggestions
+void Terminal::loadCommandCache()
+{
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (cacheDir.isEmpty()) return;
+    QDir().mkpath(cacheDir);
+    QString cacheFile = cacheDir + QDir::separator() + "commands_cache.txt";
+
+    QFile f(cacheFile);
+    if (!f.exists()) return;
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+
+    QTextStream in(&f);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (!line.isEmpty() && !commonCommands.contains(line)) {
+            commonCommands << line;
+        }
+    }
+    f.close();
+    commonCommands.removeDuplicates();
+    commonCommands.sort(Qt::CaseInsensitive);
+}
+
+// Save current command list to cache file
+void Terminal::saveCommandCache()
+{
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (cacheDir.isEmpty()) return;
+    QDir().mkpath(cacheDir);
+    QString cacheFile = cacheDir + QDir::separator() + "commands_cache.txt";
+
+    QFile f(cacheFile);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+    QTextStream out(&f);
+    for (const QString &cmd : commonCommands) {
+        out << cmd << "\n";
+    }
+    f.close();
+}
+
+// Asynchronously scan system PATH for executables and merge into commonCommands
+void Terminal::scanSystemCommandsAsync()
+{
+    auto future = QtConcurrent::run([this]() -> QStringList {
+        QStringList result;
+        QString pathEnv = qEnvironmentVariable("PATH");
+        QStringList paths = pathEnv.split(QDir::listSeparator(), Qt::SkipEmptyParts);
+        // Add common system dirs on macOS/Linux
+#ifndef Q_OS_WIN
+        paths.append("/usr/local/bin");
+        paths.append("/opt/homebrew/bin");
+#endif
+        QSet<QString> seen;
+        for (const QString &p : paths) {
+            QDir dir(p);
+            if (!dir.exists()) continue;
+            QDirIterator it(dir.absolutePath(), QDir::Files | QDir::NoSymLinks, QDirIterator::NoIteratorFlags);
+            while (it.hasNext()) {
+                it.next();
+                QFileInfo fi = it.fileInfo();
+                // Windows: consider common executable extensions
+#ifdef Q_OS_WIN
+                QString ext = fi.suffix().toLower();
+                if (ext == "exe" || ext == "bat" || ext == "cmd" || ext == "com") {
+                    seen.insert(fi.baseName());
+                }
+#else
+                if (fi.isExecutable()) {
+                    seen.insert(fi.fileName());
+                }
+#endif
+            }
+        }
+        // Convert QSet to QStringList
+        for (const QString &s : seen) {
+            result << s;
+        }
+        result.sort(Qt::CaseInsensitive);
+        return result;
+    });
+
+    QFutureWatcher<QStringList> *watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher]() {
+        QStringList found = watcher->result();
+        bool changed = false;
+        for (const QString &c : found) {
+            if (!commonCommands.contains(c)) {
+                commonCommands << c;
+                changed = true;
+            }
+        }
+        if (changed) {
+            commonCommands.removeDuplicates();
+            commonCommands.sort(Qt::CaseInsensitive);
+            saveCommandCache();
+        }
+        watcher->deleteLater();
+    });
+    watcher->setFuture(future);
+}
+
+// Load cached arguments for a specific command
+QStringList Terminal::loadCachedArguments(const QString &command)
+{
+    QStringList result;
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (cacheDir.isEmpty()) return result;
+    QDir().mkpath(cacheDir);
+    QString safeName = command;
+    // sanitize filename
+    safeName.remove(QRegularExpression("[^A-Za-z0-9_.-]"));
+    if (safeName.isEmpty()) return result;
+    QString cacheFile = cacheDir + QDir::separator() + QString("args_%1.txt").arg(safeName);
+
+    QFile f(cacheFile);
+    if (!f.exists()) return result;
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return result;
+    QTextStream in(&f);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (!line.isEmpty()) result << line;
+    }
+    f.close();
+    result.removeDuplicates();
+    result.sort(Qt::CaseInsensitive);
+    return result;
+}
+
+// Save cached arguments for a specific command
+void Terminal::saveCachedArguments(const QString &command)
+{
+    if (!commandArguments.contains(command)) return;
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (cacheDir.isEmpty()) return;
+    QDir().mkpath(cacheDir);
+    QString safeName = command;
+    safeName.remove(QRegularExpression("[^A-Za-z0-9_.-]"));
+    if (safeName.isEmpty()) return;
+    QString cacheFile = cacheDir + QDir::separator() + QString("args_%1.txt").arg(safeName);
+
+    QFile f(cacheFile);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+    QTextStream out(&f);
+    const QStringList &args = commandArguments[command];
+    for (const QString &a : args) {
+        out << a << "\n";
+    }
+    f.close();
+}
+
+// Asynchronously discover possible arguments for a given command by parsing its help output
+void Terminal::scanCommandArgumentsAsync(const QString &command)
+{
+    if (command.trimmed().isEmpty()) return;
+    // run in background thread
+    auto future = QtConcurrent::run([command]() -> QStringList {
+        QStringList result;
+        auto tryRun = [&](const QString &prog, const QStringList &args) -> QString {
+            QProcess p;
+            p.start(prog, args);
+            if (!p.waitForStarted(1000)) return QString();
+            p.waitForFinished(2000);
+            QByteArray out = p.readAllStandardOutput() + p.readAllStandardError();
+            QString s = QString::fromLocal8Bit(out);
+            return s.trimmed();
+        };
+
+        QString helpOut;
+        // common help forms
+        helpOut = tryRun(command, QStringList() << "--help");
+        if (helpOut.isEmpty()) helpOut = tryRun(command, QStringList() << "-h");
+        if (helpOut.isEmpty()) helpOut = tryRun(command, QStringList() << "help");
+        if (helpOut.isEmpty()) {
+#ifndef Q_OS_WIN
+            // try man
+            helpOut = tryRun(QStringLiteral("man"), QStringList() << command);
+#endif
+        }
+        if (helpOut.isEmpty()) {
+            // try "command help" form
+            helpOut = tryRun(command, QStringList() << "help");
+        }
+
+        if (helpOut.isEmpty()) return result;
+
+        // limit to first 500 lines to avoid huge outputs
+        QStringList lines = helpOut.split('\n');
+        if (lines.size() > 500) lines = lines.mid(0, 500);
+        QString snippet = lines.join('\n');
+
+        // regex to extract flags: -a, --long, /option and options with =VALUE
+        QRegularExpression re(R"((?:^|[\s,;()\[\]])(-{1,2}[A-Za-z0-9][A-Za-z0-9._-]*(?:[= ][A-Za-z0-9_<>\\[\]-]+)?|/[A-Za-z0-9._-]+))");
+        QSet<QString> seen;
+        QRegularExpressionMatchIterator it = re.globalMatch(snippet);
+        while (it.hasNext()) {
+            QRegularExpressionMatch m = it.next();
+            QString token = m.captured(1).trimmed();
+            if (!token.isEmpty()) seen.insert(token);
+        }
+
+        // Additional common patterns: short combined flags like -abc -> -a -b -c
+        QStringList extras;
+        for (const QString &t : seen) {
+            if (t.startsWith('-') && t.length() > 2 && !t.startsWith("--") && !t.contains('=')) {
+                // split combined like -abc into -a, -b, -c
+                for (int i = 1; i < t.length(); ++i) {
+                    QString s = QString("-%1").arg(t.at(i));
+                    extras << s;
+                }
+            }
+        }
+        for (const QString &e : extras) seen.insert(e);
+
+        for (const QString &s : seen) result << s;
+        result.removeDuplicates();
+        result.sort(Qt::CaseInsensitive);
+        return result;
+    });
+
+    QFutureWatcher<QStringList> *watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher, command]() {
+        QStringList found = watcher->result();
+        if (!found.isEmpty()) {
+            commandArguments[command] = found;
+            saveCachedArguments(command);
+        }
+        watcher->deleteLater();
+    });
+    watcher->setFuture(future);
 }
 
 QStringList Terminal::getArgumentSuggestions(const QString &command, const QString &partial)
@@ -801,7 +1040,18 @@ void Terminal::updateAutoComplete()
     else {
         QString command = parts[0];
         QString lastPart = parts.last();
-        
+
+        // Ensure we have cached arguments for this command; if not, try loading cache and schedule async scan
+        if (!commandArguments.contains(command)) {
+            QStringList cached = loadCachedArguments(command);
+            if (!cached.isEmpty()) {
+                commandArguments[command] = cached;
+            } else {
+                // Launch async scan to populate arguments for this command
+                scanCommandArgumentsAsync(command);
+            }
+        }
+
         // Try argument suggestions first
         suggestions = getArgumentSuggestions(command, lastPart);
         
