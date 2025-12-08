@@ -15,11 +15,21 @@
 AutoCompletePopup::AutoCompletePopup(QWidget *parent)
     : QListWidget(parent)
 {
-    setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
+    // setWindowFlags(Qt::Popup | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    // setAttribute(Qt::WA_ShowWithoutActivating);
+    // setFocusPolicy(Qt::NoFocus);
+    // setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // setSelectionMode(QAbstractItemView::SingleSelection);    
+    setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    
+    // Ces attributs sont cruciaux pour ne pas voler le focus à l'éditeur
+    setAttribute(Qt::WA_ShowWithoutActivating);
     setFocusPolicy(Qt::NoFocus);
+    
+    // Le reste de votre style reste identique...
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setSelectionMode(QAbstractItemView::SingleSelection);
-    
+
     // Modern dark theme styling
     setStyleSheet(
         "QListWidget {"
@@ -152,38 +162,48 @@ void TerminalTextEdit::clearCurrentCommand()
 
 void TerminalTextEdit::keyPressEvent(QKeyEvent *event)
 {
-    // Handle autocomplete popup navigation (only intercept navigation keys)
+    // Si la popup est visible, on intercepte SEULEMENT la navigation
     if (autoCompletePopup->isVisible()) {
+        // Navigation HAUT
         if (event->key() == Qt::Key_Up) {
             int currentRow = autoCompletePopup->currentRow();
             if (currentRow > 0) {
                 autoCompletePopup->setCurrentRow(currentRow - 1);
             }
-            return;
+            return; // On consomme l'événement
         }
+        
+        // Navigation BAS
         if (event->key() == Qt::Key_Down) {
             int currentRow = autoCompletePopup->currentRow();
             if (currentRow < autoCompletePopup->count() - 1) {
                 autoCompletePopup->setCurrentRow(currentRow + 1);
             }
-            return;
+            return; // On consomme l'événement
         }
+        
+        // Validation (Tab ou Entrée SEULEMENT si une sélection est active)
         if (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
             QString suggestion = autoCompletePopup->currentSuggestion();
             if (!suggestion.isEmpty()) {
                 acceptSuggestion(suggestion);
+                return; // On consomme l'événement
             }
-            return;
+            // Si pas de suggestion valide, on laisse passer (pour le saut de ligne normal)
         }
+        
+        // Annulation
         if (event->key() == Qt::Key_Escape) {
             hideAutoComplete();
             return;
         }
-        // Allow other keys to pass through for normal typing
+        
     }
     
-    // Handle special keys
-    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+    // Gestion de l'entrée commande standard
+    bool isEnter = (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter);
+
+    if (isEnter && !autoCompletePopup->isVisible()) {
         hideAutoComplete();
         QString command = getCurrentCommand();
         moveCursor(QTextCursor::End);
@@ -192,49 +212,33 @@ void TerminalTextEdit::keyPressEvent(QKeyEvent *event)
         return;
     }
 
-    if (event->key() == Qt::Key_Up && !autoCompletePopup->isVisible()) {
-        emit upPressed();
-        return;
-    }
-
-    if (event->key() == Qt::Key_Down && !autoCompletePopup->isVisible()) {
-        emit downPressed();
-        return;
-    }
-
-    if (event->key() == Qt::Key_Tab && !autoCompletePopup->isVisible()) {
-        emit tabPressed();
-        return;
-    }
-
-    // Prevent editing before prompt
+    // Empêcher la modification avant le prompt
     QTextCursor cursor = textCursor();
     if (cursor.position() < promptPosition) {
         if (event->key() == Qt::Key_Backspace ||
             event->key() == Qt::Key_Delete ||
             event->key() == Qt::Key_Left) {
-            return;
+            return; // Ignore les touches qui modifieraient avant le prompt
         }
-        moveCursor(QTextCursor::End);
+        moveCursor(QTextCursor::End); // Déplace le curseur à la fin si on tape avant le prompt
     }
 
-    // Handle backspace at prompt position
+    // Empêcher le backspace à la position du prompt
     if (event->key() == Qt::Key_Backspace && cursor.position() <= promptPosition) {
         return;
     }
 
-    // Handle Ctrl+C to cancel current command
-    if (event->matches(QKeySequence::Copy) && !textCursor().hasSelection()) {
-        clearCurrentCommand();
-        append("");
-        emit commandEntered("");
-        return;
-    }
-
+    // Appel au parent pour écrire le texte dans le terminal
     QTextEdit::keyPressEvent(event);
     
-    // Trigger autocomplete update after text changes
-    emit textChangedForAutoComplete();
+    // Mise à jour de l'autocomplétion APRÈS que le caractère soit inséré
+    if (!event->text().isEmpty() && !isEnter && event->key() != Qt::Key_Escape && event->key() != Qt::Key_Backspace) {
+        emit textChangedForAutoComplete();
+    }
+    // Gestion spéciale du Backspace pour rafraichir aussi la liste
+    else if (event->key() == Qt::Key_Backspace) {
+        emit textChangedForAutoComplete();
+    }
 }
 
 void TerminalTextEdit::mousePressEvent(QMouseEvent *event)
