@@ -6,6 +6,10 @@
 #include <QPainter>
 #include <QTextBlock>
 #include <QWidget>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QTextCursor>
+#include <QList>
 
 class LineNumberArea;
 
@@ -22,6 +26,12 @@ public:
     bool isLineNumbersVisible() const;
 
 protected:
+    // Multi-cursor support and keyboard handling
+    void mousePressEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+
+protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
@@ -32,6 +42,15 @@ private slots:
 private:
     QWidget *lineNumberArea;
     bool lineNumbersVisible;
+    // Additional cursors for multi-cursor editing (excluding the primary cursor())
+    QList<QTextCursor> extraCursors;
+
+    // Helpers for multi-cursor editing
+    void normalizeExtraCursors();
+    void insertTextAtCursors(const QString &text);
+    void deleteAtCursors(bool backspace);
+    void swapLineUp();
+    void swapLineDown();
 };
 
 class LineNumberArea : public QWidget
