@@ -25,9 +25,11 @@
 #include <QMimeData>
 #include <QList>
 #include <QUrl>
+#include <QMenu>
 #include "terminal.h"
 #include "codeeditor.h"
 #include <QTabWidget>
+#include <QTabBar>
 
 class ChatWidget;
 
@@ -65,6 +67,7 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private slots:
     // File menu operations
@@ -93,16 +96,29 @@ private slots:
     void toggleTerminal();
     void onTerminalClosed();
 
+    // Nouvelles méthodes pour les terminaux multiples
+    void addNewTerminal();
+    void closeTerminalTab(int index);
+    void onTerminalTabChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     QTabWidget *editorTabs;
     QString currentFileName;
     QString currentWorkingDirectory;
-    Terminal *terminal;
+    // Terminal *terminal; // Ancien terminal unique, remplacé par terminalList
     QShortcut *terminalShortcut;
     ChatWidget *chatWidget = nullptr;
     bool isTerminalVisible;
     bool isModified;
+
+    // Nouveaux membres pour les terminaux multiples
+    QTabWidget *terminalTabs;
+    QList<Terminal*> terminalList;
+    QPushButton *addTerminalButton;
+
+    // État de l'explorateur
+    bool isFileTreeVisible;
 
     CodeEditor *currentEditor();
 private slots:
@@ -118,6 +134,7 @@ private:
     void updateWindowTitle();
     void setupFileTree();
     void setupCodeEditor();
+    void setupTerminalTabs();
     void loadDirectoryToTree(const QString &path);
     void addFileToTree(const QString &fileName, QTreeWidgetItem *parent = nullptr);
     void addFolderToTree(const QString &folderName, QTreeWidgetItem *parent = nullptr);

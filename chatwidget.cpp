@@ -264,6 +264,7 @@ void ChatWidget::sendMessage()
     callGeminiApi(text);
 }
 
+
 void ChatWidget::callGeminiApi(const QString &prompt)
 {
     // Build request JSON according to the example REST call
@@ -285,8 +286,8 @@ void ChatWidget::callGeminiApi(const QString &prompt)
     QJsonDocument doc(root);
     QByteArray body = doc.toJson();
 
-    // Use gemini-2.0-flash model (more stable/available)
-    QUrl url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent");
+    // Use gemini-1.5-flash model (more stable/available)
+    QUrl url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent");
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 

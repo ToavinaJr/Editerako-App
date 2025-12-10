@@ -93,8 +93,8 @@
      <property name="styleSheet">
       <string notr="true">
        QFrame {
-           background-color: #2d2d30;
-           border-bottom: 1px solid #3e3e42;
+           background-color: #252526;
+           border-bottom: 1px solid #454545;
        }
       </string>
      </property>
@@ -119,9 +119,10 @@
         <property name="styleSheet">
          <string notr="true">
           QLabel {
-              font-weight: bold;
+              font-weight: 600;
               font-size: 11px;
-              color: #98c379;
+              color: #61afef;
+              padding-left: 2px;
           }
          </string>
         </property>
@@ -144,18 +145,46 @@
        </spacer>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout"/>
+      </item>
+      <item>
        <widget class="QPushButton" name="clearButton">
         <property name="minimumSize">
          <size>
-          <width>60</width>
-          <height>24</height>
+          <width>55</width>
+          <height>22</height>
          </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>55</width>
+          <height>22</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
         </property>
         <property name="toolTip">
          <string>Clear terminal</string>
         </property>
         <property name="styleSheet">
-         <string notr="true">border: none; padding: 0;</string>
+         <string notr="true">
+          QPushButton {
+              background-color: #3e3e42;
+              border: 1px solid #5c5c5c;
+              border-radius: 3px;
+              color: #cccccc;
+              font-size: 10px;
+              padding: 3px 8px;
+          }
+          QPushButton:hover {
+              background-color: #505050;
+              border-color: #6f6f6f;
+          }
+          QPushButton:pressed {
+              background-color: #2d2d30;
+          }
+         </string>
         </property>
         <property name="text">
          <string>Clear</string>
@@ -166,15 +195,18 @@
        <widget class="QPushButton" name="closeButton">
         <property name="minimumSize">
          <size>
-          <width>24</width>
-          <height>24</height>
+          <width>28</width>
+          <height>22</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>24</width>
-          <height>24</height>
+          <width>28</width>
+          <height>22</height>
          </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
         </property>
         <property name="toolTip">
          <string>Close terminal</string>
@@ -183,14 +215,20 @@
          <string notr="true">
           QPushButton {
               background-color: transparent;
-              border: none;
+              border: 1px solid transparent;
+              border-radius: 3px;
               font-size: 14px;
               font-weight: bold;
               padding: 0;
+              color: #999999;
           }
           QPushButton:hover {
               background-color: #e06c75;
-              color: white;
+              border-color: #e06c75;
+              color: #ffffff;
+          }
+          QPushButton:pressed {
+              background-color: #c25560;
           }
          </string>
         </property>
