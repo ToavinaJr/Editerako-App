@@ -5,6 +5,8 @@
 #include "chatwidget.h"
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
+#include "project/FileExplorer.h"
+#include "project/Workspace.h"
 #include <QApplication>
 #include <QStandardPaths>
 #include <QMimeDatabase>
@@ -147,10 +149,6 @@ void MainWindow::connectActions()
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);
     connect(ui->closeExplorerButton, &QPushButton::clicked, this, &MainWindow::onCloseExplorerClicked);
 
-    // File tree interaction
-    connect(ui->fileTreeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onFileTreeItemClicked);
-    connect(ui->fileTreeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::onFileTreeItemDoubleClicked);
-
     // Line numbers checkbox
     connect(ui->checkBox, &QCheckBox::toggled, this, &MainWindow::onShowLinesToggled);
 
@@ -177,9 +175,8 @@ void MainWindow::setupCodeEditor()
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
-        const QFileInfo info(path);
-        if (info.absolutePath() == currentWorkingDirectory) {
-            loadDirectoryToTree(currentWorkingDirectory);
+        if (m_workspace && m_fileExplorer && m_workspace->containsPath(path)) {
+            m_fileExplorer->reload();
         }
         if (statusBar()) {
             statusBar()->showMessage(tr("File saved successfully"), 2000);
@@ -190,136 +187,15 @@ void MainWindow::setupCodeEditor()
 
 void MainWindow::setupFileTree()
 {
-    ui->fileTreeWidget->setHeaderHidden(true);
-    ui->fileTreeWidget->setRootIsDecorated(true);
-    ui->fileTreeWidget->setAlternatingRowColors(false);
+    m_workspace = new Workspace(this);
+    m_fileExplorer = new FileExplorer(ui->fileTreeWidget, m_workspace, this);
 
-    // Set custom context menu
-    ui->fileTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
-}
-
-void MainWindow::loadDirectoryToTree(const QString &path)
-{
-    ui->fileTreeWidget->clear();
-
-    QDir dir(path);
-    if (!dir.exists()) {
-        return;
-    }
-
-    currentWorkingDirectory = path;
-
-    // Create root item
-    QTreeWidgetItem *rootItem = new QTreeWidgetItem(ui->fileTreeWidget);
-    rootItem->setText(0, QString("📁 %1").arg(dir.dirName()));
-    rootItem->setData(0, Qt::UserRole, path);
-    rootItem->setExpanded(true);
-
-    // Add directories first
-    QStringList dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-    foreach(const QString &dirName, dirs) {
-        addFolderToTree(dirName, rootItem);
-    }
-
-    // Add files
-    QStringList files = dir.entryList(QDir::Files, QDir::Name);
-    foreach(const QString &fileName, files) {
-        addFileToTree(fileName, rootItem);
-    }
-}
-
-void MainWindow::addFileToTree(const QString &fileName, QTreeWidgetItem *parent)
-{
-    QTreeWidgetItem *fileItem;
-    if (parent) {
-        fileItem = new QTreeWidgetItem(parent);
-    } else {
-        fileItem = new QTreeWidgetItem(ui->fileTreeWidget);
-    }
-
-    QString icon = getFileIcon(fileName);
-    fileItem->setText(0, QString("%1 %2").arg(icon, fileName));
-
-    QString fullPath;
-    if (parent) {
-        QString parentPath = parent->data(0, Qt::UserRole).toString();
-        fullPath = QDir(parentPath).absoluteFilePath(fileName);
-    } else {
-        fullPath = QDir(currentWorkingDirectory).absoluteFilePath(fileName);
-    }
-    fileItem->setData(0, Qt::UserRole, fullPath);
-}
-
-void MainWindow::addFolderToTree(const QString &folderName, QTreeWidgetItem *parent)
-{
-    QTreeWidgetItem *folderItem;
-    if (parent) {
-        folderItem = new QTreeWidgetItem(parent);
-    } else {
-        folderItem = new QTreeWidgetItem(ui->fileTreeWidget);
-    }
-
-    folderItem->setText(0, QString("📁 %1").arg(folderName));
-
-    QString fullPath;
-    if (parent) {
-        QString parentPath = parent->data(0, Qt::UserRole).toString();
-        fullPath = QDir(parentPath).absoluteFilePath(folderName);
-    } else {
-        fullPath = QDir(currentWorkingDirectory).absoluteFilePath(folderName);
-    }
-    folderItem->setData(0, Qt::UserRole, fullPath);
-
-    // Add subdirectories and files
-    QDir subDir(fullPath);
-    if (subDir.exists()) {
-        QStringList subDirs = subDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-        foreach(const QString &subDirName, subDirs) {
-            addFolderToTree(subDirName, folderItem);
+    connect(m_fileExplorer, &FileExplorer::fileActivated, this, &MainWindow::openFileInEditor);
+    connect(m_fileExplorer, &FileExplorer::fileSelected, this, [this](const QString &path) {
+        if (statusBar()) {
+            statusBar()->showMessage(tr("Selected: %1").arg(QFileInfo(path).fileName()), 2000);
         }
-
-        QStringList files = subDir.entryList(QDir::Files, QDir::Name);
-        foreach(const QString &fileName, files) {
-            addFileToTree(fileName, folderItem);
-        }
-    }
-}
-
-QString MainWindow::getFileIcon(const QString &fileName)
-{
-    QString ext = getFileExtension(fileName).toLower();
-
-    if (ext == "cpp" || ext == "cxx" || ext == "cc" || ext == "c") {
-        return "🔵";
-    } else if (ext == "h" || ext == "hpp" || ext == "hxx") {
-        return "🟦";
-    } else if (ext == "py") {
-        return "🐍";
-    } else if (ext == "js") {
-        return "🟨";
-    } else if (ext == "html" || ext == "htm") {
-        return "🌐";
-    } else if (ext == "css") {
-        return "🎨";
-    } else if (ext == "php") {
-        return "🐘";
-    } else if (ext == "txt") {
-        return "📝";
-    } else if (ext == "json") {
-        return "📋";
-    } else if (ext == "xml" || ext == "ui") {
-        return "📄";
-    } else if (ext == "exe" || ext == "bin") {
-        return "⚙️";
-    } else {
-        return "📄";
-    }
-}
-
-QString MainWindow::getFileExtension(const QString &fileName)
-{
-    QFileInfo fileInfo(fileName);
-    return fileInfo.suffix();
+    });
 }
 
 void MainWindow::newFile()
@@ -375,12 +251,17 @@ void MainWindow::newFile()
     QString fileName = dialog.textValue();
 
     if (ok && !fileName.isEmpty()) {
-        QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(fileName);
+        const QString targetDir = m_fileExplorer ? m_fileExplorer->selectedDirectory()
+                                                 : currentWorkingDirectory;
+        QString fullPath = QDir(targetDir).absoluteFilePath(fileName);
         QFile file(fullPath);
 
         if (file.open(QIODevice::WriteOnly)) {
             file.close();
-            loadDirectoryToTree(currentWorkingDirectory);
+            if (m_fileExplorer) {
+                m_fileExplorer->reload();
+                m_fileExplorer->revealPath(fullPath);
+            }
             openFileInEditor(fullPath);
             QMessageBox::information(this, tr("Success"), tr("File created successfully!"));
         } else {
@@ -446,10 +327,15 @@ void MainWindow::newFolder()
     QString folderName = dialog.textValue();
 
     if (ok && !folderName.isEmpty()) {
-        QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(folderName);
+        const QString targetDir = m_fileExplorer ? m_fileExplorer->selectedDirectory()
+                                                 : currentWorkingDirectory;
+        QString fullPath = QDir(targetDir).absoluteFilePath(folderName);
         QDir dir;
         if (dir.mkpath(fullPath)) {
-            loadDirectoryToTree(currentWorkingDirectory);
+            if (m_fileExplorer) {
+                m_fileExplorer->reload();
+                m_fileExplorer->revealPath(fullPath);
+            }
             QMessageBox::information(this, tr("Success"), tr("Folder created successfully!"));
         } else {
             QMessageBox::warning(this, tr("Error"), tr("Could not create folder!"));
@@ -503,45 +389,6 @@ void MainWindow::onCloseExplorerClicked()
     } else {
         ui->fileTreeWidget->setVisible(false);
         ui->closeExplorerButton->setText("▶");
-    }
-}
-
-void MainWindow::onFileTreeItemClicked(QTreeWidgetItem *item, int column)
-{
-    Q_UNUSED(column)
-
-    if (item) {
-        QString filePath = item->data(0, Qt::UserRole).toString();
-        QFileInfo fileInfo(filePath);
-
-        if (fileInfo.isFile()) {
-            // Update status bar or do something when file is selected
-            if (statusBar()) {
-                statusBar()->showMessage(QString("Selected: %1").arg(fileInfo.fileName()), 2000);
-            }
-        }
-        if (item->childCount() > 0) {
-            // Si c’est un dossier, on inverse son état
-            item->setExpanded(!item->isExpanded());
-        }
-
-    }
-}
-
-void MainWindow::onFileTreeItemDoubleClicked(QTreeWidgetItem *item, int column)
-{
-    Q_UNUSED(column)
-
-    if (item) {
-        QString filePath = item->data(0, Qt::UserRole).toString();
-        QFileInfo fileInfo(filePath);
-
-        if (fileInfo.isFile()) {
-            openFileInEditor(filePath);
-        } else if (fileInfo.isDir()) {
-            // Toggle folder expansion
-            item->setExpanded(!item->isExpanded());
-        }
     }
 }
 
@@ -851,20 +698,26 @@ void MainWindow::promptOpenFolderOrFile()
 
 void MainWindow::setProjectDirectory(const QString &path)
 {
-    currentWorkingDirectory = path;
-    if (m_editorManager) {
-        m_editorManager->setWorkingDirectory(path);
+    if (m_workspace) {
+        m_workspace->setRootPath(path);
+        currentWorkingDirectory = m_workspace->rootPath();
+    } else {
+        currentWorkingDirectory = path;
     }
-    loadDirectoryToTree(path);
+    if (m_editorManager) {
+        m_editorManager->setWorkingDirectory(currentWorkingDirectory);
+    }
+    if (m_fileExplorer) {
+        m_fileExplorer->reload();
+    }
 
     // Mettre à jour le répertoire de travail de tous les terminaux
     for (Terminal *terminal : terminalList) {
-        terminal->setWorkingDirectory(path);
+        terminal->setWorkingDirectory(currentWorkingDirectory);
     }
 
-    // Update chat widget with new project directory
     if (chatWidget) {
-        chatWidget->setProjectDirectory(path);
+        chatWidget->setProjectDirectory(currentWorkingDirectory);
     }
 
     // Update window title

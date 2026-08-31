@@ -2,8 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -33,6 +31,8 @@
 
 class ChatWidget;
 class EditorManager;
+class FileExplorer;
+class Workspace;
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -82,9 +82,6 @@ private slots:
     void onNewFolderClicked();
     void onCloseExplorerClicked();
 
-    void onFileTreeItemClicked(QTreeWidgetItem *item, int column);
-    void onFileTreeItemDoubleClicked(QTreeWidgetItem *item, int column);
-
     void onShowLinesToggled(bool checked);
 
     void onActionFindReplace();
@@ -100,6 +97,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
     EditorManager *m_editorManager = nullptr;
+    Workspace *m_workspace = nullptr;
+    FileExplorer *m_fileExplorer = nullptr;
     QString currentWorkingDirectory;
     QShortcut *terminalShortcut = nullptr;
     ChatWidget *chatWidget = nullptr;
@@ -122,11 +121,6 @@ private:
     void setupFileTree();
     void setupCodeEditor();
     void setupTerminalTabs();
-    void loadDirectoryToTree(const QString &path);
-    void addFileToTree(const QString &fileName, QTreeWidgetItem *parent = nullptr);
-    void addFolderToTree(const QString &folderName, QTreeWidgetItem *parent = nullptr);
-    QString getFileExtension(const QString &fileName);
-    QString getFileIcon(const QString &fileName);
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path);

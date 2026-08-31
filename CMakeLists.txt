@@ -82,6 +82,10 @@ qt_add_executable(Editerako
     src/syntax/TreeSitterDocument.h
     src/syntax/SyntaxHighlighter.cpp
     src/syntax/SyntaxHighlighter.h
+    src/project/Workspace.cpp
+    src/project/Workspace.h
+    src/project/FileExplorer.cpp
+    src/project/FileExplorer.h
     resources/resources.qrc
 )
 
