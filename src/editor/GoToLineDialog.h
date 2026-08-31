@@ -1,5 +1,5 @@
-#ifndef GOTOLINEDIALOG_H
-#define GOTOLINEDIALOG_H
+#ifndef EDITERAKO_GOTOLINEDIALOG_H
+#define EDITERAKO_GOTOLINEDIALOG_H
 
 #include <QDialog>
 
@@ -29,4 +29,4 @@ private:
     QPushButton *cancelButton;
 };
 
-#endif // GOTOLINEDIALOG_H
+#endif // EDITERAKO_GOTOLINEDIALOG_H

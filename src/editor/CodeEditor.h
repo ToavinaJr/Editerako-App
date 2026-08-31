@@ -1,5 +1,5 @@
-#ifndef CODEEDITOR_H
-#define CODEEDITOR_H
+#ifndef EDITERAKO_CODEEDITOR_H
+#define EDITERAKO_CODEEDITOR_H
 
 #include <QPlainTextEdit>
 #include <QTextDocument>
@@ -74,4 +74,4 @@ private:
     CodeEditor *codeEditor;
 };
 
-#endif // CODEEDITOR_H
+#endif // EDITERAKO_CODEEDITOR_H

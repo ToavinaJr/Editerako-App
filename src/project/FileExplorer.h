@@ -23,6 +23,7 @@ public:
 signals:
     void fileActivated(const QString &path);
     void fileSelected(const QString &path);
+    void directoryPopulated(const QString &path);
 
 private:
     void populateChildren(QTreeWidgetItem *parent);

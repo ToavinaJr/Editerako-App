@@ -133,7 +133,18 @@ CMakeLists.txt          source de vérité du build
 CMakePresets.json       presets debug / release (Ninja)
 scripts/                configure, build, run, clean (Windows + Linux)
 cmake/Warnings.cmake
-*.cpp / *.h / *.ui      sources applicatives (à la racine, en cours de modularisation)
+src/                    tout le code C++ / Qt
+  main.cpp              point d'entrée
+  app/                  MainWindow (orchestration)
+  core/                 settings, thème, session, commandes
+  editor/               éditeur, documents, find / go-to-line
+  syntax/               Tree-sitter, highlighter
+  project/              workspace, explorateur, file watcher
+  terminal/             widget, process, panneau d'onglets
+  viewers/              PDF, images
+  ai/                   chat Gemini + persistance
+  ui/                   helpers de layout / dialogues
+resources/              thèmes QSS (dark / light)
 tree-sitter/            runtime + grammaires C++ / HTML
 ```
 

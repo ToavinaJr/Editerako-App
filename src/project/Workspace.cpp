@@ -4,6 +4,7 @@
 #include "core/Logging.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <algorithm>
 
@@ -89,4 +90,37 @@ QList<Workspace::Entry> Workspace::listEntries(const QString &directoryPath) con
         result.append(entry);
     }
     return result;
+}
+
+bool Workspace::createEmptyFile(const QString &directory, const QString &fileName, QString *absolutePath)
+{
+    if (fileName.isEmpty()) {
+        return false;
+    }
+    const QString fullPath = QDir(directory).absoluteFilePath(fileName);
+    QFile file(fullPath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    file.close();
+    if (absolutePath) {
+        *absolutePath = fullPath;
+    }
+    return true;
+}
+
+bool Workspace::createDirectory(const QString &directory, const QString &folderName, QString *absolutePath)
+{
+    if (folderName.isEmpty()) {
+        return false;
+    }
+    const QString fullPath = QDir(directory).absoluteFilePath(folderName);
+    QDir dir;
+    if (!dir.mkpath(fullPath)) {
+        return false;
+    }
+    if (absolutePath) {
+        *absolutePath = fullPath;
+    }
+    return true;
 }

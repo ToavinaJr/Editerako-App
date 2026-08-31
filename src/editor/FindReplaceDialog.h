@@ -1,5 +1,5 @@
-#ifndef FINDREPLACEDIALOG_H
-#define FINDREPLACEDIALOG_H
+#ifndef EDITERAKO_FINDREPLACEDIALOG_H
+#define EDITERAKO_FINDREPLACEDIALOG_H
 
 #include <QDialog>
 
@@ -34,4 +34,4 @@ private:
     QPushButton *cancelButton;
 };
 
-#endif // FINDREPLACEDIALOG_H
+#endif // EDITERAKO_FINDREPLACEDIALOG_H

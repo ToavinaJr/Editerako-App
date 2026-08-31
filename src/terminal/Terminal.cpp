@@ -1,5 +1,5 @@
-#include "terminal.h"
-#include "ui_terminal.h"
+#include "terminal/Terminal.h"
+#include "ui_Terminal.h"
 #include "terminal/TerminalProcess.h"
 #include <QDir>
 #include <QTextCursor>

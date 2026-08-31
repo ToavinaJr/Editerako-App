@@ -15,6 +15,13 @@ $ErrorActionPreference = 'Stop'
 $root = Get-ProjectRoot
 Set-Location $root
 
+if (-not (Test-Path (Join-Path $root 'CMakeLists.txt'))) {
+    throw "CMakeLists.txt introuvable a la racine: $root"
+}
+if (-not (Test-Path (Join-Path $root 'src\main.cpp'))) {
+    throw "src\main.cpp introuvable - sources attendues sous src\."
+}
+
 $prefix = Get-QtPrefix
 Initialize-BuildEnvironment -QtPrefix $prefix
 

@@ -1,4 +1,4 @@
-#include "chatwidget.h"
+#include "ai/ChatWidget.h"
 #include "ai/AiProvider.h"
 
 #include <QHBoxLayout>

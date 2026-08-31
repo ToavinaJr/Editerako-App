@@ -1,6 +1,6 @@
 #include "editor/EditorManager.h"
 
-#include "codeeditor.h"
+#include "editor/CodeEditor.h"
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 #include "editor/EditorDocument.h"
@@ -282,8 +282,78 @@ void EditorManager::addViewerTab(QWidget *widget, const QString &filePath)
     m_tabs->setCurrentIndex(idx);
 }
 
+QStringList EditorManager::openFilePaths() const
+{
+    QStringList paths;
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        const QString path = pathForWidget(m_tabs->widget(i));
+        if (!path.isEmpty()) {
+            paths.append(path);
+        }
+    }
+    return paths;
+}
+
+CodeEditor *EditorManager::editorForPath(const QString &filePath) const
+{
+    if (filePath.isEmpty()) {
+        return nullptr;
+    }
+    const QString normalized = EditorDocument::normalizePath(filePath);
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i));
+        if (editor && pathForWidget(editor) == normalized) {
+            return editor;
+        }
+    }
+    return nullptr;
+}
+
+bool EditorManager::reloadFromDisk(const QString &filePath)
+{
+    CodeEditor *editor = editorForPath(filePath);
+    if (!editor) {
+        return false;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream in(&file);
+    const QString content = in.readAll();
+    file.close();
+
+    editor->setPlainText(content);
+    editor->document()->setModified(false);
+    updateTabLabel(editor);
+    qCInfo(lcEditor) << "Reloaded" << filePath;
+    return true;
+}
+
+void EditorManager::closeUntitledIfPristine()
+{
+    QList<QWidget *> toClose;
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i));
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (doc && doc->isUntitled() && !doc->isModified()) {
+            toClose.append(editor);
+        }
+    }
+    for (QWidget *widget : toClose) {
+        const int idx = m_tabs->indexOf(widget);
+        if (idx >= 0) {
+            closeTab(idx);
+        }
+    }
+}
+
 bool EditorManager::writeToDisk(CodeEditor *editor, const QString &path)
 {
+    emit aboutToSave(path);
+
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::warning(m_dialogParent, tr("Error"), tr("Could not save file!"));

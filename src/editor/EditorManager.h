@@ -4,6 +4,7 @@
 #include <QList>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
 class CodeEditor;
 class EditorDocument;
@@ -37,6 +38,11 @@ public:
     bool activateExisting(const QString &filePath);
     void addViewerTab(QWidget *widget, const QString &filePath);
 
+    [[nodiscard]] QStringList openFilePaths() const;
+    [[nodiscard]] CodeEditor *editorForPath(const QString &filePath) const;
+    bool reloadFromDisk(const QString &filePath);
+    void closeUntitledIfPristine();
+
     bool save(CodeEditor *editor);
     bool saveAs(CodeEditor *editor);
     bool saveCurrent();
@@ -53,6 +59,7 @@ public:
 signals:
     void currentChanged();
     void modificationChanged();
+    void aboutToSave(const QString &path);
     void fileSaved(const QString &path);
 
 private:

@@ -1,5 +1,5 @@
-#include "finddialog.h"
-#include "codeeditor.h"
+#include "editor/FindReplaceDialog.h"
+#include "editor/CodeEditor.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>

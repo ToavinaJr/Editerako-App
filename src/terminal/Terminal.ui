@@ -253,7 +253,7 @@
   <customwidget>
    <class>TerminalTextEdit</class>
    <extends>QTextEdit</extends>
-   <header>terminal.h</header>
+   <header>terminal/Terminal.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

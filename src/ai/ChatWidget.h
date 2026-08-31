@@ -1,5 +1,5 @@
-#ifndef CHATWIDGET_H
-#define CHATWIDGET_H
+#ifndef EDITERAKO_CHATWIDGET_H
+#define EDITERAKO_CHATWIDGET_H
 
 #include "ai/ChatMessage.h"
 #include "ai/ChatRepository.h"

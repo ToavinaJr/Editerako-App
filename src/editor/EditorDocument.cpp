@@ -1,6 +1,6 @@
 #include "editor/EditorDocument.h"
 
-#include "codeeditor.h"
+#include "editor/CodeEditor.h"
 
 #include <QDir>
 #include <QFileInfo>

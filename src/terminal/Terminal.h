@@ -1,5 +1,5 @@
-#ifndef TERMINAL_H
-#define TERMINAL_H
+#ifndef EDITERAKO_TERMINAL_H
+#define EDITERAKO_TERMINAL_H
 
 #include <QWidget>
 #include <QTextEdit>

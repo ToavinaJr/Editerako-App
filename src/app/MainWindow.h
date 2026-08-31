@@ -1,45 +1,27 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef EDITERAKO_MAINWINDOW_H
+#define EDITERAKO_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPushButton>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QTextStream>
-#include <QInputDialog>
-#include <QDir>
-#include <QFileInfo>
-#include <QStatusBar>
-#include <QCheckBox>
-#include <QStackedWidget>
-#include <QCloseEvent>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QMimeData>
-#include <QList>
-#include <QUrl>
-#include <QMenu>
-#include "terminal.h"
-#include "codeeditor.h"
-#include <QTabWidget>
-#include <QTabBar>
 
 class ChatWidget;
+class CodeEditor;
 class CommandRegistry;
 class EditorManager;
 class FileExplorer;
+class FileWatcher;
+class TerminalPanel;
 class ViewerManager;
 class Workspace;
 
-QT_BEGIN_NAMESPACE
-class QAction;
-class QMenuBar;
-class QStatusBar;
-QT_END_NAMESPACE
+class QCloseEvent;
+class QDragEnterEvent;
+class QDropEvent;
 
+QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
@@ -51,14 +33,13 @@ class MainWindow : public QMainWindow
     };
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
-    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private slots:
     void newFile();
@@ -83,11 +64,6 @@ private slots:
     void onActionGoToLine();
 
     void toggleTerminal();
-    void onTerminalClosed();
-
-    void addNewTerminal();
-    void closeTerminalTab(int index);
-    void onTerminalTabChanged(int index);
 
 private:
     Ui::MainWindow *ui;
@@ -96,30 +72,33 @@ private:
     ViewerManager *m_viewerManager = nullptr;
     Workspace *m_workspace = nullptr;
     FileExplorer *m_fileExplorer = nullptr;
+    FileWatcher *m_fileWatcher = nullptr;
+    TerminalPanel *m_terminalPanel = nullptr;
     QString currentWorkingDirectory;
     ChatWidget *chatWidget = nullptr;
-    bool isTerminalVisible = false;
-    QTabWidget *terminalTabs = nullptr;
-    QList<Terminal*> terminalList;
-    QPushButton *addTerminalButton = nullptr;
     bool isFileTreeVisible = true;
+    bool m_restoringSession = false;
 
     CodeEditor *currentEditor();
     QString editorDirectoryOrWorkspace() const;
+    QString targetDirectory() const;
 
     void connectActions();
     void updateCommandStates();
     void updateWindowTitle();
     void setupFileTree();
     void setupCodeEditor();
-    void setupTerminalTabs();
-    void attachTerminalCloseButton(Terminal *terminal);
-    void shutdownAllTerminals();
-    QWidget *terminalContainer() const;
+    void setupTerminalPanel();
+    void installChatWidget();
+    void focusMainWindowAndEditor();
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path);
     void syncChatContext();
+    void saveSession();
+    bool restoreSession();
+    void syncFileWatches();
+    void onFileChangedOnDisk(const QString &path);
 };
 
-#endif // MAINWINDOW_H
+#endif // EDITERAKO_MAINWINDOW_H

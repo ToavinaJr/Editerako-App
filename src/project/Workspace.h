@@ -27,6 +27,13 @@ public:
     [[nodiscard]] bool containsPath(const QString &filePath) const;
     [[nodiscard]] QList<Entry> listEntries(const QString &directoryPath) const;
 
+    [[nodiscard]] static bool createEmptyFile(const QString &directory,
+                                              const QString &fileName,
+                                              QString *absolutePath = nullptr);
+    [[nodiscard]] static bool createDirectory(const QString &directory,
+                                              const QString &folderName,
+                                              QString *absolutePath = nullptr);
+
 signals:
     void rootPathChanged(const QString &path);
 

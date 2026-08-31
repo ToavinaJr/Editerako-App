@@ -15,6 +15,15 @@ prefix="$(qt_prefix || true)"
 cd "$project_root"
 require_tools
 
+if [[ ! -f "$project_root/CMakeLists.txt" ]]; then
+    echo "CMakeLists.txt introuvable a la racine: $project_root" >&2
+    exit 1
+fi
+if [[ ! -f "$project_root/src/main.cpp" ]]; then
+    echo "src/main.cpp introuvable - sources attendues sous src/." >&2
+    exit 1
+fi
+
 echo "Project root : $project_root"
 echo "Preset       : $preset"
 if [[ -n "${prefix}" ]]; then

@@ -1,5 +1,5 @@
-#include "gotolinedialog.h"
-#include "codeeditor.h"
+#include "editor/GoToLineDialog.h"
+#include "editor/CodeEditor.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>

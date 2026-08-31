@@ -125,6 +125,7 @@ void FileExplorer::reload()
     populateChildren(rootItem);
     rootItem->setData(0, kLoadedRole, true);
     rootItem->setExpanded(true);
+    emit directoryPopulated(root);
 
     std::sort(expanded.begin(), expanded.end(), [](const QString &a, const QString &b) {
         return pathDepth(a) < pathDepth(b);
@@ -151,6 +152,7 @@ void FileExplorer::onItemExpanded(QTreeWidgetItem *item)
 
     populateChildren(item);
     item->setData(0, kLoadedRole, true);
+    emit directoryPopulated(item->data(0, kPathRole).toString());
     if (item->childCount() == 0) {
         item->setChildIndicatorPolicy(QTreeWidgetItem::DontShowIndicatorWhenChildless);
     }

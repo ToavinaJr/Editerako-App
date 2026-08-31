@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "app/MainWindow.h"
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 #include "core/ThemeManager.h"

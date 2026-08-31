@@ -9,6 +9,11 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+set(CMAKE_AUTOUIC_SEARCH_PATHS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/app"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/terminal"
+)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake")
 
 # Qt 6. PdfWidgets is a separate Qt module (Qt PDF); install it if find_package fails.
@@ -48,24 +53,14 @@ else()
     target_compile_options(tree_sitter PRIVATE -w)
 endif()
 
-# ---- Application ----
-qt_add_executable(Editerako
-    MANUAL_FINALIZATION
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    codeeditor.cpp
-    codeeditor.h
-    finddialog.cpp
-    finddialog.h
-    gotolinedialog.cpp
-    gotolinedialog.h
-    terminal.cpp
-    terminal.h
-    terminal.ui
-    chatwidget.cpp
-    chatwidget.h
+# ---- Application sources (all under src/) ----
+set(editerako_sources
+    src/main.cpp
+
+    src/app/MainWindow.cpp
+    src/app/MainWindow.h
+    src/app/MainWindow.ui
+
     src/core/Logging.cpp
     src/core/Logging.h
     src/core/AppSettings.cpp
@@ -74,22 +69,47 @@ qt_add_executable(Editerako
     src/core/ThemeManager.h
     src/core/CommandRegistry.cpp
     src/core/CommandRegistry.h
+    src/core/SessionStore.cpp
+    src/core/SessionStore.h
+    src/core/DropPaths.cpp
+    src/core/DropPaths.h
+
+    src/editor/CodeEditor.cpp
+    src/editor/CodeEditor.h
     src/editor/EditorDocument.cpp
     src/editor/EditorDocument.h
     src/editor/EditorManager.cpp
     src/editor/EditorManager.h
+    src/editor/FindReplaceDialog.cpp
+    src/editor/FindReplaceDialog.h
+    src/editor/GoToLineDialog.cpp
+    src/editor/GoToLineDialog.h
+
     src/syntax/LanguageRegistry.cpp
     src/syntax/LanguageRegistry.h
     src/syntax/TreeSitterDocument.cpp
     src/syntax/TreeSitterDocument.h
     src/syntax/SyntaxHighlighter.cpp
     src/syntax/SyntaxHighlighter.h
+
     src/project/Workspace.cpp
     src/project/Workspace.h
     src/project/FileExplorer.cpp
     src/project/FileExplorer.h
+    src/project/FileWatcher.cpp
+    src/project/FileWatcher.h
+
+    src/terminal/Terminal.cpp
+    src/terminal/Terminal.h
+    src/terminal/Terminal.ui
     src/terminal/TerminalProcess.cpp
     src/terminal/TerminalProcess.h
+    src/terminal/TerminalPanel.cpp
+    src/terminal/TerminalPanel.h
+
+    src/ui/UiHelpers.cpp
+    src/ui/UiHelpers.h
+
     src/ai/ChatMessage.h
     src/ai/AiProvider.cpp
     src/ai/AiProvider.h
@@ -99,19 +119,27 @@ qt_add_executable(Editerako
     src/ai/ChatRepository.h
     src/ai/ContextBuilder.cpp
     src/ai/ContextBuilder.h
+    src/ai/ChatWidget.cpp
+    src/ai/ChatWidget.h
+
     src/viewers/ImageViewer.cpp
     src/viewers/ImageViewer.h
     src/viewers/PdfViewer.cpp
     src/viewers/PdfViewer.h
     src/viewers/ViewerManager.cpp
     src/viewers/ViewerManager.h
+
     resources/resources.qrc
+)
+
+qt_add_executable(Editerako
+    MANUAL_FINALIZATION
+    ${editerako_sources}
 )
 
 editerako_enable_warnings(Editerako)
 
 target_include_directories(Editerako PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     tree-sitter/tree-sitter/lib/include
 )
@@ -124,6 +152,8 @@ target_link_libraries(Editerako PRIVATE
     Qt6::Concurrent
     Qt6::PdfWidgets
 )
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${editerako_sources})
 
 set_target_properties(Editerako PROPERTIES
     MACOSX_BUNDLE TRUE
