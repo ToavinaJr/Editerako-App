@@ -31,6 +31,7 @@ public:
 private:
     void parseFull();
     void rebuildLineStarts();
+    [[nodiscard]] QString snapshotText() const;
     void onContentsChange(int position, int charsRemoved, int charsAdded);
 
     QTextDocument *m_document = nullptr;

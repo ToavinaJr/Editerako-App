@@ -213,22 +213,8 @@ void CodeEditor::insertTextAtCursors(const QString &text)
     }
     editBlock.endEditBlock();
 
-    // Recalculate extra cursor positions after insertion
-    // Sort ascending to compute new positions with cumulative offset
     std::sort(positions.begin(), positions.end());
-    QList<QTextCursor> newExtras;
-    int primaryPos = textCursor().position();
-    int offset = 0;
-    for (int origPos : positions) {
-        int newPos = origPos + offset + textLen;
-        offset += textLen;
-        // Skip the primary cursor position (we update it via setTextCursor)
-        if (origPos == primaryPos - textLen) continue; // primary was at this original pos
-    }
-
-    // Rebuild extra cursors at new positions
     extraCursors.clear();
-    offset = 0;
     for (int i = 0; i < positions.size(); ++i) {
         int newPos = positions[i] + (i + 1) * textLen;
         // Check if this was the primary cursor original position

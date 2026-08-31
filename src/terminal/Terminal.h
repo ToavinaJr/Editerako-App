@@ -1,72 +1,19 @@
 #ifndef EDITERAKO_TERMINAL_H
 #define EDITERAKO_TERMINAL_H
 
-#include <QWidget>
-#include <QTextEdit>
-#include <QString>
-#include <QKeyEvent>
-#include <QListWidget>
-#include <QMap>
-#include <QStringList>
-#include <QColor>
-#include <QPoint>
+#include "terminal/CommandCompleter.h"
+#include "terminal/CommandHistory.h"
 
+#include <QColor>
+#include <QString>
+#include <QWidget>
+
+class CommandDiscovery;
 class TerminalProcess;
 
 namespace Ui {
 class Terminal;
 }
-
-class AutoCompletePopup : public QListWidget
-{
-    Q_OBJECT
-public:
-    explicit AutoCompletePopup(QWidget *parent = nullptr);
-    void showSuggestions(const QStringList &suggestions, const QPoint &position);
-    QString currentSuggestion() const;
-
-protected:
-    void keyPressEvent(QKeyEvent *event) override;
-    void focusOutEvent(QFocusEvent *event) override;
-
-signals:
-    void suggestionSelected(const QString &suggestion);
-    void cancelled();
-};
-
-class TerminalTextEdit : public QTextEdit
-{
-    Q_OBJECT
-
-public:
-    explicit TerminalTextEdit(QWidget *parent = nullptr);
-    void setPrompt(const QString &prompt);
-    QString getCurrentCommand() const;
-    void clearCurrentCommand();
-    void showAutoComplete(const QStringList &suggestions);
-    void hideAutoComplete();
-    void acceptSuggestion(const QString &suggestion);
-
-signals:
-    void commandEntered(const QString &command);
-    void upPressed();
-    void downPressed();
-    void tabPressed();
-    void textChangedForAutoComplete();
-
-protected:
-    void keyPressEvent(QKeyEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseDoubleClickEvent(QMouseEvent *event) override;
-
-private:
-    int promptPosition;
-    QString currentPrompt;
-    AutoCompletePopup *autoCompletePopup;
-
-    void ensureCursorInEditableArea();
-    int getPromptPosition() const;
-};
 
 class Terminal : public QWidget
 {
@@ -98,19 +45,14 @@ private slots:
     void onClearClicked();
     void onCloseClicked();
     void onTextChangedForAutoComplete();
-    void onSuggestionSelected(const QString &suggestion);
 
 private:
     Ui::Terminal *ui;
     TerminalProcess *m_process = nullptr;
+    CommandHistory m_history;
+    CommandDiscovery *m_discovery = nullptr;
+    CommandCompleter m_completer;
     QString workingDirectory;
-    QStringList commandHistory;
-    int historyIndex;
-    bool isDragging;
-    QPoint dragStartPosition;
-
-    QMap<QString, QStringList> commandArguments;
-    QStringList commonCommands;
 
     void setupTerminal();
     void displayPrompt();
@@ -119,19 +61,7 @@ private:
     void appendSuccess(const QString &text);
     void appendInfo(const QString &text);
     void navigateHistory(int direction);
-    void processInternalCommand(const QString &command);
-
-    void initializeCommandDatabase();
-    QStringList getCommandSuggestions(const QString &partial);
-    QStringList getArgumentSuggestions(const QString &command, const QString &partial);
-    QStringList getPathSuggestions(const QString &partial);
     void updateAutoComplete();
-    void scanCommandArgumentsAsync(const QString &command);
-    QStringList loadCachedArguments(const QString &command);
-    void saveCachedArguments(const QString &command);
-    void scanSystemCommandsAsync();
-    void loadCommandCache();
-    void saveCommandCache();
 };
 
 #endif

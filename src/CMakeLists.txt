@@ -19,6 +19,8 @@ set(editerako_sources
     core/SessionStore.h
     core/DropPaths.cpp
     core/DropPaths.h
+    core/AtomicFile.cpp
+    core/AtomicFile.h
 
     editor/CodeEditor.cpp
     editor/CodeEditor.h
@@ -48,10 +50,18 @@ set(editerako_sources
     terminal/Terminal.cpp
     terminal/Terminal.h
     terminal/Terminal.ui
+    terminal/TerminalInput.cpp
+    terminal/TerminalInput.h
     terminal/TerminalProcess.cpp
     terminal/TerminalProcess.h
     terminal/TerminalPanel.cpp
     terminal/TerminalPanel.h
+    terminal/CommandHistory.cpp
+    terminal/CommandHistory.h
+    terminal/CommandDiscovery.cpp
+    terminal/CommandDiscovery.h
+    terminal/CommandCompleter.cpp
+    terminal/CommandCompleter.h
 
     ui/UiHelpers.cpp
     ui/UiHelpers.h

@@ -49,3 +49,35 @@ editerako_add_test(test_CommandRegistry
 set_tests_properties(test_CommandRegistry PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+editerako_add_test(test_AtomicFile
+    SOURCES AtomicFileTest.cpp
+            "${PROJECT_SOURCE_DIR}/src/core/AtomicFile.cpp"
+    LIBS Qt6::Core
+)
+
+editerako_add_test(test_CommandHistory
+    SOURCES CommandHistoryTest.cpp
+            "${PROJECT_SOURCE_DIR}/src/terminal/CommandHistory.cpp"
+    LIBS Qt6::Core
+)
+
+editerako_add_test(test_CommandCompleter
+    SOURCES CommandCompleterTest.cpp
+            "${PROJECT_SOURCE_DIR}/src/terminal/CommandCompleter.cpp"
+            "${PROJECT_SOURCE_DIR}/src/terminal/CommandDiscovery.cpp"
+            "${PROJECT_SOURCE_DIR}/src/terminal/CommandHistory.cpp"
+    LIBS Qt6::Concurrent
+)
+
+editerako_add_test(test_TreeSitterDocument
+    SOURCES TreeSitterDocumentTest.cpp
+            "${PROJECT_SOURCE_DIR}/src/syntax/TreeSitterDocument.cpp"
+            "${PROJECT_SOURCE_DIR}/src/syntax/LanguageRegistry.cpp"
+            "${PROJECT_SOURCE_DIR}/src/core/Logging.cpp"
+    LIBS tree_sitter Qt6::Widgets
+)
+
+set_tests_properties(test_TreeSitterDocument PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)

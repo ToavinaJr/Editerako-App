@@ -2,6 +2,8 @@
 
 #include "core/Logging.h"
 
+#include <QStringList>
+#include <QTextBlock>
 #include <QTextDocument>
 
 namespace {
@@ -56,7 +58,7 @@ TreeSitterDocument::TreeSitterDocument(QTextDocument *document, LanguageId langu
         return;
     }
 
-    m_text = document->toPlainText();
+    m_text = snapshotText();
     parseFull();
     connect(document, &QTextDocument::contentsChange, this, &TreeSitterDocument::onContentsChange);
 }
@@ -91,6 +93,19 @@ void TreeSitterDocument::rebuildLineStarts()
     }
 }
 
+QString TreeSitterDocument::snapshotText() const
+{
+    if (!m_document) {
+        return {};
+    }
+    QStringList lines;
+    lines.reserve(m_document->blockCount());
+    for (QTextBlock block = m_document->firstBlock(); block.isValid(); block = block.next()) {
+        lines.append(block.text());
+    }
+    return lines.join(QLatin1Char('\n'));
+}
+
 void TreeSitterDocument::parseFull()
 {
     m_utf8 = m_text.toUtf8();
@@ -119,7 +134,7 @@ void TreeSitterDocument::onContentsChange(int position, int charsRemoved, int ch
     const TextIndex start = indexAtUtf16(m_text, position);
     const TextIndex oldEnd = indexAtUtf16(m_text, position + charsRemoved);
 
-    m_text = m_document->toPlainText();
+    m_text = snapshotText();
     const TextIndex newEnd = indexAtUtf16(m_text, position + charsAdded);
 
     if (m_tree) {

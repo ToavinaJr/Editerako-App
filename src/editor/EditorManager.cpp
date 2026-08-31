@@ -2,6 +2,7 @@
 
 #include "editor/CodeEditor.h"
 #include "core/AppSettings.h"
+#include "core/AtomicFile.h"
 #include "core/Logging.h"
 #include "editor/EditorDocument.h"
 #include "syntax/LanguageRegistry.h"
@@ -354,15 +355,12 @@ bool EditorManager::writeToDisk(CodeEditor *editor, const QString &path)
 {
     emit aboutToSave(path);
 
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(m_dialogParent, tr("Error"), tr("Could not save file!"));
+    QString error;
+    if (!writeTextAtomically(path, editor->toPlainText(), &error)) {
+        QMessageBox::warning(m_dialogParent, tr("Error"),
+                             tr("Could not save file: %1").arg(error));
         return false;
     }
-
-    QTextStream out(&file);
-    out << editor->toPlainText();
-    file.close();
 
     editor->document()->setModified(false);
     updateTabLabel(editor);
