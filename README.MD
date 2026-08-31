@@ -129,10 +129,13 @@ Le chat lit `GEMINI_API_KEY` dans l’environnement. Un fichier `.env` à la rac
 ## Project structure
 
 ```
-CMakeLists.txt          source de vérité du build
+CMakeLists.txt          projet, find_package Qt, qt_standard_project_setup
 CMakePresets.json       presets debug / release (Ninja)
 scripts/                configure, build, run, clean (Windows + Linux)
-cmake/Warnings.cmake
+cmake/
+  Warnings.cmake
+  TreeSitter.cmake      bibliothèque vendor
+src/CMakeLists.txt      cible Editerako, ressources, install / deploy
 src/                    tout le code C++ / Qt
   main.cpp              point d'entrée
   app/                  MainWindow (orchestration)
@@ -144,7 +147,7 @@ src/                    tout le code C++ / Qt
   viewers/              PDF, images
   ai/                   chat Gemini + persistance
   ui/                   helpers de layout / dialogues
-resources/              thèmes QSS (dark / light)
+resources/              thèmes QSS (dark / light), embarqués via qt_add_resources
 tree-sitter/            runtime + grammaires C++ / HTML
 ```
 

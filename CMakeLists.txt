@@ -1,20 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
-project(Editerako VERSION 0.1 LANGUAGES C CXX)
+project(Editerako VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_AUTOUIC_SEARCH_PATHS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/app"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/terminal"
-)
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreeSitter.cmake")
 
 # Qt 6. PdfWidgets is a separate Qt module (Qt PDF); install it if find_package fails.
 find_package(Qt6 REQUIRED COMPONENTS
@@ -25,151 +17,13 @@ find_package(Qt6 REQUIRED COMPONENTS
     PdfWidgets
 )
 
-if(MSVC)
-    add_compile_options(/Zc:__cplusplus /permissive-)
-endif()
+qt_standard_project_setup()
 
-# ---- Tree-sitter (vendored runtime + C++ / HTML grammars) ----
-add_library(tree_sitter STATIC
-    tree-sitter/tree-sitter/lib/src/lib.c
-    tree-sitter/tree-sitter-cpp/src/parser.c
-    tree-sitter/tree-sitter-cpp/src/scanner.c
-    tree-sitter/tree-sitter-html/src/parser.c
-    tree-sitter/tree-sitter-html/src/scanner.c
-)
+# Scripts and presets expect the binary at ${binaryDir}/Editerako(.exe),
+# not in a subdirectory created by add_subdirectory(src).
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-target_include_directories(tree_sitter PUBLIC
-    tree-sitter/tree-sitter/lib/include
-    tree-sitter/tree-sitter/lib/src
-    tree-sitter/tree-sitter-cpp/src
-    tree-sitter/tree-sitter-html/src
-)
-
-target_compile_definitions(tree_sitter PRIVATE TREE_SITTER_NO_ICU=1)
-
-if(MSVC)
-    target_compile_options(tree_sitter PRIVATE /W0)
-else()
-    target_compile_options(tree_sitter PRIVATE -w)
-endif()
-
-# ---- Application sources (all under src/) ----
-set(editerako_sources
-    src/main.cpp
-
-    src/app/MainWindow.cpp
-    src/app/MainWindow.h
-    src/app/MainWindow.ui
-
-    src/core/Logging.cpp
-    src/core/Logging.h
-    src/core/AppSettings.cpp
-    src/core/AppSettings.h
-    src/core/ThemeManager.cpp
-    src/core/ThemeManager.h
-    src/core/CommandRegistry.cpp
-    src/core/CommandRegistry.h
-    src/core/SessionStore.cpp
-    src/core/SessionStore.h
-    src/core/DropPaths.cpp
-    src/core/DropPaths.h
-
-    src/editor/CodeEditor.cpp
-    src/editor/CodeEditor.h
-    src/editor/EditorDocument.cpp
-    src/editor/EditorDocument.h
-    src/editor/EditorManager.cpp
-    src/editor/EditorManager.h
-    src/editor/FindReplaceDialog.cpp
-    src/editor/FindReplaceDialog.h
-    src/editor/GoToLineDialog.cpp
-    src/editor/GoToLineDialog.h
-
-    src/syntax/LanguageRegistry.cpp
-    src/syntax/LanguageRegistry.h
-    src/syntax/TreeSitterDocument.cpp
-    src/syntax/TreeSitterDocument.h
-    src/syntax/SyntaxHighlighter.cpp
-    src/syntax/SyntaxHighlighter.h
-
-    src/project/Workspace.cpp
-    src/project/Workspace.h
-    src/project/FileExplorer.cpp
-    src/project/FileExplorer.h
-    src/project/FileWatcher.cpp
-    src/project/FileWatcher.h
-
-    src/terminal/Terminal.cpp
-    src/terminal/Terminal.h
-    src/terminal/Terminal.ui
-    src/terminal/TerminalProcess.cpp
-    src/terminal/TerminalProcess.h
-    src/terminal/TerminalPanel.cpp
-    src/terminal/TerminalPanel.h
-
-    src/ui/UiHelpers.cpp
-    src/ui/UiHelpers.h
-
-    src/ai/ChatMessage.h
-    src/ai/AiProvider.cpp
-    src/ai/AiProvider.h
-    src/ai/GeminiProvider.cpp
-    src/ai/GeminiProvider.h
-    src/ai/ChatRepository.cpp
-    src/ai/ChatRepository.h
-    src/ai/ContextBuilder.cpp
-    src/ai/ContextBuilder.h
-    src/ai/ChatWidget.cpp
-    src/ai/ChatWidget.h
-
-    src/viewers/ImageViewer.cpp
-    src/viewers/ImageViewer.h
-    src/viewers/PdfViewer.cpp
-    src/viewers/PdfViewer.h
-    src/viewers/ViewerManager.cpp
-    src/viewers/ViewerManager.h
-
-    resources/resources.qrc
-)
-
-qt_add_executable(Editerako
-    MANUAL_FINALIZATION
-    ${editerako_sources}
-)
-
-editerako_enable_warnings(Editerako)
-
-target_include_directories(Editerako PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    tree-sitter/tree-sitter/lib/include
-)
-
-target_link_libraries(Editerako PRIVATE
-    tree_sitter
-    Qt6::Widgets
-    Qt6::Network
-    Qt6::Sql
-    Qt6::Concurrent
-    Qt6::PdfWidgets
-)
-
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${editerako_sources})
-
-set_target_properties(Editerako PROPERTIES
-    MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-)
-
-include(GNUInstallDirs)
-install(TARGETS Editerako
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-qt_finalize_executable(Editerako)
+add_subdirectory(src)
 
 # Qt Creator requests this target when no QML modules exist.
 add_custom_target(all_qmllint
