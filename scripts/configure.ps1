@@ -1,0 +1,40 @@
+# Configure the Editerako CMake build (Ninja preset).
+# Usage: .\scripts\configure.ps1 [-Config Debug|Release]
+
+[CmdletBinding()]
+param(
+    [ValidateSet('Debug', 'Release')]
+    [string] $Config = 'Debug'
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+. "$PSScriptRoot\_common.ps1"
+
+$root = Get-ProjectRoot
+Set-Location $root
+
+$prefix = Get-QtPrefix
+Initialize-BuildEnvironment -QtPrefix $prefix
+
+$preset = Get-PresetName $Config
+Write-Host "Project root : $root"
+Write-Host "Preset       : $preset"
+if ($prefix) {
+    Write-Host "Qt prefix    : $prefix"
+} else {
+    Write-Host "Qt prefix    : (CMake default search path)"
+}
+
+$cmakeArgs = @('--preset', $preset)
+if ($prefix) {
+    $cmakeArgs += "-DCMAKE_PREFIX_PATH=$prefix"
+}
+
+& cmake @cmakeArgs
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake configure a echoue (code $LASTEXITCODE)."
+}
+
+Write-Host "Configure OK -> $(Get-BuildDir $Config)"

@@ -45,14 +45,14 @@ static void loadDotEnv(const char *argv0)
     QStringList candidates;
     candidates << QDir::current().filePath(".env");
 
-    // Use argv[0] to derive executable directory (QCoreApplication not yet created)
+    // Parent directory (common when build output is in a subfolder)
     QString exePath = QString::fromLocal8Bit(argv0);
     QFileInfo exeInfo(exePath);
     QString exeDir = exeInfo.absolutePath();
     candidates << QDir(exeDir).filePath(".env");
-    // Parent directory (common when build output is in a subfolder)
-    candidates << QDir(exeDir).filePath("../.env");
     candidates << QDir(exeDir).filePath("../../.env");
+    candidates << QDir(exeDir).filePath("../.env");
+    // Use argv[0] to derive executable directory (QCoreApplication not yet created)
 
     for (const QString &path : candidates) {
         if (tryLoadEnvFile(path)) {
