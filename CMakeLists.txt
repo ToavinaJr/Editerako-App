@@ -61,8 +61,6 @@ qt_add_executable(Editerako
     finddialog.h
     gotolinedialog.cpp
     gotolinedialog.h
-    syntaxhighlighter.cpp
-    syntaxhighlighter.h
     terminal.cpp
     terminal.h
     terminal.ui
@@ -78,6 +76,12 @@ qt_add_executable(Editerako
     src/editor/EditorDocument.h
     src/editor/EditorManager.cpp
     src/editor/EditorManager.h
+    src/syntax/LanguageRegistry.cpp
+    src/syntax/LanguageRegistry.h
+    src/syntax/TreeSitterDocument.cpp
+    src/syntax/TreeSitterDocument.h
+    src/syntax/SyntaxHighlighter.cpp
+    src/syntax/SyntaxHighlighter.h
     resources/resources.qrc
 )
 

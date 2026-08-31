@@ -4,7 +4,8 @@
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 #include "editor/EditorDocument.h"
-#include "syntaxhighlighter.h"
+#include "syntax/LanguageRegistry.h"
+#include "syntax/SyntaxHighlighter.h"
 
 #include <QFile>
 #include <QFileDialog>
@@ -68,6 +69,7 @@ CodeEditor *EditorManager::createEditor()
     });
     connect(doc, &EditorDocument::filePathChanged, this, [this, editor](const QString &) {
         updateTabLabel(editor);
+        syncHighlighter(editor);
     });
 
     return editor;
@@ -83,20 +85,48 @@ void EditorManager::applyEditorStyle(CodeEditor *editor) const
         "font-size: 13px;");
 }
 
-void EditorManager::attachHighlighter(CodeEditor *editor, const QString &filePath, qint64 fileSize)
+void EditorManager::syncHighlighter(CodeEditor *editor)
 {
-    const AppSettings settings;
-    if (fileSize > settings.largeFileDisableSyntaxBytes()) {
-        qCInfo(lcEditor) << "Skipping syntax highlighter for large file" << filePath << fileSize;
+    if (!editor) {
         return;
     }
 
-    const QString ext = QFileInfo(filePath).suffix().toLower();
-    SyntaxHighlighter::Language lang = SyntaxHighlighter::CPP;
-    if (ext == QLatin1String("html") || ext == QLatin1String("tsx")) {
-        lang = SyntaxHighlighter::HTML;
+    auto *edDoc = EditorDocument::fromEditor(editor);
+    const QString path = edDoc ? edDoc->filePath() : QString();
+    const LanguageId lang = LanguageRegistry::idForPath(path);
+
+    qint64 size = static_cast<qint64>(editor->document()->characterCount());
+    if (!path.isEmpty()) {
+        const QFileInfo info(path);
+        if (info.exists()) {
+            size = info.size();
+        }
     }
-    new SyntaxHighlighter(editor, lang);
+
+    const auto existing = editor->document()->findChildren<SyntaxHighlighter *>(
+        QString(), Qt::FindDirectChildrenOnly);
+
+    const bool tooLarge = size > AppSettings().largeFileDisableSyntaxBytes();
+    if (tooLarge || lang == LanguageId::PlainText) {
+        for (SyntaxHighlighter *highlighter : existing) {
+            delete highlighter;
+        }
+        if (tooLarge) {
+            qCInfo(lcEditor) << "Skipping syntax highlighter for large file" << path << size;
+        }
+        return;
+    }
+
+    if (existing.size() == 1 && existing.front()->language() == lang) {
+        return;
+    }
+
+    for (SyntaxHighlighter *highlighter : existing) {
+        delete highlighter;
+    }
+
+    qCInfo(lcEditor) << "Highlighter" << LanguageRegistry::displayName(lang) << "for" << path;
+    new SyntaxHighlighter(editor->document(), lang);
 }
 
 void EditorManager::updateTabLabel(CodeEditor *editor)
@@ -146,7 +176,6 @@ QList<CodeEditor *> EditorManager::modifiedEditors() const
 CodeEditor *EditorManager::openUntitled()
 {
     auto *editor = createEditor();
-    attachHighlighter(editor, QString(), 0);
     const int idx = m_tabs->addTab(editor, tr("untitled"));
     m_tabs->setCurrentIndex(idx);
     updateTabLabel(editor);
@@ -218,9 +247,8 @@ bool EditorManager::openTextFile(const QString &filePath)
 
     auto *editor = createEditor();
     auto *doc = EditorDocument::fromEditor(editor);
-    doc->setFilePath(filePath);
     editor->setPlainText(content);
-    attachHighlighter(editor, filePath, size);
+    doc->setFilePath(filePath);
     editor->document()->setModified(false);
 
     const int idx = m_tabs->addTab(editor, doc->displayName());
