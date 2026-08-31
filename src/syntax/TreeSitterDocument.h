@@ -25,6 +25,8 @@ public:
     [[nodiscard]] LanguageId language() const { return m_language; }
 
     [[nodiscard]] bool utf8RangeForBlock(int blockNumber, uint32_t *start, uint32_t *end) const;
+    [[nodiscard]] TSNode rootNode() const;
+    [[nodiscard]] const QByteArray &utf8() const { return m_utf8; }
     void visitOverlapping(uint32_t startByte, uint32_t endByte,
                           const std::function<void(TSNode)> &visitor) const;
 

@@ -177,6 +177,14 @@ bool TreeSitterDocument::utf8RangeForBlock(int blockNumber, uint32_t *start, uin
     return true;
 }
 
+TSNode TreeSitterDocument::rootNode() const
+{
+    if (!m_tree) {
+        return TSNode{};
+    }
+    return ts_tree_root_node(m_tree);
+}
+
 void TreeSitterDocument::visitOverlapping(uint32_t startByte, uint32_t endByte,
                                           const std::function<void(TSNode)> &visitor) const
 {

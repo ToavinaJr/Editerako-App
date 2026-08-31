@@ -37,6 +37,8 @@ set(editerako_sources
     syntax/LanguageRegistry.h
     syntax/TreeSitterDocument.cpp
     syntax/TreeSitterDocument.h
+    syntax/HighlightQuery.cpp
+    syntax/HighlightQuery.h
     syntax/SyntaxHighlighter.cpp
     syntax/SyntaxHighlighter.h
 
@@ -111,6 +113,14 @@ qt_add_resources(Editerako editerako_themes
     FILES
         "${PROJECT_SOURCE_DIR}/resources/themes/dark.qss"
         "${PROJECT_SOURCE_DIR}/resources/themes/light.qss"
+)
+
+qt_add_resources(Editerako editerako_syntax
+    PREFIX "/editerako"
+    BASE "${PROJECT_SOURCE_DIR}/resources"
+    FILES
+        "${PROJECT_SOURCE_DIR}/resources/syntax/cpp/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/html/highlights.scm"
 )
 
 set_target_properties(Editerako PROPERTIES

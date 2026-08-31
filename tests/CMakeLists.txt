@@ -81,3 +81,14 @@ editerako_add_test(test_TreeSitterDocument
 set_tests_properties(test_TreeSitterDocument PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+editerako_add_test(test_HighlightQuery
+    SOURCES HighlightQueryTest.cpp
+            "${PROJECT_SOURCE_DIR}/src/syntax/HighlightQuery.cpp"
+            "${PROJECT_SOURCE_DIR}/src/syntax/LanguageRegistry.cpp"
+    LIBS tree_sitter Qt6::Core
+)
+
+target_compile_definitions(test_HighlightQuery PRIVATE
+    EDITERAKO_QUERY_DIR="${PROJECT_SOURCE_DIR}/resources/syntax"
+)

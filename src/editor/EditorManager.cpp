@@ -117,7 +117,8 @@ void EditorManager::syncHighlighter(CodeEditor *editor)
         QString(), Qt::FindDirectChildrenOnly);
 
     const bool tooLarge = size > AppSettings().largeFileDisableSyntaxBytes();
-    if (tooLarge || lang == LanguageId::PlainText) {
+    const bool canHighlight = LanguageRegistry::tsLanguage(lang) != nullptr;
+    if (tooLarge || !canHighlight) {
         for (SyntaxHighlighter *highlighter : existing) {
             delete highlighter;
         }

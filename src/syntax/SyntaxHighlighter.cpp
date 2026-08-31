@@ -1,32 +1,14 @@
 #include "syntax/SyntaxHighlighter.h"
 
 #include "core/Logging.h"
+#include "syntax/HighlightQuery.h"
 #include "syntax/TreeSitterDocument.h"
 
 #include <QColor>
 #include <QFont>
-#include <QRegularExpression>
-#include <QStringList>
 #include <QTextBlock>
-#include <cstring>
 
 namespace {
-
-const QStringList &cppKeywords()
-{
-    static const QStringList keywords = {
-        "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
-        "case", "catch", "char", "char16_t", "char32_t", "class", "compl", "const", "constexpr",
-        "const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast",
-        "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto",
-        "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
-        "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "register",
-        "reinterpret_cast", "return", "short", "signed", "sizeof", "static", "static_assert",
-        "static_cast", "struct", "switch", "template", "this", "thread_local", "throw", "true",
-        "try", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual", "void",
-        "volatile", "wchar_t", "while", "xor", "xor_eq"};
-    return keywords;
-}
 
 int utf8OffsetToUtf16(const QByteArray &utf8, const QString &text, uint32_t utf8Offset)
 {
@@ -52,100 +34,100 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *document, LanguageId languag
 
     setupFormats();
     m_treeDocument = new TreeSitterDocument(document, language, this);
+
+    const TSLanguage *tsLang = LanguageRegistry::tsLanguage(language);
+    const QByteArray source = LanguageRegistry::highlightQuerySource(language);
+    if (tsLang && !source.isEmpty()) {
+        m_query = std::make_unique<HighlightQuery>(tsLang, source);
+        if (!m_query->isValid()) {
+            qCWarning(lcSyntax) << "Highlight query failed for"
+                                << LanguageRegistry::displayName(language)
+                                << m_query->errorString();
+            m_query.reset();
+        }
+    }
+
     setDocument(document);
 }
 
+SyntaxHighlighter::~SyntaxHighlighter() = default;
+
 void SyntaxHighlighter::setupFormats()
 {
-    m_keywordFormat.setForeground(QColor(86, 156, 214));
-    m_keywordFormat.setFontWeight(QFont::Bold);
+    QTextCharFormat keyword;
+    keyword.setForeground(QColor(86, 156, 214));
+    keyword.setFontWeight(QFont::Bold);
+    m_formats.insert(QStringLiteral("keyword"), keyword);
 
-    m_typeFormat.setForeground(QColor(78, 201, 176));
-    m_typeFormat.setFontWeight(QFont::Bold);
+    QTextCharFormat type;
+    type.setForeground(QColor(78, 201, 176));
+    type.setFontWeight(QFont::Bold);
+    m_formats.insert(QStringLiteral("type"), type);
+    m_formats.insert(QStringLiteral("tag"), keyword);
+    m_formats.insert(QStringLiteral("attribute"), type);
 
-    m_stringFormat.setForeground(QColor(214, 157, 133));
-    m_commentFormat.setForeground(QColor(106, 153, 85));
-    m_numberFormat.setForeground(QColor(181, 206, 168));
+    QTextCharFormat string;
+    string.setForeground(QColor(214, 157, 133));
+    m_formats.insert(QStringLiteral("string"), string);
 
-    m_preprocFormat.setForeground(QColor(197, 134, 192));
-    m_preprocFormat.setFontItalic(true);
+    QTextCharFormat comment;
+    comment.setForeground(QColor(106, 153, 85));
+    m_formats.insert(QStringLiteral("comment"), comment);
 
-    m_functionFormat.setForeground(QColor(220, 220, 170));
-    m_functionFormat.setFontItalic(true);
+    QTextCharFormat number;
+    number.setForeground(QColor(181, 206, 168));
+    m_formats.insert(QStringLiteral("number"), number);
+    m_formats.insert(QStringLiteral("constant"), number);
 
-    m_variableFormat.setForeground(QColor(156, 220, 254));
-    m_parameterFormat.setForeground(QColor(215, 186, 125));
-    m_punctuationFormat.setForeground(QColor(212, 212, 212));
-    m_operatorFormat.setForeground(QColor(181, 206, 168));
+    QTextCharFormat preproc;
+    preproc.setForeground(QColor(197, 134, 192));
+    preproc.setFontItalic(true);
+    m_formats.insert(QStringLiteral("preproc"), preproc);
 
-    m_namespaceFormat.setForeground(QColor(255, 136, 0));
-    m_namespaceFormat.setFontWeight(QFont::Bold);
+    QTextCharFormat function;
+    function.setForeground(QColor(220, 220, 170));
+    function.setFontItalic(true);
+    m_formats.insert(QStringLiteral("function"), function);
+
+    QTextCharFormat variable;
+    variable.setForeground(QColor(156, 220, 254));
+    m_formats.insert(QStringLiteral("variable"), variable);
+    m_formats.insert(QStringLiteral("property"), variable);
+
+    QTextCharFormat parameter;
+    parameter.setForeground(QColor(215, 186, 125));
+    m_formats.insert(QStringLiteral("parameter"), parameter);
+
+    QTextCharFormat punctuation;
+    punctuation.setForeground(QColor(212, 212, 212));
+    m_formats.insert(QStringLiteral("punctuation"), punctuation);
+
+    QTextCharFormat op;
+    op.setForeground(QColor(181, 206, 168));
+    m_formats.insert(QStringLiteral("operator"), op);
+
+    QTextCharFormat module;
+    module.setForeground(QColor(255, 136, 0));
+    module.setFontWeight(QFont::Bold);
+    m_formats.insert(QStringLiteral("module"), module);
+    m_formats.insert(QStringLiteral("namespace"), module);
 }
 
-void SyntaxHighlighter::applyNodeFormat(const char *type, int start, int length)
+QTextCharFormat SyntaxHighlighter::formatForCapture(const QString &captureName) const
 {
-    if (!type || length <= 0) {
-        return;
+    const QString family = captureName.section(QLatin1Char('.'), 0, 0);
+    if (family == QLatin1String("keyword") && captureName.contains(QLatin1String("directive"))) {
+        return m_formats.value(QStringLiteral("preproc"));
     }
-
-    if (m_language == LanguageId::Html) {
-        if (std::strcmp(type, "tag_name") == 0) {
-            setFormat(start, length, m_keywordFormat);
-        } else if (std::strcmp(type, "attribute_name") == 0) {
-            setFormat(start, length, m_typeFormat);
-        } else if (std::strcmp(type, "quoted_attribute_value") == 0
-                   || std::strcmp(type, "attribute_value") == 0
-                   || std::strcmp(type, "string") == 0) {
-            setFormat(start, length, m_stringFormat);
-        } else if (std::strcmp(type, "comment") == 0) {
-            setFormat(start, length, m_commentFormat);
-        }
-        return;
+    if (family == QLatin1String("variable") && captureName.contains(QLatin1String("parameter"))) {
+        return m_formats.value(QStringLiteral("parameter"));
     }
-
-    if (std::strncmp(type, "preproc", 7) == 0) {
-        setFormat(start, length, m_preprocFormat);
-    } else if (std::strcmp(type, "comment") == 0) {
-        setFormat(start, length, m_commentFormat);
-    } else if (std::strcmp(type, "string_literal") == 0
-               || std::strcmp(type, "raw_string_literal") == 0
-               || std::strcmp(type, "char_literal") == 0) {
-        setFormat(start, length, m_stringFormat);
-    } else if (std::strcmp(type, "number_literal") == 0) {
-        setFormat(start, length, m_numberFormat);
-    } else if (std::strcmp(type, "primitive_type") == 0
-               || std::strcmp(type, "type_identifier") == 0) {
-        setFormat(start, length, m_typeFormat);
-    } else if (std::strcmp(type, "function_definition") == 0
-               || std::strcmp(type, "function_declarator") == 0
-               || std::strcmp(type, "operator_cast") == 0
-               || std::strcmp(type, "operator_cast_definition") == 0
-               || std::strcmp(type, "function") == 0
-               || std::strcmp(type, "call_expression") == 0) {
-        setFormat(start, length, m_functionFormat);
-    } else if (std::strcmp(type, "identifier") == 0) {
-        setFormat(start, length, m_variableFormat);
-    } else if (std::strcmp(type, "parameter_declaration") == 0) {
-        setFormat(start, length, m_parameterFormat);
-    } else if (std::strcmp(type, "namespace") == 0
-               || std::strcmp(type, "namespace_definition") == 0) {
-        setFormat(start, length, m_namespaceFormat);
-    } else if (std::strcmp(type, "class_specifier") == 0
-               || std::strcmp(type, "struct_specifier") == 0) {
-        setFormat(start, length, m_keywordFormat);
-    } else if (std::strcmp(type, "operator_name") == 0) {
-        setFormat(start, length, m_operatorFormat);
-    } else if (std::strcmp(type, "{") == 0 || std::strcmp(type, "}") == 0
-               || std::strcmp(type, "(") == 0 || std::strcmp(type, ")") == 0
-               || std::strcmp(type, "[") == 0 || std::strcmp(type, "]") == 0
-               || std::strcmp(type, ";") == 0 || std::strcmp(type, ",") == 0) {
-        setFormat(start, length, m_punctuationFormat);
-    }
+    return m_formats.value(family);
 }
 
 void SyntaxHighlighter::highlightBlock(const QString &text)
 {
-    if (!m_treeDocument || !m_treeDocument->isReady()) {
+    if (!m_treeDocument || !m_treeDocument->isReady() || !m_query) {
         return;
     }
 
@@ -166,30 +148,19 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
         return utf8OffsetToUtf16(blockUtf8, text, absByte - blockStart);
     };
 
-    m_treeDocument->visitOverlapping(blockStart, blockEnd, [&](TSNode node) {
-        const uint32_t nodeStart = ts_node_start_byte(node);
-        const uint32_t nodeEnd = ts_node_end_byte(node);
-        const uint32_t clippedStart = qMax(nodeStart, blockStart);
-        const uint32_t clippedEnd = qMin(nodeEnd, blockEnd);
-        if (clippedEnd <= clippedStart) {
-            return;
+    const TSNode root = m_treeDocument->rootNode();
+    const QVector<HighlightQuery::Capture> caps =
+        m_query->captures(root, blockStart, blockEnd, m_treeDocument->utf8());
+
+    for (const HighlightQuery::Capture &cap : caps) {
+        const QTextCharFormat fmt = formatForCapture(cap.name);
+        if (!fmt.isValid()) {
+            continue;
         }
-
-        const int start = toLocalUtf16(clippedStart);
-        const int end = toLocalUtf16(clippedEnd);
-        applyNodeFormat(ts_node_type(node), start, end - start);
-    });
-
-    if (m_language != LanguageId::Cpp) {
-        return;
-    }
-
-    static const QRegularExpression wordRegex(QStringLiteral("\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b"));
-    auto it = wordRegex.globalMatch(text);
-    while (it.hasNext()) {
-        const auto match = it.next();
-        if (cppKeywords().contains(match.captured(1))) {
-            setFormat(match.capturedStart(1), match.capturedLength(1), m_keywordFormat);
+        const int start = toLocalUtf16(cap.startByte);
+        const int end = toLocalUtf16(cap.endByte);
+        if (end > start) {
+            setFormat(start, end - start, fmt);
         }
     }
 }

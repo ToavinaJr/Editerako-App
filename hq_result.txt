@@ -1,0 +1,11 @@
+********* Start testing of HighlightQueryTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 13.1.0), windows 11
+PASS   : HighlightQueryTest::initTestCase()
+PASS   : HighlightQueryTest::invalidQuery()
+PASS   : HighlightQueryTest::capturesIdentifiers()
+PASS   : HighlightQueryTest::matchPredicate()
+PASS   : HighlightQueryTest::shippedCppQueryCompilesAndHighlights()
+PASS   : HighlightQueryTest::shippedHtmlQueryCompilesAndHighlights()
+PASS   : HighlightQueryTest::cleanupTestCase()
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 187ms
+********* Finished testing of HighlightQueryTest *********
