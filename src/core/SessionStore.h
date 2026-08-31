@@ -5,6 +5,8 @@
 #include <QString>
 #include <QStringList>
 
+class QSettings;
+
 struct SessionState {
     QString workspace;
     QStringList openFiles;
@@ -18,6 +20,9 @@ class SessionStore
 public:
     [[nodiscard]] SessionState load() const;
     void save(const SessionState &state);
+
+    [[nodiscard]] SessionState load(QSettings &settings) const;
+    void save(const SessionState &state, QSettings &settings);
 };
 
 #endif

@@ -16,7 +16,18 @@ constexpr auto kWindowState = "session/windowState";
 
 SessionState SessionStore::load() const
 {
-    const QSettings settings;
+    QSettings settings;
+    return load(settings);
+}
+
+void SessionStore::save(const SessionState &state)
+{
+    QSettings settings;
+    save(state, settings);
+}
+
+SessionState SessionStore::load(QSettings &settings) const
+{
     SessionState state;
     state.workspace = settings.value(kWorkspace).toString();
     state.openFiles = settings.value(kOpenFiles).toStringList();
@@ -26,9 +37,8 @@ SessionState SessionStore::load() const
     return state;
 }
 
-void SessionStore::save(const SessionState &state)
+void SessionStore::save(const SessionState &state, QSettings &settings)
 {
-    QSettings settings;
     settings.setValue(kWorkspace, state.workspace);
     settings.setValue(kOpenFiles, state.openFiles);
     settings.setValue(kActiveFile, state.activeFile);

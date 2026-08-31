@@ -1,6 +1,8 @@
 #ifndef EDITERAKO_VIEWERMANAGER_H
 #define EDITERAKO_VIEWERMANAGER_H
 
+#include "viewers/FileKind.h"
+
 #include <QObject>
 #include <QString>
 
@@ -11,12 +13,7 @@ class ViewerManager : public QObject
     Q_OBJECT
 
 public:
-    enum class FileKind {
-        Text,
-        Pdf,
-        Image,
-        Unsupported,
-    };
+    using FileKind = ::FileKind;
 
     enum class OpenResult {
         Opened,

@@ -72,6 +72,8 @@ set(editerako_sources
     viewers/ImageViewer.h
     viewers/PdfViewer.cpp
     viewers/PdfViewer.h
+    viewers/FileKind.cpp
+    viewers/FileKind.h
     viewers/ViewerManager.cpp
     viewers/ViewerManager.h
 )

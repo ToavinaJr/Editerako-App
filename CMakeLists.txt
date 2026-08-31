@@ -15,6 +15,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Sql
     Concurrent
     PdfWidgets
+    Test
 )
 
 qt_standard_project_setup()
@@ -23,7 +24,9 @@ qt_standard_project_setup()
 # not in a subdirectory created by add_subdirectory(src).
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
+enable_testing()
 add_subdirectory(src)
+add_subdirectory(tests)
 
 # Qt Creator requests this target when no QML modules exist.
 add_custom_target(all_qmllint

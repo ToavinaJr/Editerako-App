@@ -2,7 +2,7 @@
 
 Éditeur de code / mini-IDE en **C++20** et **Qt 6 Widgets**.
 
-Le projet est un prototype fonctionnel en cours de structuration architecturale. Les instructions ci-dessous décrivent **le build réellement supporté aujourd’hui**.
+Documentation détaillée : [docs/](docs/README.md) (architecture, build, conventions, tests).
 
 ## Features
 
@@ -21,23 +21,12 @@ Le projet est un prototype fonctionnel en cours de structuration architecturale.
 
 ## Requirements
 
-- **CMake** ≥ 3.21
-- **Ninja**
-- Compilateur C++20 (MinGW / GCC / Clang / MSVC)
-- **Qt 6** avec les modules :
-  - Widgets
-  - Network
-  - Sql
-  - Concurrent
-  - **PdfWidgets** (module Qt PDF — à installer séparément si `find_package` échoue)
+- **CMake** ≥ 3.21, **Ninja**, compilateur C++20
+- **Qt 6** : Widgets, Network, Sql, Concurrent, **PdfWidgets** (module Qt PDF), Test
 
-Qt est localisé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake` sur le `PATH`, ou (Windows) le layout de l’installateur `C:\Qt\<version>\mingw_64`.
-
-Le thème (`dark` / `light`) est lu dans `QSettings` (organisation/application `Editerako`). La valeur par défaut est `dark`.
+Qt est localisé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake`, ou (Windows) `C:\Qt\<version>\mingw_64`. Détail : [docs/build.md](docs/build.md).
 
 ## Build Windows
-
-Depuis la racine du dépôt, dans PowerShell :
 
 ```powershell
 .\scripts\configure.ps1
@@ -45,44 +34,13 @@ Depuis la racine du dépôt, dans PowerShell :
 .\scripts\run.ps1
 ```
 
-Si l’exécution des scripts est bloquée : `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+Si les scripts sont bloqués : `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Release :
+Release : ajouter `-Config Release`. Compiler puis lancer : `.\scripts\run.ps1 -Build`. Tests : `.\scripts\test.ps1`. Nettoyage : `.\scripts\clean.ps1` (`-All` pour tout `build/`).
 
-```powershell
-.\scripts\configure.ps1 -Config Release
-.\scripts\build.ps1 -Config Release
-.\scripts\run.ps1 -Config Release
-```
+CMake : `cmake --preset debug` puis `cmake --build --preset debug`.
 
-Compiler puis lancer :
-
-```powershell
-.\scripts\run.ps1 -Build
-```
-
-Nettoyer uniquement `build/debug` (le kit Qt Creator n’est pas touché) :
-
-```powershell
-.\scripts\clean.ps1
-```
-
-Tout le dossier `build/` (y compris un kit Qt Creator) :
-
-```powershell
-.\scripts\clean.ps1 -All
-```
-
-CMake directement :
-
-```powershell
-cmake --preset debug
-cmake --build --preset debug
-```
-
-### Qt Creator
-
-Ouvrir `CMakeLists.txt`. Choisir un kit Qt 6 avec PdfWidgets. Le dossier de build de Qt Creator (par exemple `build/Desktop_Qt_…`) est distinct de `build/debug` utilisé par les scripts.
+Qt Creator : ouvrir `CMakeLists.txt`, kit Qt 6 **avec PdfWidgets**. Le kit (`build/Desktop_Qt_…`) est distinct de `build/debug`.
 
 ## Build Linux
 
@@ -92,73 +50,12 @@ Ouvrir `CMakeLists.txt`. Choisir un kit Qt 6 avec PdfWidgets. Le dossier de buil
 ./scripts/run.sh
 ```
 
-Release :
+Release : argument `Release`. Compiler puis lancer : `./scripts/run.sh --build`. Tests : `./scripts/test.sh`. Sur certaines distros, installer **Qt PDF** en plus de Widgets.
 
-```bash
-./scripts/configure.sh Release
-./scripts/build.sh Release
-./scripts/run.sh Release
-```
+## AI
 
-Compiler puis lancer :
-
-```bash
-./scripts/run.sh --build
-```
-
-Nettoyer :
-
-```bash
-./scripts/clean.sh
-./scripts/clean.sh --all
-```
-
-CMake :
-
-```bash
-cmake --preset debug
-cmake --build --preset debug
-```
-
-Sur certaines distributions, installer le paquet **Qt PDF** en plus de Qt Widgets.
-
-## AI configuration
-
-Le chat lit `GEMINI_API_KEY` dans l’environnement. Un fichier `.env` à la racine (ignoré par Git) est chargé au démarrage s’il existe. Ne commitez jamais de clé.
-
-## Project structure
-
-```
-CMakeLists.txt          projet, find_package Qt, qt_standard_project_setup
-CMakePresets.json       presets debug / release (Ninja)
-scripts/                configure, build, run, clean (Windows + Linux)
-cmake/
-  Warnings.cmake
-  TreeSitter.cmake      bibliothèque vendor
-src/CMakeLists.txt      cible Editerako, ressources, install / deploy
-src/                    tout le code C++ / Qt
-  main.cpp              point d'entrée
-  app/                  MainWindow (orchestration)
-  core/                 settings, thème, session, commandes
-  editor/               éditeur, documents, find / go-to-line
-  syntax/               Tree-sitter, highlighter
-  project/              workspace, explorateur, file watcher
-  terminal/             widget, process, panneau d'onglets
-  viewers/              PDF, images
-  ai/                   chat Gemini + persistance
-  ui/                   helpers de layout / dialogues
-resources/              thèmes QSS (dark / light), embarqués via qt_add_resources
-tree-sitter/            runtime + grammaires C++ / HTML
-```
-
-## Testing
-
-Aucun test automatisé n’est encore branché (`ctest` n’a pas de suite).
-
-## Roadmap
-
-Modulariser l’éditeur, Tree-sitter au niveau document, explorateur paresseux, terminal et chat IA découplés — sans casser les fonctionnalités listées ci-dessus.
+Le chat lit `GEMINI_API_KEY`. Copier [`.env.example`](.env.example) vers `.env` à la racine (ignoré par Git). Ne jamais committer de clé.
 
 ## Contributing
 
-Compiler via les scripts ou Qt Creator, ne pas versionner `build/`, `.env`, ni les artefacts CMake/MSVC générés (voir `.gitignore`).
+Suivre [docs/conventions.md](docs/conventions.md). Ne pas versionner `build/`, `.env`, ni `{projet}/.editerako/`.
