@@ -1,55 +1,51 @@
 #ifndef CHATWIDGET_H
 #define CHATWIDGET_H
 
-#include <QWidget>
-#include <QList>
-#include <QPair>
-#include <QSqlDatabase>
+#include "ai/ChatMessage.h"
+#include "ai/ChatRepository.h"
+#include "ai/ContextBuilder.h"
 
+#include <QList>
+#include <QWidget>
+
+class AiProvider;
 class QTextEdit;
 class QLineEdit;
 class QPushButton;
-class QNetworkAccessManager;
 
-class ChatWidget : public QWidget {
+class ChatWidget : public QWidget
+{
     Q_OBJECT
+
 public:
     explicit ChatWidget(QWidget *parent = nullptr);
-    ~ChatWidget();
+    ~ChatWidget() override;
 
-    // Set the project directory and load its chat history
     void setProjectDirectory(const QString &projectDir);
-    QString projectDirectory() const { return m_projectDir; }
+    [[nodiscard]] QString projectDirectory() const { return m_projectDir; }
+    void setActiveFileContext(const QString &path, const QString &content);
 
-    // Save chat history to SQLite database
     void saveChatHistory();
-    // Load chat history from SQLite database
     void loadChatHistory();
-    // Clear current conversation view and history
     void clearChat();
 
 public slots:
     void sendMessage();
 
 private:
-    QTextEdit *conversationView;
-    QLineEdit *inputLine;
-    QPushButton *sendButton;
-    QNetworkAccessManager *networkManager;
+    void appendMessage(const QString &who, const QString &text, bool addToHistory = true);
+    void onProviderResponse(const QString &text);
+    void onProviderError(const QString &message);
+
+    QTextEdit *conversationView = nullptr;
+    QLineEdit *inputLine = nullptr;
+    QPushButton *sendButton = nullptr;
 
     QString m_projectDir;
-    QSqlDatabase m_db;
-    QString m_dbConnectionName;
-    
-    // Store messages as pairs (sender, text) for persistence
-    QList<QPair<QString, QString>> m_chatHistory;
-
-    void appendMessage(const QString &who, const QString &text, bool addToHistory = true);
-    void callGeminiApi(const QString &prompt);
-    QString databaseFilePath() const;
-    void initDatabase();
-    void closeDatabase();
-    void saveMessageToDb(const QString &sender, const QString &text);
+    ChatRepository m_repository;
+    ContextBuilder m_context;
+    AiProvider *m_provider = nullptr;
+    QList<ChatMessage> m_chatHistory;
 };
 
-#endif // CHATWIDGET_H
+#endif

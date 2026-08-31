@@ -1,42 +1,23 @@
 #include "chatwidget.h"
-#include "core/Logging.h"
-#include <QVBoxLayout>
+#include "ai/AiProvider.h"
+
 #include <QHBoxLayout>
-#include <QTextEdit>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QJsonValue>
-#include <QUrl>
-#include <QUrlQuery>
-#include <QApplication>
 #include <QScrollBar>
-#include <QDateTime>
-#include <QTextDocument>
+#include <QSizePolicy>
 #include <QSplitter>
-#include <QDir>
-#include <QFile>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QUuid>
+#include <QTextDocument>
+#include <QTextEdit>
+#include <QVBoxLayout>
 
 ChatWidget::ChatWidget(QWidget *parent)
     : QWidget(parent)
     , conversationView(new QTextEdit(this))
     , inputLine(new QLineEdit(this))
     , sendButton(new QPushButton(tr("➤"), this))
-    , networkManager(new QNetworkAccessManager(this))
-    , m_dbConnectionName(QUuid::createUuid().toString())
+    , m_provider(AiProvider::create(this))
 {
-    QString time = QDateTime::currentDateTime().toString("HH:mm");
-    
-    // Conversation view styling - Design moderne avec dégradé subtil
     conversationView->setReadOnly(true);
     conversationView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     conversationView->setStyleSheet(
@@ -70,7 +51,6 @@ ChatWidget::ChatWidget(QWidget *parent)
         "}"
     );
 
-    // Input field styling - Design plus moderne avec ombre
     inputLine->setPlaceholderText(tr("Posez votre question à Gemini..."));
     inputLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     inputLine->setStyleSheet(
@@ -96,7 +76,6 @@ ChatWidget::ChatWidget(QWidget *parent)
         "}"
     );
 
-    // Send button styling - Design gradient moderne
     sendButton->setFixedSize(44, 44);
     sendButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     sendButton->setCursor(Qt::PointingHandCursor);
@@ -121,7 +100,6 @@ ChatWidget::ChatWidget(QWidget *parent)
         "}"
     );
 
-    // Input layout encapsulated in a container so it can be placed in a splitter
     QWidget *inputContainer = new QWidget(this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputContainer);
     inputLayout->setContentsMargins(0, 0, 0, 0);
@@ -129,7 +107,6 @@ ChatWidget::ChatWidget(QWidget *parent)
     inputLayout->addWidget(inputLine);
     inputLayout->addWidget(sendButton);
 
-    // Use a vertical splitter so the user can stretch the conversation area (height)
     QSplitter *split = new QSplitter(Qt::Vertical, this);
     split->addWidget(conversationView);
     split->addWidget(inputContainer);
@@ -137,23 +114,16 @@ ChatWidget::ChatWidget(QWidget *parent)
     split->setCollapsible(0, false);
     split->setCollapsible(1, false);
 
-    // Main layout with padding optimized
     QVBoxLayout *main = new QVBoxLayout(this);
     main->setContentsMargins(16, 16, 16, 16);
     main->setSpacing(12);
     main->addWidget(split);
-
-    // Ensure conversationView expands to fill available space inside splitter
     main->setStretch(0, 1);
 
-    // Allow the ChatWidget itself to be stretched by parent layouts/splitter
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    // Reduce default minimum width so the chat column is narrower on small screens
     setMinimumWidth(160);
-    // Optional: cap maximum width to avoid overly large chat column
     setMaximumWidth(520);
 
-    // Widget background avec dégradé sophistiqué
     setStyleSheet(
         "QWidget {"
         "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
@@ -163,27 +133,28 @@ ChatWidget::ChatWidget(QWidget *parent)
 
     connect(sendButton, &QPushButton::clicked, this, &ChatWidget::sendMessage);
     connect(inputLine, &QLineEdit::returnPressed, this, &ChatWidget::sendMessage);
+    connect(m_provider, &AiProvider::responseReady, this, &ChatWidget::onProviderResponse);
+    connect(m_provider, &AiProvider::errorOccurred, this, &ChatWidget::onProviderError);
 }
+
+ChatWidget::~ChatWidget() = default;
 
 void ChatWidget::appendMessage(const QString &who, const QString &text, bool addToHistory)
 {
-    // Store in history if requested
     if (addToHistory) {
-        m_chatHistory.append(qMakePair(who, text));
+        m_chatHistory.append(ChatMessage{who, text});
     }
-    
+
     QString html;
-    QString escapedText = text.toHtmlEscaped().replace("\n", "<br>");
-    // Render Markdown to HTML for model responses so formatting is preserved
+    const QString escapedText = text.toHtmlEscaped().replace(QStringLiteral("\n"), QStringLiteral("<br>"));
     QString renderedMarkdownHtml;
     {
         QTextDocument mdDoc;
         mdDoc.setMarkdown(text);
         renderedMarkdownHtml = mdDoc.toHtml();
     }
-    
+
     if (who == tr("You")) {
-        // User message - Design moderne avec fond violet solide
         html = QString(
             "<div style='text-align: right; margin: 12px 0;'>"
             "<div style='"
@@ -205,7 +176,6 @@ void ChatWidget::appendMessage(const QString &who, const QString &text, bool add
             "</div>"
         ).arg(escapedText);
     } else if (who == tr("Gemini")) {
-        // Gemini response - Design élégant avec fond gris foncé solide
         html = QString(
             "<div style='text-align: left; margin: 12px 0;'>"
             "<div style='"
@@ -230,7 +200,6 @@ void ChatWidget::appendMessage(const QString &who, const QString &text, bool add
             "</div>"
         ).arg(renderedMarkdownHtml);
     } else {
-        // System message - Design discret mais visible
         html = QString(
             "<div style='text-align: center; margin: 16px 0;'>"
             "<span style='"
@@ -246,225 +215,62 @@ void ChatWidget::appendMessage(const QString &who, const QString &text, bool add
             "</div>"
         ).arg(escapedText);
     }
-    
+
     conversationView->append(html);
     QScrollBar *sb = conversationView->verticalScrollBar();
-    if (sb) sb->setValue(sb->maximum());
+    if (sb) {
+        sb->setValue(sb->maximum());
+    }
 }
 
 void ChatWidget::sendMessage()
 {
-    QString text = inputLine->text().trimmed();
-    if (text.isEmpty()) return;
-
-    appendMessage(tr("You"), text);
-    // Save user message to database
-    saveMessageToDb(tr("You"), text);
-    inputLine->clear();
-
-    callGeminiApi(text);
-}
-
-
-void ChatWidget::callGeminiApi(const QString &prompt)
-{
-    // Build request JSON according to the example REST call
-    QJsonObject partObj;
-    partObj["text"] = prompt;
-
-    QJsonArray partsArr;
-    partsArr.append(partObj);
-
-    QJsonObject contentObj;
-    contentObj["parts"] = partsArr;
-
-    QJsonArray contentsArr;
-    contentsArr.append(contentObj);
-
-    QJsonObject root;
-    root["contents"] = contentsArr;
-
-    QJsonDocument doc(root);
-    QByteArray body = doc.toJson();
-
-    // Use gemini-1.5-flash model (more stable/available)
-    QUrl url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent");
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    // Read API key from environment variable GEMINI_API_KEY
-    QByteArray apiKey = qgetenv("GEMINI_API_KEY");
-    if (apiKey.isEmpty()) {
-        appendMessage(tr("System"), tr("GEMINI_API_KEY not set in environment. Set it and retry."));
+    const QString text = inputLine->text().trimmed();
+    if (text.isEmpty() || !m_provider) {
         return;
     }
 
-    // The API expects x-goog-api-key header (per example). Set it here.
-    request.setRawHeader("x-goog-api-key", apiKey);
+    appendMessage(tr("You"), text);
+    m_repository.append(ChatMessage{tr("You"), text});
+    inputLine->clear();
 
-    QNetworkReply *reply = networkManager->post(request, body);
-
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        QByteArray resp = reply->readAll();
-        
-        if (reply->error() != QNetworkReply::NoError) {
-            // Show error details including server response body for debugging
-            QString errMsg = reply->errorString();
-            if (!resp.isEmpty()) {
-                errMsg += QString("\nServer response: %1").arg(QString::fromUtf8(resp));
-            }
-            appendMessage(tr("Gemini"), tr("Error: %1").arg(errMsg));
-            reply->deleteLater();
-            return;
-        }
-
-        // Try to parse response JSON and extract text if available.
-        QJsonParseError err;
-        QJsonDocument jdoc = QJsonDocument::fromJson(resp, &err);
-        QString outText;
-        if (err.error == QJsonParseError::NoError && jdoc.isObject()) {
-            QJsonObject obj = jdoc.object();
-            
-            // Structure: { "candidates": [{ "content": { "parts": [{ "text": "..." }] } }] }
-            if (obj.contains("candidates") && obj["candidates"].isArray()) {
-                QJsonArray cand = obj["candidates"].toArray();
-                if (!cand.isEmpty() && cand[0].isObject()) {
-                    QJsonObject c0 = cand[0].toObject();
-                    if (c0.contains("content") && c0["content"].isObject()) {
-                        QJsonObject content = c0["content"].toObject();
-                        if (content.contains("parts") && content["parts"].isArray()) {
-                            QJsonArray parts = content["parts"].toArray();
-                            for (const QJsonValue &partVal : parts) {
-                                if (partVal.isObject()) {
-                                    QJsonObject part = partVal.toObject();
-                                    if (part.contains("text")) {
-                                        outText += part["text"].toString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fallback: raw response
-            if (outText.isEmpty()) {
-                outText = QString::fromUtf8(resp);
-            }
-        } else {
-            outText = QString::fromUtf8(resp);
-        }
-
-        appendMessage(tr("Gemini"), outText);
-        // Save message to database immediately
-        saveMessageToDb(tr("Gemini"), outText);
-        reply->deleteLater();
-    });
+    m_provider->send(m_context.buildPrompt(text, m_chatHistory));
 }
 
-ChatWidget::~ChatWidget()
+void ChatWidget::onProviderResponse(const QString &text)
 {
-    closeDatabase();
+    appendMessage(tr("Gemini"), text);
+    m_repository.append(ChatMessage{tr("Gemini"), text});
+}
+
+void ChatWidget::onProviderError(const QString &message)
+{
+    appendMessage(tr("System"), tr("Error: %1").arg(message), false);
 }
 
 void ChatWidget::setProjectDirectory(const QString &projectDir)
 {
-    // Close previous database connection
-    closeDatabase();
-    
     m_projectDir = projectDir;
-    
-    // Clear current view and load new project's history
     clearChat();
-    
-    // Initialize database for new project and load history
-    initDatabase();
+    m_repository.open(m_projectDir);
     loadChatHistory();
 }
 
-QString ChatWidget::databaseFilePath() const
+void ChatWidget::setActiveFileContext(const QString &path, const QString &content)
 {
-    if (m_projectDir.isEmpty()) return QString();
-    return QDir(m_projectDir).filePath(".editerako/chat_history.db");
-}
-
-void ChatWidget::initDatabase()
-{
-    if (m_projectDir.isEmpty()) return;
-    
-    // Ensure .editerako directory exists
-    QDir dir(m_projectDir);
-    if (!dir.exists(".editerako")) {
-        dir.mkdir(".editerako");
-    }
-    
-    // Create database connection with unique name
-    m_db = QSqlDatabase::addDatabase("QSQLITE", m_dbConnectionName);
-    m_db.setDatabaseName(databaseFilePath());
-    
-    if (!m_db.open()) {
-        qCWarning(lcAi) << "Failed to open chat history database:" << m_db.lastError().text();
-        return;
-    }
-    
-    // Create table if not exists
-    QSqlQuery query(m_db);
-    query.exec(
-        "CREATE TABLE IF NOT EXISTS chat_messages ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  sender TEXT NOT NULL,"
-        "  message TEXT NOT NULL,"
-        "  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP"
-        ")"
-    );
-}
-
-void ChatWidget::closeDatabase()
-{
-    if (m_db.isOpen()) {
-        m_db.close();
-    }
-    // Remove connection
-    if (QSqlDatabase::contains(m_dbConnectionName)) {
-        QSqlDatabase::removeDatabase(m_dbConnectionName);
-    }
-}
-
-void ChatWidget::saveMessageToDb(const QString &sender, const QString &text)
-{
-    if (!m_db.isOpen() || m_projectDir.isEmpty()) return;
-    
-    QSqlQuery query(m_db);
-    query.prepare("INSERT INTO chat_messages (sender, message) VALUES (:sender, :message)");
-    query.bindValue(":sender", sender);
-    query.bindValue(":message", text);
-    
-    if (!query.exec()) {
-        qCWarning(lcAi) << "Failed to save chat message:" << query.lastError().text();
-    }
+    m_context.setActiveFile(path, content);
 }
 
 void ChatWidget::saveChatHistory()
 {
-    // With SQLite, messages are saved immediately via saveMessageToDb
-    // This method is kept for compatibility but doesn't need to do anything
 }
 
 void ChatWidget::loadChatHistory()
 {
-    if (!m_db.isOpen() || m_projectDir.isEmpty()) return;
-    
-    QSqlQuery query(m_db);
-    query.exec("SELECT sender, message FROM chat_messages ORDER BY id ASC");
-    
-    while (query.next()) {
-        QString sender = query.value(0).toString();
-        QString text = query.value(1).toString();
-        if (!sender.isEmpty() && !text.isEmpty()) {
-            m_chatHistory.append(qMakePair(sender, text));
-            // Add to view without re-adding to history/db
-            appendMessage(sender, text, false);
-        }
+    const QList<ChatMessage> messages = m_repository.loadAll();
+    for (const ChatMessage &message : messages) {
+        m_chatHistory.append(message);
+        appendMessage(message.sender, message.text, false);
     }
 }
 

@@ -88,6 +88,15 @@ qt_add_executable(Editerako
     src/project/FileExplorer.h
     src/terminal/TerminalProcess.cpp
     src/terminal/TerminalProcess.h
+    src/ai/ChatMessage.h
+    src/ai/AiProvider.cpp
+    src/ai/AiProvider.h
+    src/ai/GeminiProvider.cpp
+    src/ai/GeminiProvider.h
+    src/ai/ChatRepository.cpp
+    src/ai/ChatRepository.h
+    src/ai/ContextBuilder.cpp
+    src/ai/ContextBuilder.h
     resources/resources.qrc
 )
 

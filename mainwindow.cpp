@@ -122,6 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Enable drag and drop for opening files
     setAcceptDrops(true);
+    syncChatContext();
 }
 
 MainWindow::~MainWindow()
@@ -174,6 +175,7 @@ void MainWindow::setupCodeEditor()
     ui->centralStack->setCurrentIndex(CodeViewer);
 
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
+    connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncChatContext);
     connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
         if (m_workspace && m_fileExplorer && m_workspace->containsPath(path)) {
@@ -729,6 +731,28 @@ void MainWindow::setProjectDirectory(const QString &path)
 
     // Update window title
     updateWindowTitle();
+}
+
+void MainWindow::syncChatContext()
+{
+    if (!chatWidget) {
+        return;
+    }
+
+    CodeEditor *editor = m_editorManager ? m_editorManager->currentEditor() : nullptr;
+    if (!editor) {
+        chatWidget->setActiveFileContext({}, {});
+        return;
+    }
+
+    QString path;
+    if (EditorDocument *doc = EditorDocument::fromEditor(editor)) {
+        path = doc->filePath();
+        if (path.isEmpty()) {
+            path = doc->displayName();
+        }
+    }
+    chatWidget->setActiveFileContext(path, editor->toPlainText());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

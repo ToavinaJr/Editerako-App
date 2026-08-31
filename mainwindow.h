@@ -127,6 +127,7 @@ private:
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path);
+    void syncChatContext();
 };
 
 #endif // MAINWINDOW_H
