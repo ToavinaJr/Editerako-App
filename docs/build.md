@@ -57,4 +57,5 @@ Ouvrir le `CMakeLists.txt` racine. Kit Qt 6 **avec PdfWidgets**. Le dossier de k
 
 - **Lien « Permission denied »** : `Editerako.exe` tourne encore. Le tuer, relancer `build.ps1`.
 - **PdfWidgets introuvable** : installer le composant Qt PDF (aqt : `-m qtpdf`).
+- **macOS `framework 'AGL' not found`** : le SDK 26 a retiré AGL. `cmake/Apple.cmake` ignore ce framework ; en CI, Qt ≥ 6.9.2.
 - **Sources** : liste CMake explicite, pas de `file(GLOB)`. Un nouveau `.cpp` doit être ajouté dans `src/CMakeLists.txt` (et éventuellement `tests/CMakeLists.txt`).

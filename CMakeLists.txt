@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreeSitter.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Apple.cmake")
 
 # Qt 6. PdfWidgets is a separate Qt module (Qt PDF); install it if find_package fails.
 find_package(Qt6 REQUIRED COMPONENTS
@@ -17,6 +18,8 @@ find_package(Qt6 REQUIRED COMPONENTS
     PdfWidgets
     Test
 )
+
+editerako_strip_agl_from_qt()
 
 qt_standard_project_setup()
 
