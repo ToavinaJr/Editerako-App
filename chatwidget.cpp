@@ -1,4 +1,5 @@
 #include "chatwidget.h"
+#include "core/Logging.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QTextEdit>
@@ -402,7 +403,7 @@ void ChatWidget::initDatabase()
     m_db.setDatabaseName(databaseFilePath());
     
     if (!m_db.open()) {
-        qWarning() << "Failed to open chat history database:" << m_db.lastError().text();
+        qCWarning(lcAi) << "Failed to open chat history database:" << m_db.lastError().text();
         return;
     }
     
@@ -439,7 +440,7 @@ void ChatWidget::saveMessageToDb(const QString &sender, const QString &text)
     query.bindValue(":message", text);
     
     if (!query.exec()) {
-        qWarning() << "Failed to save chat message:" << query.lastError().text();
+        qCWarning(lcAi) << "Failed to save chat message:" << query.lastError().text();
     }
 }
 

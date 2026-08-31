@@ -1,5 +1,5 @@
 #include "syntaxhighlighter.h"
-#include <QDebug>
+#include "core/Logging.h"
 #include <QRegularExpression>
 
 // Importer Tree-sitter en C (évite le name mangling en C++)
@@ -29,23 +29,23 @@ SyntaxHighlighter::SyntaxHighlighter(CodeEditor *editor, Language lang)
     : QSyntaxHighlighter(editor ? editor->document() : nullptr), language(lang), parser(nullptr), tree(nullptr)
 {
     if (!editor) {
-        qWarning() << "SyntaxHighlighter: editor is nullptr!";
+        qCWarning(lcSyntax) << "SyntaxHighlighter: editor is nullptr!";
         return;
     }
 
     parser = ts_parser_new();
     if (!parser) {
-        qWarning() << "Tree-sitter parser could not be created!";
+        qCWarning(lcSyntax) << "Tree-sitter parser could not be created!";
         return;
     }
 
     if (language == CPP) {
         if (!ts_parser_set_language(parser, tree_sitter_cpp())) {
-            qWarning() << "Unable to set tree-sitter CPP language!";
+            qCWarning(lcSyntax) << "Unable to set tree-sitter CPP language!";
         }
     } else {
         if (!ts_parser_set_language(parser, tree_sitter_html())) {
-            qWarning() << "Unable to set tree-sitter HTML language!";
+            qCWarning(lcSyntax) << "Unable to set tree-sitter HTML language!";
         }
     }
 

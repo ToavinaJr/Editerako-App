@@ -1,9 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "syntaxhighlighter.h"
 #include "finddialog.h"
 #include "gotolinedialog.h"
 #include "chatwidget.h"
+#include "editor/EditorDocument.h"
+#include "editor/EditorManager.h"
 #include <QApplication>
 #include <QStandardPaths>
 #include <QMimeDatabase>
@@ -18,9 +19,8 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , editorTabs(nullptr)
-    , isModified(false)
-    , currentWorkingDirectory(QString())
+    , m_editorManager(nullptr)
+    , currentWorkingDirectory()
     , isFileTreeVisible(true)
 {
 
@@ -135,6 +135,12 @@ void MainWindow::connectActions()
     connect(ui->actionNew_Document, &QAction::triggered, this, &MainWindow::newFolder);
     connect(ui->actionOpen_File, &QAction::triggered, this, &MainWindow::openFile);
     connect(ui->actionOpen_Folder, &QAction::triggered, this, &MainWindow::openFolder);
+    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveCurrentDocument);
+    connect(ui->actionSave_As, &QAction::triggered, this, &MainWindow::saveCurrentDocumentAs);
+    connect(ui->actionSave_All, &QAction::triggered, this, &MainWindow::saveAllDocuments);
+    connect(ui->actionClose, &QAction::triggered, this, &MainWindow::closeCurrentTab);
+    connect(ui->actionClose_Others, &QAction::triggered, this, &MainWindow::closeOtherTabs);
+    connect(ui->actionClose_All, &QAction::triggered, this, &MainWindow::closeAllTabs);
 
     // Explorer buttons
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
@@ -157,42 +163,28 @@ void MainWindow::connectActions()
 
 void MainWindow::setupCodeEditor()
 {
-    // Create the tab widget that will hold multiple CodeEditor instances
-    editorTabs = new QTabWidget(this);
-    editorTabs->setTabsClosable(true);
-    editorTabs->setMovable(true);
+    m_editorManager = new EditorManager(this);
 
-    // Replace the old central widget at CodeViewer with the tab widget
     QWidget *oldEditor = ui->centralStack->widget(CodeViewer);
     if (oldEditor) {
         ui->centralStack->removeWidget(oldEditor);
         oldEditor->deleteLater();
     }
 
-    ui->centralStack->insertWidget(CodeViewer, editorTabs);
+    ui->centralStack->insertWidget(CodeViewer, m_editorManager->tabWidget());
     ui->centralStack->setCurrentIndex(CodeViewer);
 
-    // Create an initial untitled editor tab
-    CodeEditor *initial = new CodeEditor(this);
-    initial->setStyleSheet(
-        "background-color: #1e1e1e;"
-        "color: #cccccc;"
-        "border: none;"
-        "font-family: 'Monaco', 'Consolas', monospace;"
-        "font-size: 13px;"
-        );
-    editorTabs->addTab(initial, tr("untitled"));
-    initial->setProperty("filePath", QString());
-
-    // Syntax highlighter for the new editor
-    new SyntaxHighlighter(initial, SyntaxHighlighter::CPP);
-
-    connect(initial, &CodeEditor::textChanged, [this, initial](){
-        updateTabModifiedState(initial);
+    connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
+    connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
+    connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
+        const QFileInfo info(path);
+        if (info.absolutePath() == currentWorkingDirectory) {
+            loadDirectoryToTree(currentWorkingDirectory);
+        }
+        if (statusBar()) {
+            statusBar()->showMessage(tr("File saved successfully"), 2000);
+        }
     });
-
-    connect(editorTabs, &QTabWidget::currentChanged, this, &MainWindow::onEditorTabChanged);
-    connect(editorTabs, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
 }
 
 
@@ -332,74 +324,67 @@ QString MainWindow::getFileExtension(const QString &fileName)
 
 void MainWindow::newFile()
 {
-    if (askToSaveChanges()) {
-        bool ok;
+    bool ok;
 
-        // Create styled input dialog
-        QInputDialog dialog(this);
-        dialog.setWindowTitle(tr("New File"));
-        dialog.setLabelText(tr("Enter file name:"));
-        dialog.setTextValue(tr("untitled.txt"));
-        dialog.setInputMode(QInputDialog::TextInput);
+    QInputDialog dialog(this);
+    dialog.setWindowTitle(tr("New File"));
+    dialog.setLabelText(tr("Enter file name:"));
+    dialog.setTextValue(tr("untitled.txt"));
+    dialog.setInputMode(QInputDialog::TextInput);
+    dialog.setMinimumWidth(800);
+    dialog.setMinimumHeight(150);
+    dialog.setStyleSheet(
+        "QInputDialog {"
+        "    background-color: #1e1e1e;"
+        "    color: #cccccc;"
+        "}"
+        "QLabel {"
+        "    color: #cccccc;"
+        "    font-size: 12px;"
+        "}"
+        "QLineEdit {"
+        "    background-color: #3e3e42;"
+        "    border: 1px solid #6f6f6f;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    padding: 8px;"
+        "    font-size: 12px;"
+        "}"
+        "QLineEdit:focus {"
+        "    border: 1px solid #98c379;"
+        "}"
+        "QPushButton {"
+        "    background-color: #3e3e42;"
+        "    border: 1px solid #6f6f6f;"
+        "    border-radius: 4px;"
+        "    color: #cccccc;"
+        "    padding: 6px 16px;"
+        "    font-size: 11px;"
+        "    min-width: 60px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #6f6f6f;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #98c379;"
+        "    color: #1e1e1e;"
+        "}"
+        );
 
-        // Set minimum size for the dialog
-        dialog.setMinimumWidth(800);
-        dialog.setMinimumHeight(150);
+    ok = dialog.exec();
+    QString fileName = dialog.textValue();
 
-        // Apply dark theme stylesheet
-        dialog.setStyleSheet(
-            "QInputDialog {"
-            "    background-color: #1e1e1e;"
-            "    color: #cccccc;"
-            "}"
-            "QLabel {"
-            "    color: #cccccc;"
-            "    font-size: 12px;"
-            "}"
-            "QLineEdit {"
-            "    background-color: #3e3e42;"
-            "    border: 1px solid #6f6f6f;"
-            "    border-radius: 4px;"
-            "    color: #cccccc;"
-            "    padding: 8px;"
-            "    font-size: 12px;"
-            "}"
-            "QLineEdit:focus {"
-            "    border: 1px solid #98c379;"
-            "}"
-            "QPushButton {"
-            "    background-color: #3e3e42;"
-            "    border: 1px solid #6f6f6f;"
-            "    border-radius: 4px;"
-            "    color: #cccccc;"
-            "    padding: 6px 16px;"
-            "    font-size: 11px;"
-            "    min-width: 60px;"
-            "}"
-            "QPushButton:hover {"
-            "    background-color: #6f6f6f;"
-            "}"
-            "QPushButton:pressed {"
-            "    background-color: #98c379;"
-            "    color: #1e1e1e;"
-            "}"
-            );
+    if (ok && !fileName.isEmpty()) {
+        QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(fileName);
+        QFile file(fullPath);
 
-        ok = dialog.exec();
-        QString fileName = dialog.textValue();
-
-        if (ok && !fileName.isEmpty()) {
-            QString fullPath = QDir(currentWorkingDirectory).absoluteFilePath(fileName);
-            QFile file(fullPath);
-
-            if (file.open(QIODevice::WriteOnly)) {
-                file.close();
-                loadDirectoryToTree(currentWorkingDirectory);
-                openFileInEditor(fullPath);
-                QMessageBox::information(this, tr("Success"), tr("File created successfully!"));
-            } else {
-                QMessageBox::warning(this, tr("Error"), tr("Could not create file!"));
-            }
+        if (file.open(QIODevice::WriteOnly)) {
+            file.close();
+            loadDirectoryToTree(currentWorkingDirectory);
+            openFileInEditor(fullPath);
+            QMessageBox::information(this, tr("Success"), tr("File created successfully!"));
+        } else {
+            QMessageBox::warning(this, tr("Error"), tr("Could not create file!"));
         }
     }
 }
@@ -475,15 +460,13 @@ void MainWindow::newFolder()
 
 void MainWindow::openFile()
 {
-    if (askToSaveChanges()) {
-        QString fileName = QFileDialog::getOpenFileName(this,
-                                                        tr("Open File"),
-                                                        currentWorkingDirectory,
-                                                        tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open File"),
+                                                    currentWorkingDirectory,
+                                                    tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
 
-        if (!fileName.isEmpty()) {
-            openFileInEditor(fileName);
-        }
+    if (!fileName.isEmpty()) {
+        openFileInEditor(fileName);
     }
 }
 
@@ -554,9 +537,7 @@ void MainWindow::onFileTreeItemDoubleClicked(QTreeWidgetItem *item, int column)
         QFileInfo fileInfo(filePath);
 
         if (fileInfo.isFile()) {
-            if (askToSaveChanges()) {
-                openFileInEditor(filePath);
-            }
+            openFileInEditor(filePath);
         } else if (fileInfo.isDir()) {
             // Toggle folder expansion
             item->setExpanded(!item->isExpanded());
@@ -581,69 +562,14 @@ void MainWindow::openFileInEditor(const QString &filePath)
     QString ext = info.suffix().toLower();
 
     if (mimeName.startsWith("text/") || mimeName.contains("json") || mimeName.contains("xml") || mimeName.contains("html") || ext == "tsx") {
-        QFile file(filePath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            QString content = in.readAll();
-            file.close();
-
-            // If a tab for this file already exists, switch to it
-            for (int i = 0; i < editorTabs->count(); ++i) {
-                QWidget *w = editorTabs->widget(i);
-                if (w && w->property("filePath").toString() == filePath) {
-                    editorTabs->setCurrentIndex(i);
-                    return;
-                }
-            }
-
-            // Create a new editor tab and load content
-            CodeEditor *ed = new CodeEditor(this);
-            ed->setPlainText(content);
-            ed->setStyleSheet(
-                "background-color: #1e1e1e;"
-                "color: #cccccc;"
-                "border: none;"
-                "font-family: 'Monaco', 'Consolas', monospace;"
-                "font-size: 13px;"
-                );
-
-            editorTabs->addTab(ed, QFileInfo(filePath).fileName());
-            editorTabs->setCurrentWidget(ed);
-            ed->setProperty("filePath", filePath);
-
-            // Highlighter selon extension
-            new SyntaxHighlighter(ed,
-                                   (ext == "cpp") ? SyntaxHighlighter::CPP :
-                                   (ext == "html") ? SyntaxHighlighter::HTML :
-                                   (ext == "tsx") ? SyntaxHighlighter::HTML : SyntaxHighlighter::CPP
-                                   );
-
-            // Mark as unmodified after loading
-            ed->document()->setModified(false);
-            updateTabLabel(ed);
-
-            connect(ed, &CodeEditor::textChanged, [this, ed](){
-                updateTabModifiedState(ed);
-            });
-
-            currentFileName = filePath;
-            isModified = false;
-            updateWindowTitle();
+        if (m_editorManager->openTextFile(filePath)) {
             ui->centralStack->setCurrentIndex(CodeViewer);
-            // Give keyboard focus to the newly opened editor to avoid losing focus after dialogs
-            ed->setFocus();
         }
     }
 
     else if (mimeName == "application/pdf") {
-        // Add PDF viewer as a tab instead of switching central stack
-        // If a tab for this file already exists, switch to it
-        for (int i = 0; i < editorTabs->count(); ++i) {
-            QWidget *w = editorTabs->widget(i);
-            if (w && w->property("filePath").toString() == filePath) {
-                editorTabs->setCurrentIndex(i);
-                return;
-            }
+        if (m_editorManager->activateExisting(filePath)) {
+            return;
         }
 
         QWidget *container = new QWidget(this);
@@ -651,7 +577,6 @@ void MainWindow::openFileInEditor(const QString &filePath)
         lay->setContentsMargins(0,0,0,0);
 
         QPdfDocument *doc = new QPdfDocument(container);
-        // Load and verify by checking pageCount (more portable across Qt versions)
         doc->load(filePath);
         if (doc->pageCount() > 0) {
             QPdfView *pv = new QPdfView(container);
@@ -660,27 +585,18 @@ void MainWindow::openFileInEditor(const QString &filePath)
             pv->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
             lay->addWidget(pv);
 
-            int idx = editorTabs->addTab(container, QFileInfo(filePath).fileName());
-            container->setProperty("filePath", filePath);
             container->setProperty("viewerType", "pdf");
-            editorTabs->setCurrentIndex(idx);
-            // keep main window focused
+            m_editorManager->addViewerTab(container, filePath);
             this->raise(); this->activateWindow();
         } else {
             delete container;
-            // fallback to central stack if loading failed
             pdfDoc->load(filePath);
             ui->centralStack->setCurrentIndex(PdfViewer);
         }
     }
     else if (mimeName.startsWith("image/")) {
-        // Add image viewer as a tab
-        for (int i = 0; i < editorTabs->count(); ++i) {
-            QWidget *w = editorTabs->widget(i);
-            if (w && w->property("filePath").toString() == filePath) {
-                editorTabs->setCurrentIndex(i);
-                return;
-            }
+        if (m_editorManager->activateExisting(filePath)) {
+            return;
         }
 
         QWidget *container = new QWidget(this);
@@ -698,10 +614,8 @@ void MainWindow::openFileInEditor(const QString &filePath)
         scroll->setWidgetResizable(true);
         lay->addWidget(scroll);
 
-        int idx = editorTabs->addTab(container, QFileInfo(filePath).fileName());
-        container->setProperty("filePath", filePath);
         container->setProperty("viewerType", "image");
-        editorTabs->setCurrentIndex(idx);
+        m_editorManager->addViewerTab(container, filePath);
         this->raise(); this->activateWindow();
     }
     else {
@@ -709,79 +623,62 @@ void MainWindow::openFileInEditor(const QString &filePath)
     }
 }
 
-void MainWindow::saveCurrentFile()
+void MainWindow::saveCurrentDocument()
 {
-    CodeEditor *ed = currentEditor();
-    if (!ed) return;
-
-    QString path = ed->property("filePath").toString();
-    if (path.isEmpty()) {
-        QString fileName = QFileDialog::getSaveFileName(this,
-                                                        tr("Save File"),
-                                                        currentWorkingDirectory,
-                                                        tr("All Files (*.*)"));
-        if (fileName.isEmpty()) {
-            return;
-        }
-        path = fileName;
-        ed->setProperty("filePath", path);
-        int idx = editorTabs ? editorTabs->indexOf(ed) : -1;
-        if (idx >= 0) editorTabs->setTabText(idx, QFileInfo(path).fileName());
-    }
-
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&file);
-        out << ed->toPlainText();
-
-        ed->document()->setModified(false);
-        updateTabModifiedState(ed);
-
-        currentFileName = path;
-        isModified = false;
-        updateWindowTitle();
-
-        QFileInfo fileInfo(path);
-        if (fileInfo.absolutePath() == currentWorkingDirectory) {
-            loadDirectoryToTree(currentWorkingDirectory);
-        }
-
-        if (statusBar()) {
-            statusBar()->showMessage(tr("File saved successfully"), 2000);
-        }
-    } else {
-        QMessageBox::warning(this, tr("Error"), tr("Could not save file!"));
+    if (m_editorManager) {
+        m_editorManager->saveCurrent();
     }
 }
 
-bool MainWindow::askToSaveChanges()
+void MainWindow::saveCurrentDocumentAs()
 {
-    if (isModified) {
-        QMessageBox::StandardButton result = QMessageBox::question(this,
-                                                                   tr("Save Changes"),
-                                                                   tr("The document has been modified. Do you want to save your changes?"),
-                                                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-
-        if (result == QMessageBox::Save) {
-            saveCurrentFile();
-            return true;
-        } else if (result == QMessageBox::Cancel) {
-            return false;
-        }
+    if (m_editorManager) {
+        m_editorManager->saveCurrentAs();
     }
-    return true;
+}
+
+void MainWindow::saveAllDocuments()
+{
+    if (m_editorManager) {
+        m_editorManager->saveAll();
+    }
+}
+
+void MainWindow::closeCurrentTab()
+{
+    if (m_editorManager) {
+        m_editorManager->closeCurrent();
+    }
+}
+
+void MainWindow::closeOtherTabs()
+{
+    if (m_editorManager) {
+        m_editorManager->closeOthers();
+    }
+}
+
+void MainWindow::closeAllTabs()
+{
+    if (m_editorManager) {
+        m_editorManager->closeAll();
+    }
 }
 
 void MainWindow::updateWindowTitle()
 {
-    QString title = "Code Editor";
+    QString title = QStringLiteral("Editerako");
 
-    if (!currentFileName.isEmpty()) {
-        QFileInfo fileInfo(currentFileName);
-        title += " - " + fileInfo.fileName();
+    if (m_editorManager) {
+        const QString path = m_editorManager->currentFilePath();
+        if (!path.isEmpty()) {
+            title += QStringLiteral(" - ") + QFileInfo(path).fileName();
+        } else if (m_editorManager->currentEditor()) {
+            title += QStringLiteral(" - ") + tr("untitled");
+        }
 
-        if (isModified) {
-            title += "*";
+        if (auto *doc = m_editorManager->currentDocument(); doc && doc->isModified()) {
+            title += QLatin1Char('*');
         }
     }
 
@@ -790,130 +687,37 @@ void MainWindow::updateWindowTitle()
 
 CodeEditor *MainWindow::currentEditor()
 {
-    if (!editorTabs) return nullptr;
-    QWidget *w = editorTabs->currentWidget();
-    return qobject_cast<CodeEditor*>(w);
+    return m_editorManager ? m_editorManager->currentEditor() : nullptr;
 }
 
-void MainWindow::onEditorTabChanged(int index)
+QString MainWindow::editorDirectoryOrWorkspace() const
 {
-    Q_UNUSED(index)
-    if (!editorTabs) return;
-    QWidget *w = editorTabs->currentWidget();
-    if (w) {
-        currentFileName = w->property("filePath").toString();
-    } else {
-        currentFileName.clear();
-    }
-    updateWindowTitle();
-}
-
-bool MainWindow::saveEditor(CodeEditor *editor)
-{
-    if (!editor) return false;
-    QString path = editor->property("filePath").toString();
-    if (path.isEmpty()) {
-        QString fileName = QFileDialog::getSaveFileName(this,
-                                                      tr("Save File"),
-                                                      currentWorkingDirectory,
-                                                      tr("All Files (*.*)"));
-        if (fileName.isEmpty()) return false; // user cancelled
-        path = fileName;
-        editor->setProperty("filePath", path);
-        int idx = editorTabs->indexOf(editor);
-        if (idx >= 0) editorTabs->setTabText(idx, QFileInfo(path).fileName());
-    }
-
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, tr("Error"), tr("Could not save file!"));
-        return false;
-    }
-    QTextStream out(&file);
-    out << editor->toPlainText();
-    file.close();
-
-    editor->document()->setModified(false);
-    updateTabModifiedState(editor);
-
-    currentFileName = path;
-    isModified = false;
-    updateWindowTitle();
-
-    QFileInfo fileInfo(path);
-    if (fileInfo.absolutePath() == currentWorkingDirectory) {
-        loadDirectoryToTree(currentWorkingDirectory);
-    }
-
-    if (statusBar()) {
-        statusBar()->showMessage(tr("File saved successfully"), 2000);
-    }
-
-    return true;
-}
-
-void MainWindow::updateTabModifiedState(CodeEditor *editor)
-{
-    if (!editor || !editorTabs) return;
-    bool modified = editor->document()->isModified();
-    editor->setProperty("fileModified", modified);
-    updateTabLabel(editor);
-
-    if (editor == currentEditor()) {
-        isModified = modified;
-        updateWindowTitle();
-    }
-}
-
-void MainWindow::updateTabLabel(CodeEditor *editor)
-{
-    if (!editor || !editorTabs) return;
-    int idx = editorTabs->indexOf(editor);
-    if (idx < 0) return;
-    QString path = editor->property("filePath").toString();
-    QString label = path.isEmpty() ? tr("untitled") : QFileInfo(path).fileName();
-    if (editor->document()->isModified()) label += "*";
-    editorTabs->setTabText(idx, label);
-    editorTabs->setTabToolTip(idx, path);
-}
-
-void MainWindow::closeTab(int index)
-{
-    if (!editorTabs) return;
-    QWidget *w = editorTabs->widget(index);
-    CodeEditor *ed = qobject_cast<CodeEditor*>(w);
-    if (!ed) {
-        editorTabs->removeTab(index);
-        if (w) w->deleteLater();
-        return;
-    }
-
-    if (ed->document()->isModified()) {
-        QMessageBox msg(this);
-        msg.setWindowTitle(tr("Save Changes"));
-        msg.setText(tr("The document has been modified. Do you want to save your changes?"));
-        msg.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        msg.setDefaultButton(QMessageBox::Save);
-        int res = msg.exec();
-        if (res == QMessageBox::Save) {
-            if (!saveEditor(ed)) return; // save cancelled or failed -> do not close
-        } else if (res == QMessageBox::Cancel) {
-            return; // do not close
+    if (m_editorManager) {
+        const QString path = m_editorManager->currentFilePath();
+        if (!path.isEmpty()) {
+            return QFileInfo(path).absolutePath();
         }
-        // if Discard, continue to close
     }
-
-    editorTabs->removeTab(index);
-    if (w) w->deleteLater();
+    return currentWorkingDirectory;
 }
 
 void MainWindow::onActionFindReplace() {
-    FindReplaceDialog dlg(currentEditor(), this);
+    CodeEditor *ed = currentEditor();
+    if (!ed) {
+        QMessageBox::information(this, tr("Find"), tr("No text editor is active."));
+        return;
+    }
+    FindReplaceDialog dlg(ed, this);
     dlg.exec();
 }
 
 void MainWindow::onActionGoToLine() {
-    GoToLineDialog dlg(currentEditor(), this);
+    CodeEditor *ed = currentEditor();
+    if (!ed) {
+        QMessageBox::information(this, tr("Go to Line"), tr("No text editor is active."));
+        return;
+    }
+    GoToLineDialog dlg(ed, this);
     dlg.exec();
 }
 
@@ -930,12 +734,7 @@ void MainWindow::toggleTerminal()
             Terminal *currentTerminal = terminalList.at(terminalTabs->currentIndex());
             if (currentTerminal) {
                 // Set terminal working directory to current file's directory or project directory
-                if (!currentFileName.isEmpty()) {
-                    QFileInfo fileInfo(currentFileName);
-                    currentTerminal->setWorkingDirectory(fileInfo.absolutePath());
-                } else {
-                    currentTerminal->setWorkingDirectory(currentWorkingDirectory);
-                }
+                currentTerminal->setWorkingDirectory(editorDirectoryOrWorkspace());
                 currentTerminal->focusTerminal();
             }
         } else {
@@ -956,57 +755,15 @@ void MainWindow::onTerminalClosed()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // Check if any tabs have unsaved changes
-    QList<CodeEditor*> modifiedEditors;
-    if (editorTabs) {
-        for (int i = 0; i < editorTabs->count(); ++i) {
-            CodeEditor *ed = qobject_cast<CodeEditor*>(editorTabs->widget(i));
-            if (ed && ed->document()->isModified()) {
-                modifiedEditors.append(ed);
-            }
-        }
-    }
-
-    if (modifiedEditors.isEmpty()) {
-        event->accept();
+    if (m_editorManager && !m_editorManager->promptSaveAllOnQuit()) {
+        event->ignore();
         return;
     }
 
-    // Ask user what to do with unsaved changes
-    QMessageBox msg(this);
-    msg.setWindowTitle(tr("Unsaved Changes"));
-    msg.setText(tr("You have %1 file(s) with unsaved changes.\nDo you want to save all changes before closing?").arg(modifiedEditors.size()));
-    msg.setStandardButtons(QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel);
-    msg.setDefaultButton(QMessageBox::SaveAll);
-    msg.setIcon(QMessageBox::Warning);
-
-    int res = msg.exec();
-
-    if (res == QMessageBox::SaveAll) {
-        // Save all modified editors
-        for (CodeEditor *ed : modifiedEditors) {
-            if (!saveEditor(ed)) {
-                // Save was cancelled or failed — abort close
-                event->ignore();
-                return;
-            }
-        }
-        // Save chat history before closing
-        if (chatWidget) {
-            chatWidget->saveChatHistory();
-        }
-        event->accept();
-    } else if (res == QMessageBox::Discard) {
-        // Discard all changes and close
-        // Still save chat history
-        if (chatWidget) {
-            chatWidget->saveChatHistory();
-        }
-        event->accept();
-    } else {
-        // Cancel — do not close the application
-        event->ignore();
+    if (chatWidget) {
+        chatWidget->saveChatHistory();
     }
+    event->accept();
 }
 
 void MainWindow::promptOpenFolderOrFile()
@@ -1095,6 +852,9 @@ void MainWindow::promptOpenFolderOrFile()
 void MainWindow::setProjectDirectory(const QString &path)
 {
     currentWorkingDirectory = path;
+    if (m_editorManager) {
+        m_editorManager->setWorkingDirectory(path);
+    }
     loadDirectoryToTree(path);
 
     // Mettre à jour le répertoire de travail de tous les terminaux
@@ -1144,10 +904,7 @@ void MainWindow::dropEvent(QDropEvent *event)
                 QFileInfo fileInfo(filePath);
 
                 if (fileInfo.isFile()) {
-                    // Check if we should save current changes before opening new file
-                    if (askToSaveChanges()) {
-                        openFileInEditor(filePath);
-                    }
+                    openFileInEditor(filePath);
                 } else if (fileInfo.isDir()) {
                     // If a directory is dropped, set it as the project directory
                     setProjectDirectory(filePath);
@@ -1314,12 +1071,7 @@ void MainWindow::addNewTerminal()
     });
 
     // Définir le répertoire de travail
-    if (!currentFileName.isEmpty()) {
-        QFileInfo fileInfo(currentFileName);
-        newTerminal->setWorkingDirectory(fileInfo.absolutePath());
-    } else {
-        newTerminal->setWorkingDirectory(currentWorkingDirectory);
-    }
+    newTerminal->setWorkingDirectory(editorDirectoryOrWorkspace());
 
     // Ajouter dans les tabs avec emoji éclair
     int tabIndex = terminalTabs->addTab(newTerminal, QString("⚡ Terminal %1").arg(terminalList.size()));
@@ -1419,10 +1171,7 @@ void MainWindow::onTerminalTabChanged(int index)
     if (index >= 0 && index < terminalList.size()) {
         Terminal *currentTerminal = terminalList.at(index);
         // Mettre à jour le répertoire de travail si nécessaire
-        if (!currentFileName.isEmpty()) {
-            QFileInfo fileInfo(currentFileName);
-            currentTerminal->setWorkingDirectory(fileInfo.absolutePath());
-        }
+        currentTerminal->setWorkingDirectory(editorDirectoryOrWorkspace());
     }
 }
 

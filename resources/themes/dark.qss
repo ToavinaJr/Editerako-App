@@ -1,0 +1,137 @@
+/* Editerako dark theme — extracted from the historical MainWindow stylesheet. */
+
+QMainWindow {
+    background-color: #1e1e1e;
+    color: #cccccc;
+}
+
+QMenuBar {
+    background-color: #2d2d30;
+    color: #cccccc;
+}
+
+QMenu {
+    background-color: #2d2d30;
+    color: #cccccc;
+}
+
+QMenu::item:selected {
+    background-color: #3e3e42;
+}
+
+QToolBar {
+    background-color: #2d2d30;
+    border: 1px solid #3e3e42;
+    spacing: 15px;
+    height: 40px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #3e3e42;
+    background-color: #1e1e1e;
+}
+
+QTabBar::tab {
+    background-color: #2d2d30;
+    color: #cccccc;
+    border: 1px solid #3e3e42;
+    padding: 8px 16px;
+    margin-right: 0px;
+}
+
+QTabBar::tab:selected {
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+QTreeWidget, QTreeView {
+    background-color: #252526;
+    border: 1px solid #3e3e42;
+    color: #cccccc;
+    alternate-background-color: #2d2d30;
+}
+
+QTreeWidget::item:selected, QTreeView::item:selected {
+    background-color: #3e3e42;
+}
+
+QTextEdit, QPlainTextEdit {
+    background-color: #1e1e1e;
+    color: #cccccc;
+    border: none;
+    font-family: "Monaco", "Consolas", monospace;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+QLineEdit {
+    background-color: #3e3e42;
+    border: 1px solid #6f6f6f;
+    border-radius: 4px;
+    color: #cccccc;
+    padding: 6px;
+}
+
+QPushButton {
+    background-color: #3e3e42;
+    border: 1px solid #6f6f6f;
+    border-radius: 4px;
+    color: #cccccc;
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+QPushButton:hover {
+    background-color: #6f6f6f;
+}
+
+QPushButton#fixButton,
+QPushButton#inviteButton {
+    background-color: #98c379;
+    color: black;
+    font-weight: bold;
+    border: none;
+}
+
+QScrollBar:vertical {
+    background-color: #2d2d30;
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #6f6f6f;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QComboBox {
+    background-color: #3e3e42;
+    border: 1px solid #6f6f6f;
+    border-radius: 4px;
+    color: #cccccc;
+    padding: 4px 8px;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+QLabel {
+    color: #cccccc;
+}
+
+QStatusBar {
+    background-color: #2d2d30;
+    border-top: 1px solid #3e3e42;
+    color: #cccccc;
+}
+
+QDialog, QMessageBox {
+    background-color: #1e1e1e;
+    color: #cccccc;
+}
+
+QCheckBox {
+    color: #cccccc;
+}

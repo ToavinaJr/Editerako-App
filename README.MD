@@ -33,6 +33,8 @@ Le projet est un prototype fonctionnel en cours de structuration architecturale.
 
 Qt est localisé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake` sur le `PATH`, ou (Windows) le layout de l’installateur `C:\Qt\<version>\mingw_64`.
 
+Le thème (`dark` / `light`) est lu dans `QSettings` (organisation/application `Editerako`). La valeur par défaut est `dark`.
+
 ## Build Windows
 
 Depuis la racine du dépôt, dans PowerShell :

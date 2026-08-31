@@ -32,6 +32,7 @@
 #include <QTabBar>
 
 class ChatWidget;
+class EditorManager;
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -47,18 +48,13 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-private:
-    QPdfDocument *pdfDoc = nullptr;
-    QPdfView *pdfView = nullptr;
-    QLabel *imageLabel = nullptr;
-    QScrollArea *imageScroll = nullptr;
-
     enum ViewerIndex {
         CodeViewer = 0,
         PdfViewer,
         ImageViewer,
         UnsupportedViewer
     };
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -70,65 +66,56 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private slots:
-    // File menu operations
     void newFile();
     void newFolder();
     void openFile();
     void openFolder();
 
-    // Explorer buttons
+    void saveCurrentDocument();
+    void saveCurrentDocumentAs();
+    void saveAllDocuments();
+    void closeCurrentTab();
+    void closeOtherTabs();
+    void closeAllTabs();
+
     void onAddFileClicked();
     void onNewFolderClicked();
     void onCloseExplorerClicked();
 
-    // File tree interaction
     void onFileTreeItemClicked(QTreeWidgetItem *item, int column);
     void onFileTreeItemDoubleClicked(QTreeWidgetItem *item, int column);
 
-    // Line numbers toggle
     void onShowLinesToggled(bool checked);
 
-    // Find section
     void onActionFindReplace();
     void onActionGoToLine();
 
-    // Ouvrir terminal
     void toggleTerminal();
     void onTerminalClosed();
 
-    // Nouvelles méthodes pour les terminaux multiples
     void addNewTerminal();
     void closeTerminalTab(int index);
     void onTerminalTabChanged(int index);
 
 private:
     Ui::MainWindow *ui;
-    QTabWidget *editorTabs;
-    QString currentFileName;
+    EditorManager *m_editorManager = nullptr;
     QString currentWorkingDirectory;
-    // Terminal *terminal; // Ancien terminal unique, remplacé par terminalList
-    QShortcut *terminalShortcut;
+    QShortcut *terminalShortcut = nullptr;
     ChatWidget *chatWidget = nullptr;
-    bool isTerminalVisible;
-    bool isModified;
-
-    // Nouveaux membres pour les terminaux multiples
-    QTabWidget *terminalTabs;
+    bool isTerminalVisible = false;
+    QTabWidget *terminalTabs = nullptr;
     QList<Terminal*> terminalList;
-    QPushButton *addTerminalButton;
+    QPushButton *addTerminalButton = nullptr;
+    bool isFileTreeVisible = true;
 
-    // État de l'explorateur
-    bool isFileTreeVisible;
+    QPdfDocument *pdfDoc = nullptr;
+    QPdfView *pdfView = nullptr;
+    QLabel *imageLabel = nullptr;
+    QScrollArea *imageScroll = nullptr;
 
     CodeEditor *currentEditor();
-private slots:
-    void onEditorTabChanged(int index);
-    void closeTab(int index);
-
-private:
-    bool saveEditor(CodeEditor *editor);
-    void updateTabModifiedState(CodeEditor *editor);
-    void updateTabLabel(CodeEditor *editor);
+    QString editorDirectoryOrWorkspace() const;
 
     void connectActions();
     void updateWindowTitle();
@@ -138,11 +125,9 @@ private:
     void loadDirectoryToTree(const QString &path);
     void addFileToTree(const QString &fileName, QTreeWidgetItem *parent = nullptr);
     void addFolderToTree(const QString &folderName, QTreeWidgetItem *parent = nullptr);
-    bool askToSaveChanges();
     QString getFileExtension(const QString &fileName);
     QString getFileIcon(const QString &fileName);
     void openFileInEditor(const QString &filePath);
-    void saveCurrentFile();
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path);
 };

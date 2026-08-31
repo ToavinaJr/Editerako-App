@@ -68,12 +68,24 @@ qt_add_executable(Editerako
     terminal.ui
     chatwidget.cpp
     chatwidget.h
+    src/core/Logging.cpp
+    src/core/Logging.h
+    src/core/AppSettings.cpp
+    src/core/AppSettings.h
+    src/core/ThemeManager.cpp
+    src/core/ThemeManager.h
+    src/editor/EditorDocument.cpp
+    src/editor/EditorDocument.h
+    src/editor/EditorManager.cpp
+    src/editor/EditorManager.h
+    resources/resources.qrc
 )
 
 editerako_enable_warnings(Editerako)
 
 target_include_directories(Editerako PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     tree-sitter/tree-sitter/lib/include
 )
 
