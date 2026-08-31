@@ -340,6 +340,7 @@ Terminal::Terminal(QWidget *parent)
 
 Terminal::~Terminal()
 {
+    shutdown();
     delete ui;
 }
 
@@ -461,6 +462,13 @@ void Terminal::onCommandEntered(const QString &command)
 
     // Execute external command
     executeCommand(trimmedCommand);
+}
+
+void Terminal::shutdown()
+{
+    if (m_process) {
+        m_process->stop();
+    }
 }
 
 void Terminal::executeCommand(const QString &command)

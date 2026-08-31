@@ -15,9 +15,15 @@ TerminalProcess::TerminalProcess(QObject *parent)
     connect(m_process, &QProcess::readyReadStandardError, this, &TerminalProcess::onReadyRead);
     connect(m_process, &QProcess::finished, this,
             [this](int exitCode, QProcess::ExitStatus status) {
+                if (m_stopping) {
+                    return;
+                }
                 emit finished(exitCode, status == QProcess::CrashExit);
             });
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (m_stopping) {
+            return;
+        }
         if (error == QProcess::FailedToStart) {
             emit failed(tr("Failed to start command"));
             return;
@@ -78,7 +84,7 @@ bool TerminalProcess::isRunning() const
 
 void TerminalProcess::startCommand(const QString &command)
 {
-    if (isRunning() || command.trimmed().isEmpty()) {
+    if (m_stopping || isRunning() || command.trimmed().isEmpty()) {
         return;
     }
 
@@ -95,15 +101,35 @@ void TerminalProcess::startCommand(const QString &command)
 
 void TerminalProcess::stop()
 {
-    if (!m_process || m_process->state() == QProcess::NotRunning) {
+    if (m_stopping) {
         return;
     }
+    m_stopping = true;
+
+    if (!m_process) {
+        return;
+    }
+
+    blockSignals(true);
+    m_process->disconnect(this);
+
+    if (m_process->state() == QProcess::NotRunning) {
+        return;
+    }
+
+    qCInfo(lcTerminal) << "Stopping process pid" << m_process->processId();
     m_process->kill();
-    m_process->waitForFinished(300);
+    if (!m_process->waitForFinished(1000)) {
+        m_process->close();
+        m_process->waitForFinished(200);
+    }
 }
 
 void TerminalProcess::onReadyRead()
 {
+    if (m_stopping || !m_process) {
+        return;
+    }
     const QByteArray output = m_process->readAllStandardOutput();
     const QByteArray error = m_process->readAllStandardError();
     if (!output.isEmpty()) {

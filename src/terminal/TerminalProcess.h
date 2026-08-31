@@ -33,6 +33,7 @@ private:
     QProcess *m_process = nullptr;
     QString m_workingDirectory;
     QString m_shell;
+    bool m_stopping = false;
 };
 
 #endif

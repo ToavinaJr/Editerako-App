@@ -80,6 +80,7 @@ public:
     QString getWorkingDirectory() const;
     void clearTerminal();
     void executeCommand(const QString &command);
+    void shutdown();
 
 public slots:
     void focusTerminal();

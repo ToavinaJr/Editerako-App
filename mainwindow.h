@@ -121,6 +121,9 @@ private:
     void setupFileTree();
     void setupCodeEditor();
     void setupTerminalTabs();
+    void attachTerminalCloseButton(Terminal *terminal);
+    void shutdownAllTerminals();
+    QWidget *terminalContainer() const;
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path);

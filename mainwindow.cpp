@@ -126,6 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    shutdownAllTerminals();
     delete ui;
 }
 
@@ -570,25 +571,29 @@ void MainWindow::onActionGoToLine() {
 
 void MainWindow::toggleTerminal()
 {
-    // Trouver le conteneur des terminaux (parent du terminalTabs)
-    QWidget *terminalContainer = terminalTabs ? terminalTabs->parentWidget() : nullptr;
-    if (terminalContainer) {
-        isTerminalVisible = !isTerminalVisible;
-        terminalContainer->setVisible(isTerminalVisible);
+    QWidget *container = terminalContainer();
+    if (!container) {
+        return;
+    }
 
-        if (isTerminalVisible) {
-            // Donner le focus au terminal actif
-            Terminal *currentTerminal = terminalList.at(terminalTabs->currentIndex());
-            if (currentTerminal) {
-                // Set terminal working directory to current file's directory or project directory
-                currentTerminal->setWorkingDirectory(editorDirectoryOrWorkspace());
-                currentTerminal->focusTerminal();
-            }
-        } else {
-            // Retourner le focus à l'éditeur
-            if (currentEditor()) {
-                currentEditor()->setFocus();
-            }
+    if (!isTerminalVisible) {
+        if (terminalList.isEmpty()) {
+            addNewTerminal();
+        }
+        isTerminalVisible = true;
+        container->setVisible(true);
+
+        const int index = terminalTabs ? terminalTabs->currentIndex() : -1;
+        if (index >= 0 && index < terminalList.size()) {
+            Terminal *currentTerminal = terminalList.at(index);
+            currentTerminal->setWorkingDirectory(editorDirectoryOrWorkspace());
+            currentTerminal->focusTerminal();
+        }
+    } else {
+        isTerminalVisible = false;
+        container->setVisible(false);
+        if (currentEditor()) {
+            currentEditor()->setFocus();
         }
     }
 }
@@ -606,6 +611,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+
+    shutdownAllTerminals();
 
     if (chatWidget) {
         chatWidget->saveChatHistory();
@@ -816,33 +823,8 @@ void MainWindow::setupTerminalTabs()
     });
 
     // Ajouter le premier terminal dans les tabs
-    int firstTabIndex = terminalTabs->addTab(firstTerminal, "⚡ Terminal 1");
-    
-    // Créer un bouton de fermeture personnalisé avec × visible
-    QPushButton *closeBtn = new QPushButton("×", this);
-    closeBtn->setFixedSize(16, 16);
-    closeBtn->setCursor(Qt::PointingHandCursor);
-    closeBtn->setStyleSheet(
-        "QPushButton {"
-        "    background-color: transparent;"
-        "    border: none;"
-        "    border-radius: 3px;"
-        "    color: #909090;"
-        "    font-size: 14px;"
-        "    font-weight: bold;"
-        "    padding: 0px;"
-        "    margin: 0px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #e06c75;"
-        "    color: #ffffff;"
-        "}"
-    );
-    connect(closeBtn, &QPushButton::clicked, this, [this, firstTerminal]() {
-        int idx = terminalTabs->indexOf(firstTerminal);
-        if (idx >= 0) closeTerminalTab(idx);
-    });
-    terminalTabs->tabBar()->setTabButton(firstTabIndex, QTabBar::RightSide, closeBtn);
+    terminalTabs->addTab(firstTerminal, "⚡ Terminal 1");
+    attachTerminalCloseButton(firstTerminal);
 
     // Créer le bouton + pour ajouter de nouveaux terminaux
     addTerminalButton = new QPushButton("+", this);
@@ -928,9 +910,65 @@ void MainWindow::addNewTerminal()
 
     // Ajouter dans les tabs avec emoji éclair
     int tabIndex = terminalTabs->addTab(newTerminal, QString("⚡ Terminal %1").arg(terminalList.size()));
-    
-    // Créer un bouton de fermeture personnalisé avec × visible
-    QPushButton *closeBtn = new QPushButton("×", this);
+    attachTerminalCloseButton(newTerminal);
+
+    if (QWidget *container = terminalContainer()) {
+        container->setVisible(true);
+        isTerminalVisible = true;
+    }
+
+    terminalTabs->setCurrentIndex(tabIndex);
+
+    // Donner le focus au nouveau terminal
+    newTerminal->focusTerminal();
+}
+
+
+void MainWindow::closeTerminalTab(int index)
+{
+    if (index < 0 || index >= terminalList.size()) {
+        return;
+    }
+
+    Terminal *terminalToClose = terminalList.takeAt(index);
+    terminalTabs->removeTab(index);
+
+    terminalToClose->shutdown();
+    terminalToClose->deleteLater();
+
+    for (int i = 0; i < terminalList.size(); ++i) {
+        terminalTabs->setTabText(i, QString("⚡ Terminal %1").arg(i + 1));
+    }
+
+    if (terminalList.isEmpty()) {
+        if (QWidget *container = terminalContainer()) {
+            container->setVisible(false);
+        }
+        isTerminalVisible = false;
+        if (currentEditor()) {
+            currentEditor()->setFocus();
+        }
+    }
+}
+
+void MainWindow::attachTerminalCloseButton(Terminal *terminal)
+{
+    if (!terminalTabs || !terminal) {
+        return;
+    }
+
+    const int index = terminalTabs->indexOf(terminal);
+    if (index < 0) {
+        return;
+    }
+
+    QWidget *oldBtn = terminalTabs->tabBar()->tabButton(index, QTabBar::RightSide);
+    if (oldBtn) {
+        terminalTabs->tabBar()->setTabButton(index, QTabBar::RightSide, nullptr);
+        oldBtn->deleteLater();
+    }
+
+    auto *closeBtn = new QPushButton(QStringLiteral("×"), terminalTabs->tabBar());
     closeBtn->setFixedSize(16, 16);
     closeBtn->setCursor(Qt::PointingHandCursor);
     closeBtn->setStyleSheet(
@@ -949,74 +987,27 @@ void MainWindow::addNewTerminal()
         "    color: #ffffff;"
         "}"
     );
-    connect(closeBtn, &QPushButton::clicked, this, [this, tabIndex]() {
-        closeTerminalTab(tabIndex);
+    connect(closeBtn, &QPushButton::clicked, this, [this, terminal]() {
+        const int idx = terminalList.indexOf(terminal);
+        if (idx >= 0) {
+            closeTerminalTab(idx);
+        }
     });
-    terminalTabs->tabBar()->setTabButton(tabIndex, QTabBar::RightSide, closeBtn);
-    
-    terminalTabs->setCurrentIndex(tabIndex);
-
-    // Donner le focus au nouveau terminal
-    newTerminal->focusTerminal();
+    terminalTabs->tabBar()->setTabButton(index, QTabBar::RightSide, closeBtn);
 }
 
-
-void MainWindow::closeTerminalTab(int index)
+void MainWindow::shutdownAllTerminals()
 {
-    if (index < 0 || index >= terminalList.size()) return;
-
-    Terminal *terminalToClose = terminalList.at(index);
-
-    // Si c'est le dernier terminal, ne pas le fermer
-    if (terminalList.size() == 1) {
-        QMessageBox::information(this, tr("Cannot close terminal"),
-                               tr("At least one terminal must remain open."));
-        return;
-    }
-
-    // Fermer le terminal
-    terminalList.removeAt(index);
-    terminalTabs->removeTab(index);
-
-    // Renommer les onglets restants et recréer leurs boutons de fermeture
-    for (int i = 0; i < terminalList.size(); ++i) {
-        terminalTabs->setTabText(i, QString("⚡ Terminal %1").arg(i + 1));
-
-        // Supprimer l'ancien bouton de fermeture s'il existe
-        QWidget *oldBtn = terminalTabs->tabBar()->tabButton(i, QTabBar::RightSide);
-        if (oldBtn) {
-            terminalTabs->tabBar()->setTabButton(i, QTabBar::RightSide, nullptr);
-            oldBtn->deleteLater();
+    for (Terminal *terminal : terminalList) {
+        if (terminal) {
+            terminal->shutdown();
         }
-
-        // Créer un nouveau bouton de fermeture
-        QPushButton *closeBtn = new QPushButton("×", this);
-        closeBtn->setFixedSize(16, 16);
-        closeBtn->setCursor(Qt::PointingHandCursor);
-        closeBtn->setStyleSheet(
-            "QPushButton {"
-            "    background-color: transparent;"
-            "    border: none;"
-            "    border-radius: 3px;"
-            "    color: #909090;"
-            "    font-size: 14px;"
-            "    font-weight: bold;"
-            "    padding: 0px;"
-            "    margin: 0px;"
-            "}"
-            "QPushButton:hover {"
-            "    background-color: #e06c75;"
-            "    color: #ffffff;"
-            "}"
-        );
-        connect(closeBtn, &QPushButton::clicked, this, [this, i]() {
-            closeTerminalTab(i);
-        });
-        terminalTabs->tabBar()->setTabButton(i, QTabBar::RightSide, closeBtn);
     }
+}
 
-    // Supprimer le terminal
-    terminalToClose->deleteLater();
+QWidget *MainWindow::terminalContainer() const
+{
+    return terminalTabs ? terminalTabs->parentWidget() : nullptr;
 }
 
 void MainWindow::onTerminalTabChanged(int index)
