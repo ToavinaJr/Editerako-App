@@ -1,21 +1,80 @@
-build/
-build/*
-
-Debug/
-Debug/*
-
-token.save
-token
-
-CMakeLists.txt.user
+# ---- Build / CMake ----
+/build/
+/out/
+/cmake-build-*/
 CMakeCache.txt
+CMakeFiles/
+CMakeLists.txt.user
+CMakeLists.txt.autosave
+cmake_install.cmake
+CMakeScripts/
+compile_commands.json
+CTestTestfile.cmake
+/Makefile
+*.ninja
+.ninja_deps
+.ninja_log
 
-tree-sitter_autogen/
-tree-sitter_autogen/*
+# ---- Compilateurs / linkers ----
+*.obj
+*.o
+*.a
+*.lib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.tlog
+*.recipe
+*.lastbuildstate
+*.log
 
-tree-sitter-html.dir/
-tree-sitter-html.dir/*
+# ---- Visual Studio / MSBuild (in-source) ----
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.sdf
+*.opensdf
+*.dir/
+*_autogen/
+x64/
+Win32/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+.vs/
 
-tree-sitter.dir
+# ---- Qt / Qt Creator ----
+.qt/
+.qtc/
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+*.autosave
+.qtcreator/
 
+# ---- IDEs ----
+.vscode/
+.idea/
+*.user
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---- Secrets / environnement ----
 .env
+.env.*
+!.env.example
+token
+token.save
+
+# ---- Données runtime locales ----
+.editerako/
+.deps/
