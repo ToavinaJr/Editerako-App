@@ -72,6 +72,8 @@ qt_add_executable(Editerako
     src/core/AppSettings.h
     src/core/ThemeManager.cpp
     src/core/ThemeManager.h
+    src/core/CommandRegistry.cpp
+    src/core/CommandRegistry.h
     src/editor/EditorDocument.cpp
     src/editor/EditorDocument.h
     src/editor/EditorManager.cpp

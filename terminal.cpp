@@ -32,32 +32,7 @@ AutoCompletePopup::AutoCompletePopup(QWidget *parent)
     // Le reste de votre style reste identique...
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setSelectionMode(QAbstractItemView::SingleSelection);
-
-    // Modern dark theme styling
-    setStyleSheet(
-        "QListWidget {"
-        "    background-color: #252526;"
-        "    border: 1px solid #454545;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    font-family: 'Consolas', 'Monaco', monospace;"
-        "    font-size: 12px;"
-        "    padding: 4px;"
-        "    outline: none;"
-        "}"
-        "QListWidget::item {"
-        "    padding: 6px 12px;"
-        "    border-radius: 3px;"
-        "    margin: 1px 2px;"
-        "}"
-        "QListWidget::item:hover {"
-        "    background-color: #2a2d2e;"
-        "}"
-        "QListWidget::item:selected {"
-        "    background-color: #094771;"
-        "    color: #ffffff;"
-        "}"
-    );
+    setObjectName(QStringLiteral("AutoCompletePopup"));
     
     connect(this, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
         if (item) {

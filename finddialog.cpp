@@ -10,6 +10,7 @@
 #include <QRegularExpression>
 #include <QMessageBox>
 #include <QFrame>
+#include <QStyle>
 
 FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
     : QDialog(parent), editor(editor)
@@ -17,87 +18,7 @@ FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
     setWindowTitle("Find / Replace");
     setMinimumWidth(500);
     setMinimumHeight(280);
-
-    // Style global du dialog
-    setStyleSheet(
-        "QDialog {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "}"
-        "QLabel {"
-        "    color: #cccccc;"
-        "    font-size: 12px;"
-        "    padding: 4px 0px;"
-        "}"
-        "QLineEdit {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 8px;"
-        "    font-size: 12px;"
-        "    selection-background-color: #264f78;"
-        "}"
-        "QLineEdit:focus {"
-        "    border: 1px solid #98c379;"
-        "}"
-        "QCheckBox {"
-        "    color: #cccccc;"
-        "    font-size: 11px;"
-        "    spacing: 8px;"
-        "}"
-        "QCheckBox::indicator {"
-        "    width: 16px;"
-        "    height: 16px;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 3px;"
-        "    background-color: #3e3e42;"
-        "}"
-        "QCheckBox::indicator:checked {"
-        "    background-color: #98c379;"
-        "    border-color: #98c379;"
-        "}"
-        "QPushButton {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 8px 16px;"
-        "    font-size: 11px;"
-        "    min-width: 80px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #6f6f6f;"
-        "    border-color: #8f8f8f;"
-        "}"
-        "QPushButton:pressed {"
-        "    background-color: #2d2d30;"
-        "}"
-        "QPushButton#findNextButton {"
-        "    background-color: #98c379;"
-        "    color: #1e1e1e;"
-        "    font-weight: bold;"
-        "    border: none;"
-        "}"
-        "QPushButton#findNextButton:hover {"
-        "    background-color: #a8d389;"
-        "}"
-        "QPushButton#replaceAllButton {"
-        "    background-color: #e5c07b;"
-        "    color: #1e1e1e;"
-        "    font-weight: bold;"
-        "    border: none;"
-        "}"
-        "QPushButton#replaceAllButton:hover {"
-        "    background-color: #f0d08b;"
-        "}"
-        "QFrame#separator {"
-        "    background-color: #3e3e42;"
-        "    max-height: 1px;"
-        "}"
-        );
-
-    // Widgets
+    setObjectName(QStringLiteral("FindReplaceDialog"));
     searchLineEdit = new QLineEdit;
     searchLineEdit->setPlaceholderText("Search text...");
 
@@ -129,14 +50,14 @@ FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
 
     // Section Find
     QLabel *findLabel = new QLabel("Find:");
-    findLabel->setStyleSheet("font-weight: bold; font-size: 13px;");
+    findLabel->setObjectName(QStringLiteral("sectionLabel"));
     mainLayout->addWidget(findLabel);
     mainLayout->addWidget(searchLineEdit);
 
     // Section Replace
     mainLayout->addSpacing(8);
     QLabel *replaceLabel = new QLabel("Replace:");
-    replaceLabel->setStyleSheet("font-weight: bold; font-size: 13px;");
+    replaceLabel->setObjectName(QStringLiteral("sectionLabel"));
     mainLayout->addWidget(replaceLabel);
     mainLayout->addWidget(replaceLineEdit);
 
@@ -177,19 +98,15 @@ void FindReplaceDialog::findNext()
 {
     QString pattern = searchLineEdit->text();
     if(pattern.isEmpty()) {
-        searchLineEdit->setStyleSheet(
-            "QLineEdit {"
-            "    border: 2px solid #e06c75;"
-            "    background-color: #3e3e42;"
-            "    color: #cccccc;"
-            "    padding: 8px;"
-            "}"
-            );
+        searchLineEdit->setProperty("invalid", true);
+        searchLineEdit->style()->unpolish(searchLineEdit);
+        searchLineEdit->style()->polish(searchLineEdit);
         return;
     }
 
-    // Reset style
-    searchLineEdit->setStyleSheet("");
+    searchLineEdit->setProperty("invalid", false);
+    searchLineEdit->style()->unpolish(searchLineEdit);
+    searchLineEdit->style()->polish(searchLineEdit);
 
     QTextDocument::FindFlags flags;
     if(caseSensitiveCheckBox->isChecked())
@@ -230,23 +147,6 @@ void FindReplaceDialog::findNext()
         msgBox.setWindowTitle("Find");
         msgBox.setText("No more matches found.");
         msgBox.setIcon(QMessageBox::Information);
-        msgBox.setStyleSheet(
-            "QMessageBox {"
-            "    background-color: #1e1e1e;"
-            "    color: #cccccc;"
-            "}"
-            "QPushButton {"
-            "    background-color: #3e3e42;"
-            "    border: 1px solid #6f6f6f;"
-            "    border-radius: 4px;"
-            "    color: #cccccc;"
-            "    padding: 6px 16px;"
-            "    min-width: 60px;"
-            "}"
-            "QPushButton:hover {"
-            "    background-color: #6f6f6f;"
-            "}"
-            );
         msgBox.exec();
     }
 }
@@ -295,22 +195,5 @@ void FindReplaceDialog::replaceAll()
     msgBox.setWindowTitle("Replace All");
     msgBox.setText(QString("Replaced %1 occurrence(s).").arg(count));
     msgBox.setIcon(QMessageBox::Information);
-    msgBox.setStyleSheet(
-        "QMessageBox {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "}"
-        "QPushButton {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 6px 16px;"
-        "    min-width: 60px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #6f6f6f;"
-        "}"
-        );
     msgBox.exec();
 }

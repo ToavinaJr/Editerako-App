@@ -135,3 +135,220 @@ QDialog, QMessageBox {
 QCheckBox {
     color: #cccccc;
 }
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #6f6f6f;
+    border-radius: 3px;
+    background-color: #3e3e42;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #98c379;
+    border-color: #98c379;
+}
+
+QInputDialog {
+    background-color: #1e1e1e;
+    color: #cccccc;
+}
+
+QLineEdit:focus {
+    border: 1px solid #98c379;
+}
+
+QLineEdit[invalid="true"] {
+    border: 2px solid #e06c75;
+}
+
+QPushButton:pressed {
+    background-color: #2d2d30;
+}
+
+FindReplaceDialog QLabel#sectionLabel {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+FindReplaceDialog QPushButton#findNextButton {
+    background-color: #98c379;
+    color: #1e1e1e;
+    font-weight: bold;
+    border: none;
+}
+
+FindReplaceDialog QPushButton#findNextButton:hover {
+    background-color: #a8d389;
+}
+
+FindReplaceDialog QPushButton#replaceAllButton {
+    background-color: #e5c07b;
+    color: #1e1e1e;
+    font-weight: bold;
+    border: none;
+}
+
+FindReplaceDialog QPushButton#replaceAllButton:hover {
+    background-color: #f0d08b;
+}
+
+FindReplaceDialog QFrame#separator {
+    background-color: #3e3e42;
+    max-height: 1px;
+}
+
+QTabWidget#terminalTabs::pane {
+    border: 1px solid #3e3e42;
+    background-color: #1e1e1e;
+}
+
+QTabWidget#terminalTabs QTabBar::tab {
+    background-color: #2d2d30;
+    color: #969696;
+    border: none;
+    border-right: 1px solid #3e3e42;
+    padding: 6px 12px;
+    padding-right: 24px;
+    min-width: 80px;
+    font-size: 11px;
+}
+
+QTabWidget#terminalTabs QTabBar::tab:selected {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QTabWidget#terminalTabs QTabBar::tab:hover:!selected {
+    background-color: #2a2d2e;
+}
+
+QPushButton#addTerminalButton {
+    background-color: transparent;
+    border: none;
+    color: #cccccc;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 0px;
+}
+
+QPushButton#addTerminalButton:hover {
+    background-color: #3e3e42;
+    color: #ffffff;
+    border-radius: 3px;
+}
+
+QPushButton#addTerminalButton:pressed {
+    background-color: #4a9eff;
+    color: #ffffff;
+}
+
+QPushButton#terminalCloseButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 3px;
+    color: #909090;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0px;
+}
+
+QPushButton#terminalCloseButton:hover {
+    background-color: #e06c75;
+    color: #ffffff;
+}
+
+AutoCompletePopup {
+    background-color: #252526;
+    border: 1px solid #454545;
+    border-radius: 4px;
+    color: #cccccc;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
+    padding: 4px;
+    outline: none;
+}
+
+AutoCompletePopup::item {
+    padding: 6px 12px;
+    border-radius: 3px;
+    margin: 1px 2px;
+}
+
+AutoCompletePopup::item:hover {
+    background-color: #2a2d2e;
+}
+
+AutoCompletePopup::item:selected {
+    background-color: #094771;
+    color: #ffffff;
+}
+
+QLabel#pdfStatusLabel {
+    color: #cccccc;
+    background-color: #1e1e1e;
+}
+
+ChatWidget {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0f0f12, stop:1 #1a1a1f);
+}
+
+ChatWidget QTextEdit#chatConversation {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1a1a1d, stop:1 #16161a);
+    color: #e8e8e8;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: "Segoe UI", "SF Pro Display", system-ui, sans-serif;
+    font-size: 14px;
+    selection-background-color: #4a9eff;
+}
+
+ChatWidget QTextEdit#chatConversation QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 4px;
+}
+
+ChatWidget QTextEdit#chatConversation QScrollBar::handle:vertical {
+    background: rgba(100, 100, 120, 0.4);
+    border-radius: 5px;
+    min-height: 30px;
+}
+
+ChatWidget QLineEdit#chatInput {
+    background-color: #2a2a2f;
+    color: #e8e8e8;
+    border: 2px solid transparent;
+    border-radius: 24px;
+    padding: 12px 20px;
+    font-family: "Segoe UI", "SF Pro Display", system-ui, sans-serif;
+    font-size: 14px;
+    selection-background-color: #4a9eff;
+}
+
+ChatWidget QLineEdit#chatInput:focus {
+    border: 2px solid #4a9eff;
+    background-color: #323238;
+}
+
+ChatWidget QLineEdit#chatInput:hover {
+    background-color: #32323a;
+}
+
+ChatWidget QPushButton#chatSendButton {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4a9eff, stop:1 #357abd);
+    color: white;
+    border: none;
+    border-radius: 22px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+ChatWidget QPushButton#chatSendButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #5fadff, stop:1 #4a8fd4);
+}
+
+ChatWidget QPushButton#chatSendButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3a8eef, stop:1 #2a6aad);
+}

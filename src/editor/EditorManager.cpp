@@ -10,6 +10,9 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontMetrics>
+#include <QtGlobal>
 #include <QMessageBox>
 #include <QTabWidget>
 #include <QTextStream>
@@ -77,12 +80,18 @@ CodeEditor *EditorManager::createEditor()
 
 void EditorManager::applyEditorStyle(CodeEditor *editor) const
 {
-    editor->setStyleSheet(
-        "background-color: #1e1e1e;"
-        "color: #cccccc;"
-        "border: none;"
-        "font-family: 'Monaco', 'Consolas', monospace;"
-        "font-size: 13px;");
+    const AppSettings settings;
+    QFont font(settings.editorFontFamily());
+    font.setPointSize(qMax(8, settings.editorFontSize()));
+    editor->setFont(font);
+
+    const QFontMetrics metrics(font);
+    editor->setTabStopDistance(
+        settings.editorTabSize() * metrics.horizontalAdvance(QLatin1Char(' ')));
+    editor->setLineWrapMode(settings.editorWordWrap()
+                                ? QPlainTextEdit::WidgetWidth
+                                : QPlainTextEdit::NoWrap);
+    editor->setLineNumbersVisible(settings.editorLineNumbers());
 }
 
 void EditorManager::syncHighlighter(CodeEditor *editor)

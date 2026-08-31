@@ -3,18 +3,23 @@
 #include "finddialog.h"
 #include "gotolinedialog.h"
 #include "chatwidget.h"
+#include "core/CommandRegistry.h"
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
 #include "project/FileExplorer.h"
 #include "project/Workspace.h"
 #include "viewers/ViewerManager.h"
 #include <QApplication>
+#include <QAction>
+#include <QKeySequence>
+#include <QMenuBar>
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QMessageBox>
 #include <QUrl>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -47,9 +52,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Ask user to select a folder/file to open at startup
     promptOpenFolderOrFile();
-
-    // Adding shortcut
-    ui->actionFindReplace->setShortcut(QKeySequence("Ctrl+F"));
 
     // Setup terminal tabs system
     setupTerminalTabs();
@@ -118,31 +120,68 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectActions()
 {
-    // File menu actions
-    connect(ui->actionFile, &QAction::triggered, this, &MainWindow::newFile);
-    connect(ui->actionNew_Document, &QAction::triggered, this, &MainWindow::newFolder);
-    connect(ui->actionOpen_File, &QAction::triggered, this, &MainWindow::openFile);
-    connect(ui->actionOpen_Folder, &QAction::triggered, this, &MainWindow::openFolder);
-    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveCurrentDocument);
-    connect(ui->actionSave_As, &QAction::triggered, this, &MainWindow::saveCurrentDocumentAs);
-    connect(ui->actionSave_All, &QAction::triggered, this, &MainWindow::saveAllDocuments);
-    connect(ui->actionClose, &QAction::triggered, this, &MainWindow::closeCurrentTab);
-    connect(ui->actionClose_Others, &QAction::triggered, this, &MainWindow::closeOtherTabs);
-    connect(ui->actionClose_All, &QAction::triggered, this, &MainWindow::closeAllTabs);
+    m_commands = new CommandRegistry(this);
 
-    // Explorer buttons
+    auto bind = [this](const QString &id, QAction *action, void (MainWindow::*slot)()) {
+        m_commands->add(id, action);
+        connect(action, &QAction::triggered, this, slot);
+    };
+
+    bind(QStringLiteral("file.new"), ui->actionFile, &MainWindow::newFile);
+    bind(QStringLiteral("file.newFolder"), ui->actionNew_Document, &MainWindow::newFolder);
+    bind(QStringLiteral("file.open"), ui->actionOpen_File, &MainWindow::openFile);
+    bind(QStringLiteral("file.openFolder"), ui->actionOpen_Folder, &MainWindow::openFolder);
+    bind(QStringLiteral("file.save"), ui->actionSave, &MainWindow::saveCurrentDocument);
+    bind(QStringLiteral("file.saveAs"), ui->actionSave_As, &MainWindow::saveCurrentDocumentAs);
+    bind(QStringLiteral("file.saveAll"), ui->actionSave_All, &MainWindow::saveAllDocuments);
+    bind(QStringLiteral("file.close"), ui->actionClose, &MainWindow::closeCurrentTab);
+    bind(QStringLiteral("file.closeOthers"), ui->actionClose_Others, &MainWindow::closeOtherTabs);
+    bind(QStringLiteral("file.closeAll"), ui->actionClose_All, &MainWindow::closeAllTabs);
+    bind(QStringLiteral("edit.find"), ui->actionFindReplace, &MainWindow::onActionFindReplace);
+    bind(QStringLiteral("edit.gotoLine"), ui->actionGoToLine, &MainWindow::onActionGoToLine);
+
+    ui->actionFile->setShortcut(QKeySequence::New);
+    ui->actionOpen_File->setShortcut(QKeySequence::Open);
+    ui->actionSave->setShortcut(QKeySequence::Save);
+    ui->actionSave_As->setShortcut(QKeySequence::SaveAs);
+    ui->actionClose->setShortcut(QKeySequence(QStringLiteral("Ctrl+W")));
+    ui->actionFindReplace->setShortcut(QKeySequence::Find);
+    ui->actionGoToLine->setShortcut(QKeySequence(QStringLiteral("Ctrl+G")));
+
+    QAction *toggleTerminal = m_commands->create(
+        QStringLiteral("view.terminal"),
+        tr("Toggle Terminal"),
+        QKeySequence(QStringLiteral("Ctrl+J")));
+    connect(toggleTerminal, &QAction::triggered, this, &MainWindow::toggleTerminal);
+
+    QMenu *viewMenu = menuBar()->addMenu(tr("View"));
+    viewMenu->addAction(toggleTerminal);
+
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);
     connect(ui->closeExplorerButton, &QPushButton::clicked, this, &MainWindow::onCloseExplorerClicked);
-
-    // Line numbers checkbox
     connect(ui->checkBox, &QCheckBox::toggled, this, &MainWindow::onShowLinesToggled);
 
-    // Text editor modification tracking will be connected per-tab when created
+    updateCommandStates();
+}
 
-    // Connection to the find dialog
-    connect(ui->actionFindReplace, &QAction::triggered, this, &MainWindow::onActionFindReplace);
-    connect(ui->actionGoToLine, &QAction::triggered, this, &MainWindow::onActionGoToLine);
+void MainWindow::updateCommandStates()
+{
+    if (!m_commands) {
+        return;
+    }
+
+    const bool hasEditor = currentEditor() != nullptr;
+    const int tabCount = m_editorManager ? m_editorManager->tabWidget()->count() : 0;
+
+    m_commands->setEnabled(QStringLiteral("file.save"), hasEditor);
+    m_commands->setEnabled(QStringLiteral("file.saveAs"), hasEditor);
+    m_commands->setEnabled(QStringLiteral("file.saveAll"), hasEditor);
+    m_commands->setEnabled(QStringLiteral("edit.find"), hasEditor);
+    m_commands->setEnabled(QStringLiteral("edit.gotoLine"), hasEditor);
+    m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
+    m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
+    m_commands->setEnabled(QStringLiteral("file.closeAll"), tabCount > 0);
 }
 
 void MainWindow::setupCodeEditor()
@@ -162,6 +201,7 @@ void MainWindow::setupCodeEditor()
 
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncChatContext);
+    connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateCommandStates);
     connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
         if (m_workspace && m_fileExplorer && m_workspace->containsPath(path)) {
@@ -198,43 +238,6 @@ void MainWindow::newFile()
     dialog.setInputMode(QInputDialog::TextInput);
     dialog.setMinimumWidth(800);
     dialog.setMinimumHeight(150);
-    dialog.setStyleSheet(
-        "QInputDialog {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "}"
-        "QLabel {"
-        "    color: #cccccc;"
-        "    font-size: 12px;"
-        "}"
-        "QLineEdit {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 8px;"
-        "    font-size: 12px;"
-        "}"
-        "QLineEdit:focus {"
-        "    border: 1px solid #98c379;"
-        "}"
-        "QPushButton {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 6px 16px;"
-        "    font-size: 11px;"
-        "    min-width: 60px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #6f6f6f;"
-        "}"
-        "QPushButton:pressed {"
-        "    background-color: #98c379;"
-        "    color: #1e1e1e;"
-        "}"
-        );
 
     ok = dialog.exec();
     QString fileName = dialog.textValue();
@@ -273,44 +276,6 @@ void MainWindow::newFolder()
     // Set minimum size for the dialog
     dialog.setMinimumWidth(400);
     dialog.setMinimumHeight(150);
-    // Apply dark theme stylesheet
-    dialog.setStyleSheet(
-        "QInputDialog {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "}"
-        "QLabel {"
-        "    color: #cccccc;"
-        "    font-size: 12px;"
-        "}"
-        "QLineEdit {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 8px;"
-        "    font-size: 12px;"
-        "}"
-        "QLineEdit:focus {"
-        "    border: 1px solid #98c379;"
-        "}"
-        "QPushButton {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 6px 16px;"
-        "    font-size: 11px;"
-        "    min-width: 60px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #6f6f6f;"
-        "}"
-        "QPushButton:pressed {"
-        "    background-color: #98c379;"
-        "    color: #1e1e1e;"
-        "}"
-        );
 
     ok = dialog.exec();
     QString folderName = dialog.textValue();
@@ -568,29 +533,7 @@ void MainWindow::promptOpenFolderOrFile()
     QPushButton *folderBtn = msgBox.addButton(tr("Open Folder"), QMessageBox::AcceptRole);
     QPushButton *fileBtn = msgBox.addButton(tr("Open File"), QMessageBox::AcceptRole);
     msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-    
-    msgBox.setStyleSheet(
-        "QMessageBox {"
-        "    background-color: #1e1e1e;"
-        "    color: #cccccc;"
-        "}"
-        "QLabel {"
-        "    color: #cccccc;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton {"
-        "    background-color: #3e3e42;"
-        "    border: 1px solid #6f6f6f;"
-        "    border-radius: 4px;"
-        "    color: #cccccc;"
-        "    padding: 8px 16px;"
-        "    min-width: 100px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #6f6f6f;"
-        "}"
-    );
-    
+
     msgBox.exec();
     
     if (msgBox.clickedButton() == folderBtn) {
@@ -739,35 +682,8 @@ void MainWindow::setupTerminalTabs()
 {
     // Créer le tab widget pour les terminaux
     terminalTabs = new QTabWidget(this);
+    terminalTabs->setObjectName(QStringLiteral("terminalTabs"));
     terminalTabs->setMovable(true);
-
-    // Style amélioré pour les terminaux avec boutons de fermeture
-    terminalTabs->setStyleSheet(
-        "QTabWidget::pane {"
-        "    border: 1px solid #3e3e42;"
-        "    background-color: #1e1e1e;"
-        "}"
-        "QTabBar {"
-        "    background-color: #2d2d30;"
-        "}"
-        "QTabBar::tab {"
-        "    background-color: #2d2d30;"
-        "    color: #969696;"
-        "    border: none;"
-        "    border-right: 1px solid #3e3e42;"
-        "    padding: 6px 12px;"
-        "    padding-right: 24px;"
-        "    min-width: 80px;"
-        "    font-size: 11px;"
-        "}"
-        "QTabBar::tab:selected {"
-        "    background-color: #1e1e1e;"
-        "    color: #ffffff;"
-        "}"
-        "QTabBar::tab:hover:!selected {"
-        "    background-color: #2a2d2e;"
-        "}"
-    );
 
     // Créer le premier terminal
     Terminal *firstTerminal = new Terminal(this);
@@ -787,29 +703,10 @@ void MainWindow::setupTerminalTabs()
 
     // Créer le bouton + pour ajouter de nouveaux terminaux
     addTerminalButton = new QPushButton("+", this);
+    addTerminalButton->setObjectName(QStringLiteral("addTerminalButton"));
     addTerminalButton->setFixedSize(28, 28);
     addTerminalButton->setToolTip(tr("Add new terminal"));
     addTerminalButton->setCursor(Qt::PointingHandCursor);
-    addTerminalButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: transparent;"
-        "    border: none;"
-        "    color: #cccccc;"
-        "    font-weight: bold;"
-        "    font-size: 16px;"
-        "    padding: 0px;"
-        "    margin-right: 8px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #3e3e42;"
-        "    color: #ffffff;"
-        "    border-radius: 3px;"
-        "}"
-        "QPushButton:pressed {"
-        "    background-color: #4a9eff;"
-        "    color: #ffffff;"
-        "}"
-    );
 
     // Créer un container pour le bouton + avec marge à droite
     QWidget *cornerWidget = new QWidget(this);
@@ -845,10 +742,6 @@ void MainWindow::setupTerminalTabs()
 
     // Cacher initialement les terminaux
     terminalContainer->setVisible(false);
-
-    // Setup Ctrl+J shortcut for terminal
-    terminalShortcut = new QShortcut(QKeySequence("Ctrl+J"), this);
-    connect(terminalShortcut, &QShortcut::activated, this, &MainWindow::toggleTerminal);
 }
 
 void MainWindow::addNewTerminal()
@@ -928,24 +821,9 @@ void MainWindow::attachTerminalCloseButton(Terminal *terminal)
     }
 
     auto *closeBtn = new QPushButton(QStringLiteral("×"), terminalTabs->tabBar());
+    closeBtn->setObjectName(QStringLiteral("terminalCloseButton"));
     closeBtn->setFixedSize(16, 16);
     closeBtn->setCursor(Qt::PointingHandCursor);
-    closeBtn->setStyleSheet(
-        "QPushButton {"
-        "    background-color: transparent;"
-        "    border: none;"
-        "    border-radius: 3px;"
-        "    color: #909090;"
-        "    font-size: 14px;"
-        "    font-weight: bold;"
-        "    padding: 0px;"
-        "    margin: 0px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #e06c75;"
-        "    color: #ffffff;"
-        "}"
-    );
     connect(closeBtn, &QPushButton::clicked, this, [this, terminal]() {
         const int idx = terminalList.indexOf(terminal);
         if (idx >= 0) {

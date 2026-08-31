@@ -15,7 +15,7 @@ PdfViewer::PdfViewer(QWidget *parent)
 {
     m_statusLabel->setAlignment(Qt::AlignCenter);
     m_statusLabel->setWordWrap(true);
-    m_statusLabel->setStyleSheet(QStringLiteral("color: #cccccc; background-color: #1e1e1e;"));
+    m_statusLabel->setObjectName(QStringLiteral("pdfStatusLabel"));
     m_statusLabel->setText(tr("Loading PDF…"));
 
     m_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

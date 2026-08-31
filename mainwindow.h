@@ -12,7 +12,6 @@
 #include <QStatusBar>
 #include <QCheckBox>
 #include <QStackedWidget>
-#include <QShortcut>
 #include <QCloseEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -26,6 +25,7 @@
 #include <QTabBar>
 
 class ChatWidget;
+class CommandRegistry;
 class EditorManager;
 class FileExplorer;
 class ViewerManager;
@@ -91,12 +91,12 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    CommandRegistry *m_commands = nullptr;
     EditorManager *m_editorManager = nullptr;
     ViewerManager *m_viewerManager = nullptr;
     Workspace *m_workspace = nullptr;
     FileExplorer *m_fileExplorer = nullptr;
     QString currentWorkingDirectory;
-    QShortcut *terminalShortcut = nullptr;
     ChatWidget *chatWidget = nullptr;
     bool isTerminalVisible = false;
     QTabWidget *terminalTabs = nullptr;
@@ -108,6 +108,7 @@ private:
     QString editorDirectoryOrWorkspace() const;
 
     void connectActions();
+    void updateCommandStates();
     void updateWindowTitle();
     void setupFileTree();
     void setupCodeEditor();

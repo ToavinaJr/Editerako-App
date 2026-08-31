@@ -19,86 +19,17 @@ ChatWidget::ChatWidget(QWidget *parent)
     , m_provider(AiProvider::create(this))
 {
     conversationView->setReadOnly(true);
+    conversationView->setObjectName(QStringLiteral("chatConversation"));
     conversationView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    conversationView->setStyleSheet(
-        "QTextEdit {"
-        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-        "    stop:0 #1a1a1d, stop:1 #16161a);"
-        "  color: #e8e8e8;"
-        "  border: none;"
-        "  border-radius: 12px;"
-        "  padding: 16px;"
-        "  font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;"
-        "  font-size: 14px;"
-        "  line-height: 1.6;"
-        "  selection-background-color: #4a9eff;"
-        "}"
-        "QScrollBar:vertical {"
-        "  background: transparent;"
-        "  width: 10px;"
-        "  margin: 4px;"
-        "}"
-        "QScrollBar::handle:vertical {"
-        "  background: rgba(100, 100, 120, 0.4);"
-        "  border-radius: 5px;"
-        "  min-height: 30px;"
-        "}"
-        "QScrollBar::handle:vertical:hover {"
-        "  background: rgba(120, 120, 140, 0.6);"
-        "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "  height: 0px;"
-        "}"
-    );
 
     inputLine->setPlaceholderText(tr("Posez votre question à Gemini..."));
+    inputLine->setObjectName(QStringLiteral("chatInput"));
     inputLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    inputLine->setStyleSheet(
-        "QLineEdit {"
-        "  background-color: #2a2a2f;"
-        "  color: #e8e8e8;"
-        "  border: 2px solid transparent;"
-        "  border-radius: 24px;"
-        "  padding: 12px 20px;"
-        "  font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;"
-        "  font-size: 14px;"
-        "  selection-background-color: #4a9eff;"
-        "}"
-        "QLineEdit:focus {"
-        "  border: 2px solid #4a9eff;"
-        "  background-color: #323238;"
-        "}"
-        "QLineEdit:hover {"
-        "  background-color: #32323a;"
-        "}"
-        "QLineEdit::placeholder {"
-        "  color: #7a7a85;"
-        "}"
-    );
 
+    sendButton->setObjectName(QStringLiteral("chatSendButton"));
     sendButton->setFixedSize(44, 44);
     sendButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     sendButton->setCursor(Qt::PointingHandCursor);
-    sendButton->setStyleSheet(
-        "QPushButton {"
-        "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
-        "    stop:0 #4a9eff, stop:1 #357abd);"
-        "  color: white;"
-        "  border: none;"
-        "  border-radius: 22px;"
-        "  font-size: 16px;"
-        "  font-weight: bold;"
-        "}"
-        "QPushButton:hover {"
-        "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
-        "    stop:0 #5fadff, stop:1 #4a8fd4);"
-        "}"
-        "QPushButton:pressed {"
-        "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1,"
-        "    stop:0 #3a8eef, stop:1 #2a6aad);"
-        "  padding-top: 2px;"
-        "}"
-    );
 
     QWidget *inputContainer = new QWidget(this);
     QHBoxLayout *inputLayout = new QHBoxLayout(inputContainer);
@@ -123,13 +54,6 @@ ChatWidget::ChatWidget(QWidget *parent)
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     setMinimumWidth(160);
     setMaximumWidth(520);
-
-    setStyleSheet(
-        "QWidget {"
-        "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-        "    stop:0 #0f0f12, stop:1 #1a1a1f);"
-        "}"
-    );
 
     connect(sendButton, &QPushButton::clicked, this, &ChatWidget::sendMessage);
     connect(inputLine, &QLineEdit::returnPressed, this, &ChatWidget::sendMessage);
