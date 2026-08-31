@@ -1,5 +1,6 @@
 #include "terminal.h"
 #include "ui_terminal.h"
+#include "terminal/TerminalProcess.h"
 #include <QDir>
 #include <QTextCursor>
 #include <QScrollBar>
@@ -318,33 +319,27 @@ void TerminalTextEdit::acceptSuggestion(const QString &suggestion)
 Terminal::Terminal(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Terminal)
-    , process(nullptr)
+    , m_process(nullptr)
     , historyIndex(-1)
-    , isProcessRunning(false)
+    , isDragging(false)
 {
     ui->setupUi(this);
     setupTerminal();
-    initializeShell();
     initializeCommandDatabase();
 
-    // Set default working directory
     workingDirectory = QDir::currentPath();
+    if (m_process) {
+        m_process->setWorkingDirectory(workingDirectory);
+    }
 
     displayPrompt();
-    isDragging = false;
 
-    // Activer le drag sur la toolbar
     ui->terminalToolbar->setMouseTracking(true);
     ui->terminalToolbar->installEventFilter(this);
-
 }
 
 Terminal::~Terminal()
 {
-    if (process && process->state() == QProcess::Running) {
-        process->kill();
-        process->waitForFinished();
-    }
     delete ui;
 }
 
@@ -366,34 +361,11 @@ void Terminal::setupTerminal()
     connect(ui->closeButton, &QPushButton::clicked,
             this, &Terminal::onCloseClicked);
 
-    // Setup process
-    process = new QProcess(this);
-    connect(process, &QProcess::readyReadStandardOutput,
-            this, &Terminal::onProcessReadyRead);
-    connect(process, &QProcess::readyReadStandardError,
-            this, &Terminal::onProcessReadyRead);
-    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, &Terminal::onProcessFinished);
-    connect(process, &QProcess::errorOccurred,
-            this, &Terminal::onProcessError);
-}
-
-void Terminal::initializeShell()
-{
-#ifdef Q_OS_WIN
-    currentShell = "cmd.exe";
-#else
-    currentShell = getSystemShell();
-#endif
-}
-
-QString Terminal::getSystemShell()
-{
-    QString shell = qEnvironmentVariable("SHELL");
-    if (shell.isEmpty()) {
-        shell = "/bin/bash";
-    }
-    return shell;
+    // Setup process (non-blocking start; no waitForStarted on the UI thread)
+    m_process = new TerminalProcess(this);
+    connect(m_process, &TerminalProcess::outputReady, this, &Terminal::onProcessOutput);
+    connect(m_process, &TerminalProcess::finished, this, &Terminal::onProcessFinished);
+    connect(m_process, &TerminalProcess::failed, this, &Terminal::onProcessFailed);
 }
 
 void Terminal::displayPrompt()
@@ -493,48 +465,28 @@ void Terminal::onCommandEntered(const QString &command)
 
 void Terminal::executeCommand(const QString &command)
 {
-    if (isProcessRunning) {
+    if (!m_process) {
+        return;
+    }
+    if (m_process->isRunning()) {
         appendOutput("A command is already running. Please wait...\n",
                      QColor(229, 192, 123));
         displayPrompt();
         return;
     }
 
-    isProcessRunning = true;
-    process->setWorkingDirectory(workingDirectory);
-
-#ifdef Q_OS_WIN
-    process->start("cmd.exe", QStringList() << "/c" << command);
-#else
-    process->start(currentShell, QStringList() << "-c" << command);
-#endif
-
-    if (!process->waitForStarted(3000)) {
-        appendError("Failed to start command");
-        isProcessRunning = false;
-        displayPrompt();
-    }
+    m_process->setWorkingDirectory(workingDirectory);
+    m_process->startCommand(command);
 }
 
-void Terminal::onProcessReadyRead()
+void Terminal::onProcessOutput(const QString &text, bool isError)
 {
-    QByteArray output = process->readAllStandardOutput();
-    QByteArray error = process->readAllStandardError();
-
-    if (!output.isEmpty()) {
-        appendOutput(QString::fromLocal8Bit(output), QColor(204, 204, 204)); // Default color for stdout
-    }
-
-    if (!error.isEmpty()) {
-        appendOutput(QString::fromLocal8Bit(error), QColor(224, 108, 117)); // Red for stderr
-    }
+    appendOutput(text, isError ? QColor(224, 108, 117) : QColor(204, 204, 204));
 }
 
-void Terminal::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
+void Terminal::onProcessFinished(int exitCode, bool crashed)
 {
-    isProcessRunning = false;
-
-    if (exitStatus == QProcess::CrashExit) {
+    if (crashed) {
         appendOutput("\nProcess crashed\n", QColor(224, 108, 117));
     } else if (exitCode != 0) {
         appendOutput(QString("\nProcess exited with code %1\n").arg(exitCode),
@@ -544,33 +496,12 @@ void Terminal::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
     displayPrompt();
 }
 
-void Terminal::onProcessError(QProcess::ProcessError error)
+void Terminal::onProcessFailed(const QString &message)
 {
-    isProcessRunning = false;
-
-    QString errorMsg;
-    switch (error) {
-    case QProcess::FailedToStart:
-        errorMsg = "Failed to start process";
-        break;
-    case QProcess::Crashed:
-        errorMsg = "Process crashed";
-        break;
-    case QProcess::Timedout:
-        errorMsg = "Process timed out";
-        break;
-    case QProcess::WriteError:
-        errorMsg = "Write error";
-        break;
-    case QProcess::ReadError:
-        errorMsg = "Read error";
-        break;
-    default:
-        errorMsg = "Unknown error";
+    appendOutput(message + "\n", QColor(224, 108, 117));
+    if (!m_process || !m_process->isRunning()) {
+        displayPrompt();
     }
-
-    appendOutput(errorMsg + "\n", QColor(224, 108, 117));
-    displayPrompt();
 }
 
 void Terminal::onUpPressed()
@@ -608,6 +539,9 @@ void Terminal::setWorkingDirectory(const QString &path)
     QDir dir(path);
     if (dir.exists()) {
         workingDirectory = dir.absolutePath();
+        if (m_process) {
+            m_process->setWorkingDirectory(workingDirectory);
+        }
     }
 }
 
@@ -1080,7 +1014,7 @@ void Terminal::onTextChangedForAutoComplete()
 
 void Terminal::onSuggestionSelected(const QString &suggestion)
 {
-    // Handled by TerminalTextEdit::acceptSuggestion
+    Q_UNUSED(suggestion)
 }
 
 void Terminal::appendError(const QString &text)

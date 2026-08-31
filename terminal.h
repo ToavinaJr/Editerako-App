@@ -2,19 +2,21 @@
 #define TERMINAL_H
 
 #include <QWidget>
-#include <QProcess>
 #include <QTextEdit>
 #include <QString>
 #include <QKeyEvent>
 #include <QListWidget>
 #include <QMap>
 #include <QStringList>
+#include <QColor>
+#include <QPoint>
+
+class TerminalProcess;
 
 namespace Ui {
 class Terminal;
 }
 
-// Popup widget for autocomplete suggestions
 class AutoCompletePopup : public QListWidget
 {
     Q_OBJECT
@@ -72,7 +74,7 @@ class Terminal : public QWidget
 
 public:
     explicit Terminal(QWidget *parent = nullptr);
-    ~Terminal();
+    ~Terminal() override;
 
     void setWorkingDirectory(const QString &path);
     QString getWorkingDirectory() const;
@@ -87,9 +89,9 @@ signals:
 
 private slots:
     void onCommandEntered(const QString &command);
-    void onProcessReadyRead();
-    void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void onProcessError(QProcess::ProcessError error);
+    void onProcessOutput(const QString &text, bool isError);
+    void onProcessFinished(int exitCode, bool crashed);
+    void onProcessFailed(const QString &message);
     void onUpPressed();
     void onDownPressed();
     void onClearClicked();
@@ -99,44 +101,36 @@ private slots:
 
 private:
     Ui::Terminal *ui;
-    QProcess *process;
+    TerminalProcess *m_process = nullptr;
     QString workingDirectory;
-    QString currentShell;
     QStringList commandHistory;
     int historyIndex;
-    bool isProcessRunning;
     bool isDragging;
     QPoint dragStartPosition;
-    
-    // Autocomplete data structures
+
     QMap<QString, QStringList> commandArguments;
     QStringList commonCommands;
-    
+
     void setupTerminal();
     void displayPrompt();
     void appendOutput(const QString &text, const QColor &color);
     void appendError(const QString &text);
     void appendSuccess(const QString &text);
     void appendInfo(const QString &text);
-    void initializeShell();
-    QString getSystemShell();
     void navigateHistory(int direction);
     void processInternalCommand(const QString &command);
-    
-    // Autocomplete helper methods
+
     void initializeCommandDatabase();
     QStringList getCommandSuggestions(const QString &partial);
     QStringList getArgumentSuggestions(const QString &command, const QString &partial);
     QStringList getPathSuggestions(const QString &partial);
     void updateAutoComplete();
-    // Command argument discovery & cache
     void scanCommandArgumentsAsync(const QString &command);
     QStringList loadCachedArguments(const QString &command);
     void saveCachedArguments(const QString &command);
-    // System command scanning & cache
     void scanSystemCommandsAsync();
     void loadCommandCache();
     void saveCommandCache();
 };
 
-#endif // TERMINAL_H
+#endif

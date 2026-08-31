@@ -86,6 +86,8 @@ qt_add_executable(Editerako
     src/project/Workspace.h
     src/project/FileExplorer.cpp
     src/project/FileExplorer.h
+    src/terminal/TerminalProcess.cpp
+    src/terminal/TerminalProcess.h
     resources/resources.qrc
 )
 
