@@ -7,10 +7,9 @@
 #include "editor/EditorManager.h"
 #include "project/FileExplorer.h"
 #include "project/Workspace.h"
+#include "viewers/ViewerManager.h"
 #include <QApplication>
 #include <QStandardPaths>
-#include <QMimeDatabase>
-#include <QMimeType>
 #include <QDesktopServices>
 #include <QMessageBox>
 #include <QUrl>
@@ -27,21 +26,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
 
     ui->setupUi(this);
-
-    pdfDoc = new QPdfDocument(this);
-    pdfView = new QPdfView(this);
-    pdfView->setDocument(pdfDoc);
-    pdfView->setZoomFactor(1.0);
-
-    imageLabel = new QLabel(this);
-    imageLabel->setAlignment(Qt::AlignCenter);
-    imageScroll = new QScrollArea(this);
-    imageScroll->setWidget(imageLabel);
-    imageScroll->setWidgetResizable(true);
-
-    // Ajout dans la pile
-    ui->centralStack->insertWidget(PdfViewer, pdfView);
-    ui->centralStack->insertWidget(ImageViewer, imageScroll);
     ui->centralStack->setCurrentIndex(CodeViewer);
 
     // Setup the tabbed code editor area
@@ -173,6 +157,8 @@ void MainWindow::setupCodeEditor()
 
     ui->centralStack->insertWidget(CodeViewer, m_editorManager->tabWidget());
     ui->centralStack->setCurrentIndex(CodeViewer);
+
+    m_viewerManager = new ViewerManager(m_editorManager, this);
 
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncChatContext);
@@ -404,71 +390,20 @@ void MainWindow::onShowLinesToggled(bool checked)
 
 void MainWindow::openFileInEditor(const QString &filePath)
 {
-    QFileInfo info(filePath);
-    QMimeDatabase db;
-    QMimeType mime = db.mimeTypeForFile(info);
-    QString mimeName = mime.name();
-
-    QString ext = info.suffix().toLower();
-
-    if (mimeName.startsWith("text/") || mimeName.contains("json") || mimeName.contains("xml") || mimeName.contains("html") || ext == "tsx") {
-        if (m_editorManager->openTextFile(filePath)) {
-            ui->centralStack->setCurrentIndex(CodeViewer);
-        }
+    if (!m_viewerManager) {
+        return;
     }
 
-    else if (mimeName == "application/pdf") {
-        if (m_editorManager->activateExisting(filePath)) {
-            return;
+    const ViewerManager::OpenResult result = m_viewerManager->open(filePath);
+    if (result == ViewerManager::OpenResult::Opened) {
+        ui->centralStack->setCurrentIndex(CodeViewer);
+        if (ViewerManager::kindForPath(filePath) != ViewerManager::FileKind::Text) {
+            raise();
+            activateWindow();
         }
-
-        QWidget *container = new QWidget(this);
-        QVBoxLayout *lay = new QVBoxLayout(container);
-        lay->setContentsMargins(0,0,0,0);
-
-        QPdfDocument *doc = new QPdfDocument(container);
-        doc->load(filePath);
-        if (doc->pageCount() > 0) {
-            QPdfView *pv = new QPdfView(container);
-            pv->setDocument(doc);
-            pv->setZoomFactor(1.0);
-            pv->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-            lay->addWidget(pv);
-
-            container->setProperty("viewerType", "pdf");
-            m_editorManager->addViewerTab(container, filePath);
-            this->raise(); this->activateWindow();
-        } else {
-            delete container;
-            pdfDoc->load(filePath);
-            ui->centralStack->setCurrentIndex(PdfViewer);
-        }
+        return;
     }
-    else if (mimeName.startsWith("image/")) {
-        if (m_editorManager->activateExisting(filePath)) {
-            return;
-        }
-
-        QWidget *container = new QWidget(this);
-        QVBoxLayout *lay = new QVBoxLayout(container);
-        lay->setContentsMargins(0,0,0,0);
-
-        QLabel *lbl = new QLabel(container);
-        lbl->setAlignment(Qt::AlignCenter);
-        QPixmap pix(filePath);
-        lbl->setPixmap(pix);
-        lbl->setScaledContents(true);
-
-        QScrollArea *scroll = new QScrollArea(container);
-        scroll->setWidget(lbl);
-        scroll->setWidgetResizable(true);
-        lay->addWidget(scroll);
-
-        container->setProperty("viewerType", "image");
-        m_editorManager->addViewerTab(container, filePath);
-        this->raise(); this->activateWindow();
-    }
-    else {
+    if (result == ViewerManager::OpenResult::Unsupported) {
         ui->centralStack->setCurrentIndex(UnsupportedViewer);
     }
 }

@@ -97,6 +97,12 @@ qt_add_executable(Editerako
     src/ai/ChatRepository.h
     src/ai/ContextBuilder.cpp
     src/ai/ContextBuilder.h
+    src/viewers/ImageViewer.cpp
+    src/viewers/ImageViewer.h
+    src/viewers/PdfViewer.cpp
+    src/viewers/PdfViewer.h
+    src/viewers/ViewerManager.cpp
+    src/viewers/ViewerManager.h
     resources/resources.qrc
 )
 

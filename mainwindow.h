@@ -12,10 +12,6 @@
 #include <QStatusBar>
 #include <QCheckBox>
 #include <QStackedWidget>
-#include <QPdfDocument>
-#include <QtPdfWidgets/QPdfView>
-#include <QScrollArea>
-#include <QLabel>
 #include <QShortcut>
 #include <QCloseEvent>
 #include <QDragEnterEvent>
@@ -32,6 +28,7 @@
 class ChatWidget;
 class EditorManager;
 class FileExplorer;
+class ViewerManager;
 class Workspace;
 
 QT_BEGIN_NAMESPACE
@@ -50,8 +47,6 @@ class MainWindow : public QMainWindow
 
     enum ViewerIndex {
         CodeViewer = 0,
-        PdfViewer,
-        ImageViewer,
         UnsupportedViewer
     };
 
@@ -97,6 +92,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     EditorManager *m_editorManager = nullptr;
+    ViewerManager *m_viewerManager = nullptr;
     Workspace *m_workspace = nullptr;
     FileExplorer *m_fileExplorer = nullptr;
     QString currentWorkingDirectory;
@@ -107,11 +103,6 @@ private:
     QList<Terminal*> terminalList;
     QPushButton *addTerminalButton = nullptr;
     bool isFileTreeVisible = true;
-
-    QPdfDocument *pdfDoc = nullptr;
-    QPdfView *pdfView = nullptr;
-    QLabel *imageLabel = nullptr;
-    QScrollArea *imageScroll = nullptr;
 
     CodeEditor *currentEditor();
     QString editorDirectoryOrWorkspace() const;

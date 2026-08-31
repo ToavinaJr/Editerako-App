@@ -174,8 +174,6 @@ padding: 0 0 0 0 ;</string>
       <item>
        <widget class="QStackedWidget" name="centralStack">
         <widget class="QPlainTextEdit" name="codeEditor"/>
-        <widget class="QWidget" name="pdfViewer"/>
-        <widget class="QWidget" name="imageViewer"/>
         <widget class="QLabel" name="unsupportedViewer">
          <property name="text">
           <string>Unsupported file type.</string>
