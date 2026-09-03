@@ -1,0 +1,22 @@
+editerako_add_module(EditerakoTerminal
+    SOURCES
+        Terminal.cpp
+        Terminal.h
+        Terminal.ui
+        TerminalInput.cpp
+        TerminalInput.h
+        TerminalProcess.cpp
+        TerminalProcess.h
+        TerminalPanel.cpp
+        TerminalPanel.h
+        CommandHistory.cpp
+        CommandHistory.h
+        CommandDiscovery.cpp
+        CommandDiscovery.h
+        CommandCompleter.cpp
+        CommandCompleter.h
+    LIBS
+        EditerakoCore
+        Qt6::Widgets
+        Qt6::Concurrent
+)

@@ -1,110 +1,39 @@
-# Application target. Paths are relative to this directory (src/).
+# Application executable. Module libraries live in sibling subdirectories.
 
-set(editerako_sources
+add_subdirectory(core)
+add_subdirectory(syntax)
+add_subdirectory(editor)
+add_subdirectory(project)
+add_subdirectory(terminal)
+add_subdirectory(viewers)
+add_subdirectory(ai)
+
+set(editerako_app_sources
     main.cpp
-
     app/MainWindow.cpp
     app/MainWindow.h
     app/MainWindow.ui
-
-    core/Logging.cpp
-    core/Logging.h
-    core/AppSettings.cpp
-    core/AppSettings.h
-    core/ThemeManager.cpp
-    core/ThemeManager.h
-    core/CommandRegistry.cpp
-    core/CommandRegistry.h
-    core/SessionStore.cpp
-    core/SessionStore.h
-    core/DropPaths.cpp
-    core/DropPaths.h
-    core/AtomicFile.cpp
-    core/AtomicFile.h
-
-    editor/CodeEditor.cpp
-    editor/CodeEditor.h
-    editor/EditorDocument.cpp
-    editor/EditorDocument.h
-    editor/EditorManager.cpp
-    editor/EditorManager.h
-    editor/FindReplaceDialog.cpp
-    editor/FindReplaceDialog.h
-    editor/GoToLineDialog.cpp
-    editor/GoToLineDialog.h
-
-    syntax/LanguageRegistry.cpp
-    syntax/LanguageRegistry.h
-    syntax/TreeSitterDocument.cpp
-    syntax/TreeSitterDocument.h
-    syntax/HighlightQuery.cpp
-    syntax/HighlightQuery.h
-    syntax/SyntaxHighlighter.cpp
-    syntax/SyntaxHighlighter.h
-
-    project/Workspace.cpp
-    project/Workspace.h
-    project/FileExplorer.cpp
-    project/FileExplorer.h
-    project/FileWatcher.cpp
-    project/FileWatcher.h
-
-    terminal/Terminal.cpp
-    terminal/Terminal.h
-    terminal/Terminal.ui
-    terminal/TerminalInput.cpp
-    terminal/TerminalInput.h
-    terminal/TerminalProcess.cpp
-    terminal/TerminalProcess.h
-    terminal/TerminalPanel.cpp
-    terminal/TerminalPanel.h
-    terminal/CommandHistory.cpp
-    terminal/CommandHistory.h
-    terminal/CommandDiscovery.cpp
-    terminal/CommandDiscovery.h
-    terminal/CommandCompleter.cpp
-    terminal/CommandCompleter.h
-
     ui/UiHelpers.cpp
     ui/UiHelpers.h
-
-    ai/ChatMessage.h
-    ai/AiProvider.cpp
-    ai/AiProvider.h
-    ai/GeminiProvider.cpp
-    ai/GeminiProvider.h
-    ai/ChatRepository.cpp
-    ai/ChatRepository.h
-    ai/ContextBuilder.cpp
-    ai/ContextBuilder.h
-    ai/ChatWidget.cpp
-    ai/ChatWidget.h
-
-    viewers/ImageViewer.cpp
-    viewers/ImageViewer.h
-    viewers/PdfViewer.cpp
-    viewers/PdfViewer.h
-    viewers/FileKind.cpp
-    viewers/FileKind.h
-    viewers/ViewerManager.cpp
-    viewers/ViewerManager.h
 )
 
-qt_add_executable(Editerako ${editerako_sources})
+qt_add_executable(Editerako ${editerako_app_sources})
 
 editerako_enable_warnings(Editerako)
+target_compile_features(Editerako PRIVATE cxx_std_20)
 
 target_include_directories(Editerako PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(Editerako PRIVATE
-    tree_sitter
-    Qt6::Widgets
-    Qt6::Network
-    Qt6::Sql
-    Qt6::Concurrent
-    Qt6::PdfWidgets
+    EditerakoCore
+    EditerakoSyntax
+    EditerakoEditor
+    EditerakoProject
+    EditerakoTerminal
+    EditerakoViewers
+    EditerakoAI
 )
 
 qt_add_resources(Editerako editerako_themes
@@ -130,7 +59,7 @@ set_target_properties(Editerako PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${editerako_sources})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${editerako_app_sources})
 
 install(TARGETS Editerako
     BUNDLE DESTINATION .

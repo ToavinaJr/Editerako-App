@@ -1,0 +1,15 @@
+editerako_add_module(EditerakoSyntax
+    SOURCES
+        LanguageRegistry.cpp
+        LanguageRegistry.h
+        TreeSitterDocument.cpp
+        TreeSitterDocument.h
+        HighlightQuery.cpp
+        HighlightQuery.h
+        SyntaxHighlighter.cpp
+        SyntaxHighlighter.h
+    LIBS
+        EditerakoCore
+        tree_sitter
+        Qt6::Widgets
+)

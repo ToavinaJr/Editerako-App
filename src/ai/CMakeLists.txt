@@ -1,0 +1,19 @@
+editerako_add_module(EditerakoAI
+    SOURCES
+        ChatMessage.h
+        AiProvider.cpp
+        AiProvider.h
+        GeminiProvider.cpp
+        GeminiProvider.h
+        ChatRepository.cpp
+        ChatRepository.h
+        ContextBuilder.cpp
+        ContextBuilder.h
+        ChatWidget.cpp
+        ChatWidget.h
+    LIBS
+        EditerakoCore
+        Qt6::Widgets
+        Qt6::Network
+        Qt6::Sql
+)

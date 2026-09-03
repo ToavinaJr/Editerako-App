@@ -1,0 +1,16 @@
+editerako_add_module(EditerakoViewers
+    SOURCES
+        FileKind.cpp
+        FileKind.h
+        ImageViewer.cpp
+        ImageViewer.h
+        PdfViewer.cpp
+        PdfViewer.h
+        ViewerManager.cpp
+        ViewerManager.h
+    LIBS
+        EditerakoCore
+        EditerakoEditor
+        Qt6::Widgets
+        Qt6::PdfWidgets
+)

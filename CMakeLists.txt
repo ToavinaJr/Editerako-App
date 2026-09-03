@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Libraries.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreeSitter.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Apple.cmake")
 

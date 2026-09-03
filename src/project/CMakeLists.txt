@@ -1,0 +1,12 @@
+editerako_add_module(EditerakoProject
+    SOURCES
+        Workspace.cpp
+        Workspace.h
+        FileExplorer.cpp
+        FileExplorer.h
+        FileWatcher.cpp
+        FileWatcher.h
+    LIBS
+        EditerakoCore
+        Qt6::Widgets
+)

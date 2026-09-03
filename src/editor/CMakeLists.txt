@@ -1,0 +1,17 @@
+editerako_add_module(EditerakoEditor
+    SOURCES
+        CodeEditor.cpp
+        CodeEditor.h
+        EditorDocument.cpp
+        EditorDocument.h
+        EditorManager.cpp
+        EditorManager.h
+        FindReplaceDialog.cpp
+        FindReplaceDialog.h
+        GoToLineDialog.cpp
+        GoToLineDialog.h
+    LIBS
+        EditerakoCore
+        EditerakoSyntax
+        Qt6::Widgets
+)

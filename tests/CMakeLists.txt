@@ -2,48 +2,37 @@ include("${PROJECT_SOURCE_DIR}/cmake/Testing.cmake")
 
 editerako_add_test(test_LanguageRegistry
     SOURCES LanguageRegistryTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/syntax/LanguageRegistry.cpp"
-    LIBS tree_sitter
+    LIBS EditerakoSyntax
 )
 
 editerako_add_test(test_Workspace
     SOURCES WorkspaceTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/project/Workspace.cpp"
-            "${PROJECT_SOURCE_DIR}/src/core/AppSettings.cpp"
-            "${PROJECT_SOURCE_DIR}/src/core/Logging.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoProject
 )
 
 editerako_add_test(test_DropPaths
     SOURCES DropPathsTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/core/DropPaths.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoCore
 )
 
 editerako_add_test(test_SessionStore
     SOURCES SessionStoreTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/core/SessionStore.cpp"
-            "${PROJECT_SOURCE_DIR}/src/core/Logging.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoCore
 )
 
 editerako_add_test(test_ContextBuilder
     SOURCES ContextBuilderTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/ai/ContextBuilder.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoAI
 )
 
 editerako_add_test(test_FileKind
     SOURCES FileKindTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/viewers/FileKind.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoViewers
 )
 
 editerako_add_test(test_CommandRegistry
     SOURCES CommandRegistryTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/core/CommandRegistry.cpp"
-            "${PROJECT_SOURCE_DIR}/src/core/Logging.cpp"
-    LIBS Qt6::Widgets
+    LIBS EditerakoCore
 )
 
 set_tests_properties(test_CommandRegistry PROPERTIES
@@ -52,30 +41,22 @@ set_tests_properties(test_CommandRegistry PROPERTIES
 
 editerako_add_test(test_AtomicFile
     SOURCES AtomicFileTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/core/AtomicFile.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoCore
 )
 
 editerako_add_test(test_CommandHistory
     SOURCES CommandHistoryTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/terminal/CommandHistory.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoTerminal
 )
 
 editerako_add_test(test_CommandCompleter
     SOURCES CommandCompleterTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/terminal/CommandCompleter.cpp"
-            "${PROJECT_SOURCE_DIR}/src/terminal/CommandDiscovery.cpp"
-            "${PROJECT_SOURCE_DIR}/src/terminal/CommandHistory.cpp"
-    LIBS Qt6::Concurrent
+    LIBS EditerakoTerminal
 )
 
 editerako_add_test(test_TreeSitterDocument
     SOURCES TreeSitterDocumentTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/syntax/TreeSitterDocument.cpp"
-            "${PROJECT_SOURCE_DIR}/src/syntax/LanguageRegistry.cpp"
-            "${PROJECT_SOURCE_DIR}/src/core/Logging.cpp"
-    LIBS tree_sitter Qt6::Widgets
+    LIBS EditerakoSyntax
 )
 
 set_tests_properties(test_TreeSitterDocument PROPERTIES
@@ -84,9 +65,7 @@ set_tests_properties(test_TreeSitterDocument PROPERTIES
 
 editerako_add_test(test_HighlightQuery
     SOURCES HighlightQueryTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/syntax/HighlightQuery.cpp"
-            "${PROJECT_SOURCE_DIR}/src/syntax/LanguageRegistry.cpp"
-    LIBS tree_sitter Qt6::Core
+    LIBS EditerakoSyntax
 )
 
 target_compile_definitions(test_HighlightQuery PRIVATE

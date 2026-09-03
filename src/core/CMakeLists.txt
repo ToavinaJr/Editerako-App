@@ -1,0 +1,19 @@
+editerako_add_module(EditerakoCore
+    SOURCES
+        Logging.cpp
+        Logging.h
+        AppSettings.cpp
+        AppSettings.h
+        ThemeManager.cpp
+        ThemeManager.h
+        CommandRegistry.cpp
+        CommandRegistry.h
+        SessionStore.cpp
+        SessionStore.h
+        DropPaths.cpp
+        DropPaths.h
+        AtomicFile.cpp
+        AtomicFile.h
+    LIBS
+        Qt6::Widgets
+)

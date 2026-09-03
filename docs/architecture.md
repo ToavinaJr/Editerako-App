@@ -1,38 +1,37 @@
 # Architecture
 
-Editerako est **un seul exécutable Qt Widgets**. Les dossiers sous `src/` sont des modules logiques, pas des bibliothèques séparées. `MainWindow` orchestre ; la logique métier vit dans les modules.
+Editerako est **un exécutable Qt Widgets** (`Editerako`) qui lie des **bibliothèques statiques** internes, une par module. `MainWindow` orchestre ; la logique métier vit dans les modules.
 
 ```
-src/main.cpp
-    QApplication, thème, MainWindow
+src/main.cpp + src/app/ + src/ui/     cible Editerako
         │
-        ▼
-src/app/MainWindow          orchestration UI
-        ├── editor/         onglets texte, save/close
-        ├── viewers/        PDF, images, fileKindForPath
-        ├── project/        workspace, arbre, QFileSystemWatcher
-        ├── terminal/       panneau d'onglets + QProcess
-        ├── ai/             chat Gemini + SQLite
-        └── core/           settings, session, commandes, thème
+        ├── EditerakoEditor  ← EditerakoSyntax ← tree_sitter
+        │         ↑
+        ├── EditerakoViewers
+        ├── EditerakoProject
+        ├── EditerakoTerminal
+        ├── EditerakoAI
+        └── EditerakoCore
 ```
 
-Includes : `#include "module/Fichier.h"` avec `src/` comme seul chemin d’include applicatif.
+Includes : `#include "module/Fichier.h"` avec `src/` comme chemin PUBLIC de chaque lib.
+
+Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App. Les protocoles futurs (LSP, Git, Tasks) ne doivent pas dépendre de `MainWindow`. Détail CMake : [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md).
 
 ## Modules
 
-| Dossier | Responsabilité |
-|---|---|
-| `app/` | Fenêtre principale, menus, drag-and-drop, dialogue d’accueil, câblage des signaux |
-| `core/` | `AppSettings`, `SessionStore`, `CommandRegistry`, `ThemeManager`, `DropPaths`, catégories de log |
-| `editor/` | `CodeEditor`, `EditorDocument`, `EditorManager`, find / go-to-line |
-| `syntax/` | `LanguageRegistry` (C++ / HTML), `TreeSitterDocument`, `SyntaxHighlighter` |
-| `project/` | `Workspace` (racine, exclusions, création fichier/dossier), `FileExplorer`, `FileWatcher` |
-| `terminal/` | `Terminal` (widget), `TerminalProcess` (`QProcess`), `TerminalPanel` (onglets, + / ×) |
-| `viewers/` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
-| `ai/` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
-| `ui/` | Helpers de layout / `QInputDialog` (pas de widgets métier) |
+| Dossier | Cible CMake | Responsabilité |
+|---|---|---|
+| `app/` + `ui/` | `Editerako` (exe) | Fenêtre principale, menus, drag-and-drop, helpers de layout |
+| `core/` | `EditerakoCore` | `AppSettings`, `SessionStore`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, logs |
+| `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument`, `EditorManager`, find / go-to-line |
+| `syntax/` | `EditerakoSyntax` | `LanguageRegistry` (C++ / HTML), `TreeSitterDocument`, `SyntaxHighlighter` |
+| `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher` |
+| `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
+| `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
+| `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 
-Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake`. Seul `tree_sitter/api.h` est PUBLIC pour l’application.
+Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake`. Seul `tree_sitter/api.h` est PUBLIC.
 
 ## Flux importants
 

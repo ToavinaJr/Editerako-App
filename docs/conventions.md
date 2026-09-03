@@ -9,10 +9,12 @@
 
 ## CMake
 
-- Lister chaque `.cpp` / `.h` / `.ui` dans `src/CMakeLists.txt`. Pas de GLOB.
+- Lister chaque `.cpp` / `.h` / `.ui` dans le `CMakeLists.txt` **du module** (`src/core/`, `src/editor/`, …). L’exe (`src/CMakeLists.txt`) ne contient que `app/`, `ui/` et `main.cpp`. Pas de GLOB.
 - Cible app : `WIN32_EXECUTABLE ON` (pas de console). Cibles test : `OFF` (ctest doit voir la sortie).
+- Modules : `editerako_add_module()` dans `cmake/Libraries.cmake` (`target_sources`, includes PUBLIC `src/`, `cxx_std_20`).
 - Warnings via `editerako_enable_warnings()` ; Tree-sitter compile avec `-w` / `/W0`.
 - Vendor : `cmake/TreeSitter.cmake` n’exporte en PUBLIC que `tree_sitter/api.h`.
+- Lier `PRIVATE`/`PUBLIC` explicitement. Ne pas ajouter `include_directories()` global.
 
 ## Qt
 

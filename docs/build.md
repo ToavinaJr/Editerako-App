@@ -29,10 +29,12 @@ Les scripts exigent `CMakeLists.txt` et `src/main.cpp` à la racine / sous `src/
 CMakeLists.txt          projet, find_package, qt_standard_project_setup, enable_testing
 CMakePresets.json       debug / release (Ninja), CMAKE_EXPORT_COMPILE_COMMANDS
 cmake/Warnings.cmake    -Wall ou /W4 sur les cibles app/tests, pas sur Tree-sitter
+cmake/Libraries.cmake   editerako_add_module() — libs statiques internes
 cmake/TreeSitter.cmake  lib statique vendor
 cmake/Testing.cmake     editerako_add_test()
-src/CMakeLists.txt      cible Editerako, qt_add_resources, install / deploy
-tests/CMakeLists.txt    7 exécutables Qt Test
+src/<module>/CMakeLists.txt  EditerakoCore, Editor, Syntax, Project, Terminal, Viewers, AI
+src/CMakeLists.txt      sous-modules, cible Editerako, qt_add_resources, install / deploy
+tests/CMakeLists.txt    12 exécutables Qt Test (lient les libs de module)
 ```
 
 Presets :
@@ -58,4 +60,4 @@ Ouvrir le `CMakeLists.txt` racine. Kit Qt 6 **avec PdfWidgets**. Le dossier de k
 - **Lien « Permission denied »** : `Editerako.exe` tourne encore. Le tuer, relancer `build.ps1`.
 - **PdfWidgets introuvable** : installer le composant Qt PDF (aqt : `-m qtpdf`).
 - **macOS `framework 'AGL' not found`** : le SDK 26 a retiré AGL. `cmake/Apple.cmake` ignore ce framework ; en CI, Qt ≥ 6.9.2.
-- **Sources** : liste CMake explicite, pas de `file(GLOB)`. Un nouveau `.cpp` doit être ajouté dans `src/CMakeLists.txt` (et éventuellement `tests/CMakeLists.txt`).
+- **Sources** : liste CMake explicite, pas de `file(GLOB)`. Un nouveau `.cpp` métier va dans `src/<module>/CMakeLists.txt`. L’exe (`app/`, `ui/`, `main.cpp`) s’ajoute dans `src/CMakeLists.txt`.

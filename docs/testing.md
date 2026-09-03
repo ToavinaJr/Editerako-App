@@ -14,15 +14,22 @@ Suite **Qt Test** + **ctest**. On teste la logique isolée, pas `MainWindow` ni 
 
 ## Cibles actuelles
 
-| Cible | Fichiers sous test |
-|---|---|
-| `test_LanguageRegistry` | extensions C++ / HTML, pointeurs Tree-sitter |
-| `test_Workspace` | racine, `containsPath`, exclusions, création fichier/dossier |
-| `test_DropPaths` | extraction de chemins depuis `QMimeData` |
-| `test_SessionStore` | round-trip via `QSettings` Ini temporaire |
-| `test_ContextBuilder` | prompt, troncature, fenêtre d’historique |
-| `test_FileKind` | texte / PDF / image / vide |
-| `test_CommandRegistry` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
+Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne recompilent pas les `.cpp` métier.
+
+| Cible | Module lié | Fichiers sous test |
+|---|---|---|
+| `test_LanguageRegistry` | `EditerakoSyntax` | extensions C++ / HTML, pointeurs Tree-sitter |
+| `test_Workspace` | `EditerakoProject` | racine, `containsPath`, exclusions, création fichier/dossier |
+| `test_DropPaths` | `EditerakoCore` | extraction de chemins depuis `QMimeData` |
+| `test_SessionStore` | `EditerakoCore` | round-trip via `QSettings` Ini temporaire |
+| `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |
+| `test_FileKind` | `EditerakoViewers` | texte / PDF / image / vide |
+| `test_CommandRegistry` | `EditerakoCore` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
+| `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode |
+| `test_CommandHistory` | `EditerakoTerminal` | historique, navigation |
+| `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
+| `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
+| `test_HighlightQuery` | `EditerakoSyntax` | captures et predicates (queries sur disque via `EDITERAKO_QUERY_DIR`) |
 
 Les binaires sont dans `build/<preset>/tests/`.
 
@@ -55,14 +62,13 @@ QTEST_GUILESS_MAIN(FooTest)   // QTEST_MAIN si QWidget / QApplication
 ```cmake
 editerako_add_test(test_Foo
     SOURCES FooTest.cpp
-            "${PROJECT_SOURCE_DIR}/src/module/Foo.cpp"
-    LIBS Qt6::Core
+    LIBS EditerakoCore
 )
 ```
 
-Compiler les `.cpp` nécessaires du module (et `Logging.cpp` si le code utilise `qCInfo`). Ne pas lier `Editerako.exe`.
+Lier la cible du module (`EditerakoCore`, `EditerakoSyntax`, …), pas les `.cpp` individuels, et pas `Editerako.exe`.
 
-3. Si le test crée un `QWidget`, lier `Qt6::Widgets`, utiliser `QTEST_MAIN`, et éventuellement :
+3. Si le test crée un `QWidget`, utiliser `QTEST_MAIN`, et éventuellement :
 
 ```cmake
 set_tests_properties(test_Foo PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
