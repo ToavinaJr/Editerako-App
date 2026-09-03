@@ -21,12 +21,13 @@ src/main.cpp + src/app/ + src/ui/     cible Editerako
         ├── EditerakoProject
         ├── EditerakoTerminal
         ├── EditerakoAI
+        ├── EditerakoLsp
         └── EditerakoCore
 ```
 
 Includes : `#include "module/Fichier.h"` avec `src/` comme chemin PUBLIC de chaque lib.
 
-Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App. Les protocoles futurs (LSP, Git, Tasks) ne doivent pas dépendre de `MainWindow`. Détail CMake : [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md).
+Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App. `EditerakoLsp` ne dépend pas de `MainWindow` ni des widgets. Détail CMake : [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md).
 
 ## Modules
 
@@ -39,6 +40,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
+| `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 
 Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake` (une OBJECT lib par grammaire). Seul `tree_sitter/api.h` est PUBLIC. Metadata : `LanguageDefinition` dans `LanguageRegistry`. Détail : [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md).
 

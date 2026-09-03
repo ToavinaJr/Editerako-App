@@ -18,4 +18,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0007-workspace-search-explorer-ops.md](adr/0007-workspace-search-explorer-ops.md) | Search workspace et ops explorateur |
 | [adr/0008-editing-commands.md](adr/0008-editing-commands.md) | Indent, commentaires, paires, lignes, occurrences |
 | [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md) | Grammaires Tree-sitter réelles + LanguageDefinition |
+| [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) | JSON-RPC LSP, client, tests mock |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

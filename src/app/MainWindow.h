@@ -11,6 +11,7 @@ class CommandRegistry;
 class EditorManager;
 class EditorStatusWidget;
 class KeybindingManager;
+class LspServerManager;
 class TerminalPanel;
 class ViewerManager;
 class WorkspaceController;
@@ -80,6 +81,7 @@ private:
     EditorManager *m_editorManager = nullptr;
     EditorStatusWidget *m_editorStatus = nullptr;
     ViewerManager *m_viewerManager = nullptr;
+    LspServerManager *m_lsp = nullptr;
     WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;
     WorkspaceSearchDialog *m_searchDialog = nullptr;

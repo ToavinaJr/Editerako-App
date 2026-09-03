@@ -13,6 +13,7 @@
 #include "editor/EditorStatusWidget.h"
 #include "editor/FindReplaceDialog.h"
 #include "editor/GoToLineDialog.h"
+#include "lsp/LspServerManager.h"
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
@@ -67,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent)
     installChatWidget();
     connectWorkspaceCollaborators();
 
+    m_lsp = new LspServerManager(this);
+
     setAcceptDrops(true);
 
     if (!restoreSession()) {
@@ -77,6 +80,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if (m_lsp) {
+        m_lsp->stopAll();
+    }
     if (m_terminalPanel) {
         m_terminalPanel->shutdownAll();
     }
@@ -721,6 +727,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (m_editorManager && !m_editorManager->promptSaveAllOnQuit()) {
         event->ignore();
         return;
+    }
+
+    if (m_lsp) {
+        m_lsp->stopAll();
     }
 
     if (m_terminalPanel) {

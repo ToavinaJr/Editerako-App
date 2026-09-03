@@ -28,7 +28,7 @@
 
 ## Journalisation
 
-Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject`, `lcTerminal`, `lcAi`, `lcViewer`. Utiliser `qCInfo` / `qCWarning` du module concerné, pas `qDebug()` nu.
+Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject`, `lcTerminal`, `lcAi`, `lcViewer`, `lcLsp`. Utiliser `qCInfo` / `qCWarning` du module concerné, pas `qDebug()` nu.
 
 ## Données locales (ne pas committer)
 

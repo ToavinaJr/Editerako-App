@@ -51,6 +51,10 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_LineEditCommands` | `EditerakoEditor` | duplicate/delete/join/sort, occurrence (`offscreen`) |
 | `test_MultiCursorController` | `EditerakoEditor` | toggle, insert multi, doublon du curseur primaire (`QT_QPA_PLATFORM=offscreen`) |
 | `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
+| `test_LspMessageFramer` | `EditerakoLsp` | `Content-Length`, messages partiels |
+| `test_LspTypes` | `EditerakoLsp` | Position, diagnostics, hover, completion, URI |
+| `test_LspClient` | `EditerakoLsp` | initialize mock, didOpen, diagnostics, providers |
+| `test_LspServerProcess` | `EditerakoLsp` | commande vide, binaire absent, spec inconnue |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

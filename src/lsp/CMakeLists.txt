@@ -1,0 +1,30 @@
+editerako_add_module(EditerakoLsp
+    SOURCES
+        LspTypes.cpp
+        LspTypes.h
+        LspMessageFramer.cpp
+        LspMessageFramer.h
+        JsonRpcTransport.cpp
+        JsonRpcTransport.h
+        LspClient.cpp
+        LspClient.h
+        LspServerProcess.cpp
+        LspServerProcess.h
+        LspServerManager.cpp
+        LspServerManager.h
+        LspDocumentSync.cpp
+        LspDocumentSync.h
+        LspDiagnosticsProvider.cpp
+        LspDiagnosticsProvider.h
+        LspCompletionProvider.cpp
+        LspCompletionProvider.h
+        LspHoverProvider.cpp
+        LspHoverProvider.h
+        LspNavigationProvider.cpp
+        LspNavigationProvider.h
+        LspSymbolProvider.cpp
+        LspSymbolProvider.h
+    LIBS
+        EditerakoCore
+        Qt6::Core
+)

@@ -7,6 +7,7 @@ add_subdirectory(project)
 add_subdirectory(terminal)
 add_subdirectory(viewers)
 add_subdirectory(ai)
+add_subdirectory(lsp)
 
 set(editerako_app_sources
     main.cpp
@@ -46,6 +47,7 @@ target_link_libraries(Editerako PRIVATE
     EditerakoTerminal
     EditerakoViewers
     EditerakoAI
+    EditerakoLsp
 )
 
 qt_add_resources(Editerako editerako_themes

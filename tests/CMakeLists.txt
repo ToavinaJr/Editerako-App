@@ -200,3 +200,23 @@ editerako_add_test(test_EditorDocument
 set_tests_properties(test_EditorDocument PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+editerako_add_test(test_LspMessageFramer
+    SOURCES LspMessageFramerTest.cpp
+    LIBS EditerakoLsp
+)
+
+editerako_add_test(test_LspTypes
+    SOURCES LspTypesTest.cpp
+    LIBS EditerakoLsp
+)
+
+editerako_add_test(test_LspClient
+    SOURCES LspClientTest.cpp
+    LIBS EditerakoLsp
+)
+
+editerako_add_test(test_LspServerProcess
+    SOURCES LspServerProcessTest.cpp
+    LIBS EditerakoLsp
+)
