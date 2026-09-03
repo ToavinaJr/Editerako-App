@@ -30,6 +30,7 @@ public:
     void syncWatchedFiles(const QStringList &openFilePaths);
     void ignoreNextChange(const QString &path);
     void refreshIfContains(const QString &path);
+    void reloadExplorer();
 
 signals:
     void rootPathChanged(const QString &path);

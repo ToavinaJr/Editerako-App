@@ -15,6 +15,10 @@ set(editerako_app_sources
     app/MainWindow.ui
     ui/UiHelpers.cpp
     ui/UiHelpers.h
+    ui/KeybindingEditor.cpp
+    ui/KeybindingEditor.h
+    ui/SettingsDialog.cpp
+    ui/SettingsDialog.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})

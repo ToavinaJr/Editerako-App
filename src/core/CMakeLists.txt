@@ -20,6 +20,10 @@ editerako_add_module(EditerakoCore
         AtomicFile.h
         TextFileFormat.cpp
         TextFileFormat.h
+        KeybindingModel.cpp
+        KeybindingModel.h
+        KeybindingManager.cpp
+        KeybindingManager.h
     LIBS
         Qt6::Widgets
 )

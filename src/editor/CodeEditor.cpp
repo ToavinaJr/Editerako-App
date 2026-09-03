@@ -1,5 +1,6 @@
 #include "editor/CodeEditor.h"
 
+#include "core/AppSettings.h"
 #include "editor/features/CurrentLineHighlighter.h"
 #include "editor/features/LineNumberArea.h"
 
@@ -141,6 +142,17 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
             m_lineMovement.moveDown();
             return;
         }
+    }
+
+    if (event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier
+        && AppSettings().editorInsertSpaces()) {
+        const QString spaces(qMax(1, AppSettings().editorTabSize()), QLatin1Char(' '));
+        if (!m_multiCursor.isEmpty()) {
+            m_multiCursor.insertText(spaces);
+        } else {
+            insertPlainText(spaces);
+        }
+        return;
     }
 
     if (m_multiCursor.handleKeyPress(event)) {

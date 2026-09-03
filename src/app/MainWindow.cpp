@@ -1,9 +1,12 @@
 #include "app/MainWindow.h"
 #include "ui_MainWindow.h"
 #include "ai/ChatWidget.h"
+#include "core/AppSettings.h"
 #include "core/CommandRegistry.h"
 #include "core/DiskChangePolicy.h"
 #include "core/DropPaths.h"
+#include "core/KeybindingManager.h"
+#include "core/ThemeManager.h"
 #include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
@@ -12,9 +15,11 @@
 #include "editor/GoToLineDialog.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
+#include "ui/SettingsDialog.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
 
+#include <QApplication>
 #include <QAction>
 #include <QCheckBox>
 #include <QCloseEvent>
@@ -28,9 +33,11 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPushButton>
+#include <QSignalBlocker>
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QTabWidget>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -43,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupFileTree();
     setupCodeEditor();
     connectActions();
+    restartAutoSave();
     updateWindowTitle();
 
     if (currentEditor()) {
@@ -91,27 +99,29 @@ void MainWindow::connectActions()
     bind(QStringLiteral("edit.find"), ui->actionFindReplace, &MainWindow::onActionFindReplace);
     bind(QStringLiteral("edit.gotoLine"), ui->actionGoToLine, &MainWindow::onActionGoToLine);
 
-    ui->actionFile->setShortcut(QKeySequence::New);
-    ui->actionOpen_File->setShortcut(QKeySequence::Open);
-    ui->actionSave->setShortcut(QKeySequence::Save);
-    ui->actionSave_As->setShortcut(QKeySequence::SaveAs);
-    ui->actionClose->setShortcut(QKeySequence(QStringLiteral("Ctrl+W")));
-    ui->actionFindReplace->setShortcut(QKeySequence::Find);
-    ui->actionGoToLine->setShortcut(QKeySequence(QStringLiteral("Ctrl+G")));
-
     QAction *toggleTerminal = m_commands->create(
         QStringLiteral("view.terminal"),
-        tr("Toggle Terminal"),
-        QKeySequence(QStringLiteral("Ctrl+J")));
+        tr("Toggle Terminal"));
     connect(toggleTerminal, &QAction::triggered, this, &MainWindow::toggleTerminal);
+
+    QAction *preferences = m_commands->create(
+        QStringLiteral("preferences.open"),
+        tr("Preferences..."));
+    connect(preferences, &QAction::triggered, this, &MainWindow::openPreferences);
+
+    m_keybindings = new KeybindingManager(m_commands, this);
+    m_keybindings->apply();
 
     QMenu *viewMenu = menuBar()->addMenu(tr("View"));
     viewMenu->addAction(toggleTerminal);
+    viewMenu->addSeparator();
+    viewMenu->addAction(preferences);
 
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);
     connect(ui->closeExplorerButton, &QPushButton::clicked, this, &MainWindow::onCloseExplorerClicked);
     connect(ui->checkBox, &QCheckBox::toggled, this, &MainWindow::onShowLinesToggled);
+    ui->checkBox->setChecked(AppSettings().editorLineNumbers());
 
     updateCommandStates();
 }
@@ -120,6 +130,7 @@ void MainWindow::connectWorkspaceCollaborators()
 {
     connect(m_workspaceController, &WorkspaceController::rootPathChanged, this,
             [this](const QString &path) {
+                AppSettings::setWorkspaceRoot(path);
                 if (m_editorManager) {
                     m_editorManager->setWorkingDirectory(path);
                 }
@@ -329,10 +340,56 @@ void MainWindow::onCloseExplorerClicked()
     }
 }
 
+void MainWindow::openPreferences()
+{
+    SettingsDialog dialog(m_keybindings, m_commands, this);
+    connect(&dialog, &SettingsDialog::settingsApplied, this, &MainWindow::applyPreferences);
+    dialog.exec();
+}
+
+void MainWindow::applyPreferences()
+{
+    const AppSettings settings;
+    if (qApp) {
+        ThemeManager::apply(*qApp, settings.themeId());
+    }
+    if (m_editorManager) {
+        m_editorManager->applySettings();
+    }
+    if (m_workspaceController) {
+        m_workspaceController->reloadExplorer();
+    }
+    if (ui->checkBox) {
+        const QSignalBlocker blocker(ui->checkBox);
+        ui->checkBox->setChecked(settings.editorLineNumbers());
+    }
+    restartAutoSave();
+}
+
+void MainWindow::restartAutoSave()
+{
+    if (!m_autoSaveTimer) {
+        m_autoSaveTimer = new QTimer(this);
+        connect(m_autoSaveTimer, &QTimer::timeout, this, [this]() {
+            if (m_editorManager && AppSettings().autoSave()) {
+                m_editorManager->saveDirtyFilesQuietly();
+            }
+        });
+    }
+
+    const AppSettings settings;
+    if (!settings.autoSave()) {
+        m_autoSaveTimer->stop();
+        return;
+    }
+    m_autoSaveTimer->start(settings.autoSaveDelayMs());
+}
+
 void MainWindow::onShowLinesToggled(bool checked)
 {
-    if (currentEditor()) {
-        currentEditor()->setLineNumbersVisible(checked);
+    AppSettings().setEditorLineNumbers(checked);
+    if (m_editorManager) {
+        m_editorManager->applySettings();
     }
 }
 
@@ -591,6 +648,9 @@ bool MainWindow::restoreSession()
 
     SessionController::RestoreGuard guard(m_session);
     setProjectDirectory(state.workspace);
+    if (m_editorManager) {
+        m_editorManager->applySettings();
+    }
 
     const QStringList toOpen = SessionController::existingFiles(state.openFiles);
     for (const QString &path : toOpen) {

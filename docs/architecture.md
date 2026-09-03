@@ -32,8 +32,8 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 
 | Dossier | Cible CMake | Responsabilité |
 |---|---|---|
-| `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs, D&D, câblage des signaux |
-| `core/` | `EditerakoCore` | `AppSettings`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
+| `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs (`SettingsDialog`), D&D, câblage des signaux |
+| `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `KeybindingModel` / `KeybindingManager`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
 | `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument` (path, encoding, EOL, language, version, caret), `EditorManager`, `EditorIo` / `EditorStyle` / `HighlighterSync` / `EditorStatusWidget` ; `features/` |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
@@ -56,7 +56,9 @@ Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` 
 
 **Éditeur.** `CodeEditor` délègue gutter, ligne courante, multi-curseurs et swap de lignes à `src/editor/features/`. `EditorManager` orchestre les onglets et les dialogs. Lecture/écriture via `readTextFile` / `writeTextFile` : encoding, BOM et EOL sont stockés sur `EditorDocument` ; le buffer est en LF. Status bar : Ln/Col, encoding, EOL, language. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).
 
-**Chat.** `GEMINI_API_KEY` (`.env` chargé au démarrage). Historique SQLite : `{projet}/.editerako/chat_history.db` (non versionné). Modèle : `gemini-2.0-flash-001`. `AiProvider::create` est le point d’extension pour un autre backend.
+**Settings.** Défaut < user QSettings < `{workspace}/.editerako/settings.json`. UI Préférences (`Ctrl+,`). Raccourcis via `KeybindingManager` (plus de `setShortcut` dans `MainWindow`). Détail : [settings.md](settings.md), [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md).
+
+**Chat.** `GEMINI_API_KEY` (`.env` chargé au démarrage). Historique SQLite : `{projet}/.editerako/chat_history.db` (non versionné). Modèle / endpoint : `AppSettings` (`gemini-2.0-flash-001` par défaut). `AiProvider::create` est le point d’extension pour un autre backend.
 
 ## Ce que MainWindow ne doit plus contenir
 

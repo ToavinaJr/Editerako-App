@@ -3,6 +3,7 @@
 #include "core/Logging.h"
 
 #include <QAction>
+#include <QStringList>
 #include <QWidget>
 
 CommandRegistry::CommandRegistry(QWidget *actionParent)
@@ -46,6 +47,13 @@ QAction *CommandRegistry::create(const QString &id,
 QAction *CommandRegistry::action(const QString &id) const
 {
     return m_actions.value(id, nullptr);
+}
+
+QStringList CommandRegistry::ids() const
+{
+    QStringList result = m_actions.keys();
+    result.sort();
+    return result;
 }
 
 bool CommandRegistry::setEnabled(const QString &id, bool enabled)

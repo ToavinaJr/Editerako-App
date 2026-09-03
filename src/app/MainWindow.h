@@ -10,6 +10,7 @@ class CodeEditor;
 class CommandRegistry;
 class EditorManager;
 class EditorStatusWidget;
+class KeybindingManager;
 class TerminalPanel;
 class ViewerManager;
 class WorkspaceController;
@@ -17,6 +18,7 @@ class WorkspaceController;
 class QCloseEvent;
 class QDragEnterEvent;
 class QDropEvent;
+class QTimer;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -65,10 +67,12 @@ private slots:
     void onActionGoToLine();
 
     void toggleTerminal();
+    void openPreferences();
 
 private:
     Ui::MainWindow *ui;
     CommandRegistry *m_commands = nullptr;
+    KeybindingManager *m_keybindings = nullptr;
     EditorManager *m_editorManager = nullptr;
     EditorStatusWidget *m_editorStatus = nullptr;
     ViewerManager *m_viewerManager = nullptr;
@@ -76,6 +80,7 @@ private:
     TerminalPanel *m_terminalPanel = nullptr;
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
+    QTimer *m_autoSaveTimer = nullptr;
     bool isFileTreeVisible = true;
 
     CodeEditor *currentEditor();
@@ -84,6 +89,8 @@ private:
 
     void connectActions();
     void connectWorkspaceCollaborators();
+    void applyPreferences();
+    void restartAutoSave();
     void updateCommandStates();
     void updateWindowTitle();
     void setupFileTree();

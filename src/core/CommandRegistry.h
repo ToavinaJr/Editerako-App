@@ -5,6 +5,7 @@
 #include <QKeySequence>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
 class QAction;
 class QWidget;
@@ -22,6 +23,7 @@ public:
                     const QKeySequence &shortcut = {});
 
     [[nodiscard]] QAction *action(const QString &id) const;
+    [[nodiscard]] QStringList ids() const;
     bool setEnabled(const QString &id, bool enabled);
 
 private:

@@ -19,12 +19,12 @@
 ## Qt
 
 - `Q_OBJECT` + `tr()` pour tout texte UI.
-- Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, …).
-- `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()`.
+- Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, `preferences.open`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`.
+- `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()` ; préférences → `SettingsDialog`.
 - Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O → `readTextFile` / `writeTextFile` (pas `QIODevice::Text`) ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`).
 - Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
-- Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage.
+- Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage et depuis Préférences.
 
 ## Journalisation
 
@@ -35,10 +35,10 @@ Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject
 | Chemin | Rôle |
 |---|---|
 | `.env` | `GEMINI_API_KEY=...` |
-| `{projet}/.editerako/` | `chat_history.db` |
+| `{projet}/.editerako/` | `chat_history.db`, `settings.json` (overlay workspace) |
 | `build/` | artefacts CMake |
 
-`QSettings` organisation/application : `Editerako`. Les tests de session passent un `QSettings` fichier temporaire, pas le profil utilisateur.
+`QSettings` organisation/application : `Editerako`. Les tests de session / settings passent un `QSettings` fichier temporaire, pas le profil utilisateur. Overlay workspace : [settings.md](settings.md).
 
 ## Comportements à ne pas « corriger » à la légère
 

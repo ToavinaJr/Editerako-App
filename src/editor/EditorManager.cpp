@@ -118,6 +118,26 @@ QList<CodeEditor *> EditorManager::modifiedEditors() const
     return result;
 }
 
+void EditorManager::applySettings()
+{
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        if (auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i))) {
+            EditorStyle::apply(editor);
+        }
+    }
+}
+
+void EditorManager::saveDirtyFilesQuietly()
+{
+    for (CodeEditor *editor : modifiedEditors()) {
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (!doc || doc->isUntitled() || doc->isReadOnly()) {
+            continue;
+        }
+        save(editor);
+    }
+}
+
 CodeEditor *EditorManager::openUntitled()
 {
     auto *editor = createEditor();

@@ -59,6 +59,17 @@ void GeminiProvider::send(const QString &prompt)
 
     abortActiveReply();
 
+    const QString model = [&] {
+        const QString configured = AppSettings().aiModel();
+        return configured.isEmpty() ? AppSettings::defaultAiModel() : configured;
+    }();
+    QString endpoint = AppSettings().aiEndpoint();
+    if (endpoint.isEmpty()) {
+        endpoint = QStringLiteral(
+                       "https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
+                       .arg(model);
+    }
+
     QJsonObject partObj;
     partObj.insert(QStringLiteral("text"), prompt);
     QJsonArray partsArr;
@@ -74,8 +85,7 @@ void GeminiProvider::send(const QString &prompt)
 
     const QByteArray body = QJsonDocument(root).toJson(QJsonDocument::Compact);
 
-    QUrl url(QStringLiteral(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent"));
+    QUrl url(endpoint);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setRawHeader("x-goog-api-key", apiKey);

@@ -68,6 +68,20 @@ editerako_add_test(test_TextFileFormat
     LIBS EditerakoCore
 )
 
+editerako_add_test(test_AppSettings
+    SOURCES AppSettingsTest.cpp
+    LIBS EditerakoCore
+)
+
+editerako_add_test(test_KeybindingModel
+    SOURCES KeybindingModelTest.cpp
+    LIBS EditerakoCore
+)
+
+set_tests_properties(test_KeybindingModel PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
 editerako_add_test(test_CommandHistory
     SOURCES CommandHistoryTest.cpp
     LIBS EditerakoTerminal

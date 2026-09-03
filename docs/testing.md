@@ -30,6 +30,8 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_CommandRegistry` | `EditerakoCore` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode, octets bruts |
 | `test_TextFileFormat` | `EditerakoCore` | UTF-8/BOM, UTF-16, Latin1, LF/CRLF, upgrade Unicode |
+| `test_AppSettings` | `EditerakoCore` | round-trip user, overlay workspace JSON |
+| `test_KeybindingModel` | `EditerakoCore` | défauts, override, conflits, apply sur `CommandRegistry` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_CommandHistory` | `EditerakoTerminal` | historique, navigation |
 | `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |

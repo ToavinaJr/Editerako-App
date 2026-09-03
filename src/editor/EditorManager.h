@@ -55,6 +55,8 @@ public:
     CloseResult closeAll();
 
     bool promptSaveAllOnQuit();
+    void applySettings();
+    void saveDirtyFilesQuietly();
 
 signals:
     void currentChanged();

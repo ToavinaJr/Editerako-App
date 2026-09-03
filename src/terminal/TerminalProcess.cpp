@@ -1,8 +1,10 @@
 #include "terminal/TerminalProcess.h"
 
+#include "core/AppSettings.h"
 #include "core/Logging.h"
 
 #include <QDir>
+#include <QFileInfo>
 #include <QProcess>
 
 TerminalProcess::TerminalProcess(QObject *parent)
@@ -90,12 +92,24 @@ void TerminalProcess::startCommand(const QString &command)
 
     m_process->setWorkingDirectory(m_workingDirectory);
 
+    QString shell = AppSettings().terminalShell();
+    if (shell.isEmpty()) {
+        shell = defaultShell();
+    }
+
 #ifdef Q_OS_WIN
-    qCInfo(lcTerminal) << "Starting" << command << "in" << m_workingDirectory;
-    m_process->start(QStringLiteral("cmd.exe"), {QStringLiteral("/c"), command});
+    QStringList args;
+    const QString name = QFileInfo(shell).fileName().toLower();
+    if (name == QLatin1String("powershell.exe") || name == QLatin1String("pwsh.exe")) {
+        args = {QStringLiteral("-NoProfile"), QStringLiteral("-Command"), command};
+    } else {
+        args = {QStringLiteral("/c"), command};
+    }
+    qCInfo(lcTerminal) << "Starting" << command << "via" << shell << "in" << m_workingDirectory;
+    m_process->start(shell, args);
 #else
-    qCInfo(lcTerminal) << "Starting" << command << "via" << m_shell << "in" << m_workingDirectory;
-    m_process->start(m_shell, {QStringLiteral("-c"), command});
+    qCInfo(lcTerminal) << "Starting" << command << "via" << shell << "in" << m_workingDirectory;
+    m_process->start(shell, {QStringLiteral("-c"), command});
 #endif
 }
 

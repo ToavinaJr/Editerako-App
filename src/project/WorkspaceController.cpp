@@ -81,3 +81,8 @@ void WorkspaceController::refreshIfContains(const QString &path)
         m_explorer->reload();
     }
 }
+
+void WorkspaceController::reloadExplorer()
+{
+    m_explorer->reload();
+}
