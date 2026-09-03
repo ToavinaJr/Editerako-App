@@ -8,6 +8,8 @@ editerako_add_module(EditerakoEditor
         EditorIo.h
         EditorManager.cpp
         EditorManager.h
+        EditorStatusWidget.cpp
+        EditorStatusWidget.h
         EditorStyle.cpp
         EditorStyle.h
         FindReplaceDialog.cpp

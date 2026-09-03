@@ -7,6 +7,7 @@
 #include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
+#include "editor/EditorStatusWidget.h"
 #include "editor/FindReplaceDialog.h"
 #include "editor/GoToLineDialog.h"
 #include "project/WorkspaceController.h"
@@ -186,6 +187,13 @@ void MainWindow::setupCodeEditor()
             statusBar()->showMessage(tr("File saved successfully"), 2000);
         }
     });
+
+    m_editorStatus = new EditorStatusWidget(this);
+    statusBar()->addPermanentWidget(m_editorStatus);
+    connect(m_editorManager, &EditorManager::currentChanged, this, [this]() {
+        m_editorStatus->setEditor(currentEditor());
+    });
+    m_editorStatus->setEditor(currentEditor());
 }
 
 void MainWindow::setupFileTree()

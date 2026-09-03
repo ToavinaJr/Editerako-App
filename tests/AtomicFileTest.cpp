@@ -15,6 +15,7 @@ private slots:
     void writesAndOverwrites();
     void preservesUnicode();
     void directoryPathFails();
+    void writeBytesKeepsRawEol();
 };
 
 void AtomicFileTest::emptyPathFails()
@@ -67,6 +68,20 @@ void AtomicFileTest::directoryPathFails()
     QString error;
     QVERIFY(!writeTextAtomically(dir.path(), QStringLiteral("x"), &error));
     QVERIFY(!error.isEmpty());
+}
+
+void AtomicFileTest::writeBytesKeepsRawEol()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("raw.txt"));
+    const QByteArray payload("a\r\nb");
+    QString error;
+    QVERIFY(writeBytesAtomically(path, payload, &error));
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), payload);
 }
 
 QTEST_GUILESS_MAIN(AtomicFileTest)

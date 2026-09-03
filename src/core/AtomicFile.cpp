@@ -1,9 +1,8 @@
 #include "core/AtomicFile.h"
 
 #include <QSaveFile>
-#include <QTextStream>
 
-bool writeTextAtomically(const QString &path, const QString &text, QString *errorOut)
+bool writeBytesAtomically(const QString &path, const QByteArray &bytes, QString *errorOut)
 {
     if (path.isEmpty()) {
         if (errorOut) {
@@ -14,17 +13,14 @@ bool writeTextAtomically(const QString &path, const QString &text, QString *erro
 
     QSaveFile file(path);
     file.setDirectWriteFallback(true);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (!file.open(QIODevice::WriteOnly)) {
         if (errorOut) {
             *errorOut = file.errorString();
         }
         return false;
     }
 
-    QTextStream out(&file);
-    out << text;
-    out.flush();
-    if (file.error() != QFileDevice::NoError) {
+    if (file.write(bytes) != bytes.size()) {
         if (errorOut) {
             *errorOut = file.errorString();
         }
@@ -38,4 +34,9 @@ bool writeTextAtomically(const QString &path, const QString &text, QString *erro
         return false;
     }
     return true;
+}
+
+bool writeTextAtomically(const QString &path, const QString &text, QString *errorOut)
+{
+    return writeBytesAtomically(path, text.toUtf8(), errorOut);
 }

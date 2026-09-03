@@ -4,15 +4,24 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QScrollBar>
+#include <QTextCursor>
 #include <QTextDocument>
+#include <QtGlobal>
 
 EditorDocument::EditorDocument(CodeEditor *editor)
     : QObject(editor)
     , m_editor(editor)
+    , m_format(defaultTextFileMeta())
 {
     Q_ASSERT(editor);
     connect(editor->document(), &QTextDocument::modificationChanged,
             this, &EditorDocument::modificationChanged);
+    connect(editor->document(), &QTextDocument::contentsChange,
+            this, [this](int, int, int) {
+                ++m_version;
+                emit versionChanged(m_version);
+            });
 }
 
 EditorDocument *EditorDocument::fromEditor(CodeEditor *editor)
@@ -62,4 +71,61 @@ bool EditorDocument::isUntitled() const
 bool EditorDocument::isModified() const
 {
     return m_editor && m_editor->document()->isModified();
+}
+
+void EditorDocument::setFormat(const TextFileMeta &meta)
+{
+    if (m_format == meta) {
+        return;
+    }
+    m_format = meta;
+    emit formatChanged();
+}
+
+LanguageId EditorDocument::language() const
+{
+    return LanguageRegistry::idForPath(m_filePath);
+}
+
+void EditorDocument::setReadOnly(bool readOnly)
+{
+    m_readOnly = readOnly;
+}
+
+void EditorDocument::resetVersion()
+{
+    m_version = 0;
+    emit versionChanged(m_version);
+}
+
+EditorDocument::CaretState EditorDocument::caretState() const
+{
+    CaretState state;
+    if (!m_editor) {
+        return state;
+    }
+    const QTextCursor cursor = m_editor->textCursor();
+    state.position = cursor.position();
+    state.anchor = cursor.anchor();
+    if (auto *bar = m_editor->verticalScrollBar()) {
+        state.scrollY = bar->value();
+    }
+    return state;
+}
+
+void EditorDocument::restoreCaretState(const CaretState &state)
+{
+    if (!m_editor) {
+        return;
+    }
+    QTextCursor cursor(m_editor->document());
+    const int length = m_editor->document()->characterCount() - 1;
+    const int pos = qBound(0, state.position, length);
+    const int anchor = qBound(0, state.anchor, length);
+    cursor.setPosition(anchor);
+    cursor.setPosition(pos, QTextCursor::KeepAnchor);
+    m_editor->setTextCursor(cursor);
+    if (auto *bar = m_editor->verticalScrollBar()) {
+        bar->setValue(state.scrollY);
+    }
 }

@@ -11,4 +11,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md) | Cibles CMake par module |
 | [adr/0002-mainwindow-composition-root.md](adr/0002-mainwindow-composition-root.md) | MainWindow composition root |
 | [adr/0003-editor-features.md](adr/0003-editor-features.md) | Features extraits de `CodeEditor` / `EditorManager` |
+| [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md) | Encoding, BOM, EOL, modèle document |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

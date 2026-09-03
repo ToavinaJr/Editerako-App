@@ -63,6 +63,11 @@ editerako_add_test(test_AtomicFile
     LIBS EditerakoCore
 )
 
+editerako_add_test(test_TextFileFormat
+    SOURCES TextFileFormatTest.cpp
+    LIBS EditerakoCore
+)
+
 editerako_add_test(test_CommandHistory
     SOURCES CommandHistoryTest.cpp
     LIBS EditerakoTerminal
@@ -116,5 +121,14 @@ editerako_add_test(test_MultiCursorController
 )
 
 set_tests_properties(test_MultiCursorController PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+editerako_add_test(test_EditorDocument
+    SOURCES EditorDocumentTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_EditorDocument PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )

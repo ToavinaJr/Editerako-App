@@ -28,15 +28,17 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |
 | `test_FileKind` | `EditerakoViewers` | texte / PDF / image / vide |
 | `test_CommandRegistry` | `EditerakoCore` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
-| `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode |
+| `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode, octets bruts |
+| `test_TextFileFormat` | `EditerakoCore` | UTF-8/BOM, UTF-16, Latin1, LF/CRLF, upgrade Unicode |
 | `test_CommandHistory` | `EditerakoTerminal` | historique, navigation |
 | `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
 | `test_HighlightQuery` | `EditerakoSyntax` | captures et predicates (queries sur disque via `EDITERAKO_QUERY_DIR`) |
-| `test_EditorIo` | `EditerakoEditor` | lecture texte, fichier manquant, Unicode |
+| `test_EditorIo` | `EditerakoEditor` | lecture texte, Unicode, conservation CRLF, `diskMatches` |
 | `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python, C++ sous/seuil, HTML |
 | `test_LineMovementController` | `EditerakoEditor` | swap up/down sur `QPlainTextEdit` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_MultiCursorController` | `EditerakoEditor` | toggle, insert multi, doublon du curseur primaire (`QT_QPA_PLATFORM=offscreen`) |
+| `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

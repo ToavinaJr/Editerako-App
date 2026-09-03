@@ -127,6 +127,10 @@ QStatusBar {
     color: #1e1e1e;
 }
 
+QStatusBar QLabel {
+    padding: 0 4px;
+}
+
 QDialog, QMessageBox {
     background-color: #ffffff;
     color: #1e1e1e;

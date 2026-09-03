@@ -21,8 +21,8 @@
 - `Q_OBJECT` + `tr()` pour tout texte UI.
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, …).
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()`.
-- Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O lecture → `readTextFile` ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`).
-- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`.
+- Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O → `readTextFile` / `writeTextFile` (pas `QIODevice::Text`) ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`).
+- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
 - Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage.
 
@@ -45,3 +45,4 @@ Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject
 - PDF : `setDocument` seulement si le statut est `Ready`.
 - Terminal : cwd = dossier du fichier actif, sinon workspace ; boutons × capturent le `Terminal*`, pas un index d’onglet.
 - Premier `Ctrl+J` : voir [architecture.md](architecture.md).
+- Fichiers texte : conserver encoding / BOM / EOL du disque. Buffer interne = LF. Détail : [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).

@@ -18,6 +18,8 @@ editerako_add_module(EditerakoCore
         DropPaths.h
         AtomicFile.cpp
         AtomicFile.h
+        TextFileFormat.cpp
+        TextFileFormat.h
     LIBS
         Qt6::Widgets
 )

@@ -1,7 +1,6 @@
 #include "editor/EditorManager.h"
 
 #include "core/AppSettings.h"
-#include "core/AtomicFile.h"
 #include "core/Logging.h"
 #include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
@@ -190,7 +189,14 @@ bool EditorManager::openTextFile(const QString &filePath)
     auto *editor = createEditor();
     auto *doc = EditorDocument::fromEditor(editor);
     editor->setPlainText(loaded.text);
-    doc->setFilePath(filePath);
+    if (doc) {
+        doc->setFormat(loaded.meta);
+        doc->setFilePath(filePath);
+        const bool writable = info.isWritable();
+        doc->setReadOnly(!writable);
+        editor->setReadOnly(!writable);
+        doc->resetVersion();
+    }
     editor->document()->setModified(false);
 
     const int idx = m_tabs->addTab(editor, doc->displayName());
@@ -255,6 +261,13 @@ bool EditorManager::reloadFromDisk(const QString &filePath)
     }
 
     editor->setPlainText(loaded.text);
+    if (auto *doc = EditorDocument::fromEditor(editor)) {
+        doc->setFormat(loaded.meta);
+        const bool writable = QFileInfo(filePath).isWritable();
+        doc->setReadOnly(!writable);
+        editor->setReadOnly(!writable);
+        doc->resetVersion();
+    }
     editor->document()->setModified(false);
     updateTabLabel(editor);
     qCInfo(lcEditor) << "Reloaded" << filePath;
@@ -283,13 +296,18 @@ bool EditorManager::writeToDisk(CodeEditor *editor, const QString &path)
 {
     emit aboutToSave(path);
 
-    QString error;
-    if (!writeTextAtomically(path, editor->toPlainText(), &error)) {
+    auto *doc = EditorDocument::fromEditor(editor);
+    const TextFileMeta meta = doc ? doc->format() : defaultTextFileMeta();
+    const TextSaveResult saved = writeTextFile(path, editor->toPlainText(), meta);
+    if (!saved.ok) {
         QMessageBox::warning(m_dialogParent, tr("Error"),
-                             tr("Could not save file: %1").arg(error));
+                             tr("Could not save file: %1").arg(saved.error));
         return false;
     }
 
+    if (doc) {
+        doc->setFormat(saved.meta);
+    }
     editor->document()->setModified(false);
     updateTabLabel(editor);
     emit fileSaved(path);

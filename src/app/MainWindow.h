@@ -9,6 +9,7 @@ class ChatWidget;
 class CodeEditor;
 class CommandRegistry;
 class EditorManager;
+class EditorStatusWidget;
 class TerminalPanel;
 class ViewerManager;
 class WorkspaceController;
@@ -69,6 +70,7 @@ private:
     Ui::MainWindow *ui;
     CommandRegistry *m_commands = nullptr;
     EditorManager *m_editorManager = nullptr;
+    EditorStatusWidget *m_editorStatus = nullptr;
     ViewerManager *m_viewerManager = nullptr;
     WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;
