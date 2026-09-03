@@ -4,7 +4,7 @@
 
 - Code applicatif uniquement sous `src/`. PascalCase : `EditorManager.cpp`, pas `editormanager.cpp`.
 - Garde d’include : `EDITERAKO_EDITORMANAGER_H`.
-- Include interne : `"editor/EditorManager.h"` (chemin depuis `src/`). Jamais de chemin relatif `../`.
+- Include interne : `"editor/EditorManager.h"` (chemin depuis `src/`). Features éditeur : `"editor/features/MultiCursorController.h"`. Jamais de chemin relatif `../`.
 - Headers Qt et STL après les includes du projet. Forward-declare dans les `.h` quand un pointeur suffit (`MainWindow.h`).
 
 ## CMake
@@ -21,6 +21,7 @@
 - `Q_OBJECT` + `tr()` pour tout texte UI.
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, …).
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()`.
+- Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O lecture → `readTextFile` ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`).
 - Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
 - Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage.

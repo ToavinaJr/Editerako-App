@@ -1,22 +1,18 @@
 #include "editor/EditorManager.h"
 
-#include "editor/CodeEditor.h"
 #include "core/AppSettings.h"
 #include "core/AtomicFile.h"
 #include "core/Logging.h"
+#include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
-#include "syntax/LanguageRegistry.h"
-#include "syntax/SyntaxHighlighter.h"
+#include "editor/EditorIo.h"
+#include "editor/EditorStyle.h"
+#include "editor/HighlighterSync.h"
 
-#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFont>
-#include <QFontMetrics>
-#include <QtGlobal>
 #include <QMessageBox>
 #include <QTabWidget>
-#include <QTextStream>
 
 EditorManager::EditorManager(QWidget *dialogParent)
     : QObject(dialogParent)
@@ -64,7 +60,7 @@ void EditorManager::setWorkingDirectory(const QString &dir)
 CodeEditor *EditorManager::createEditor()
 {
     auto *editor = new CodeEditor(m_tabs);
-    applyEditorStyle(editor);
+    EditorStyle::apply(editor);
 
     auto *doc = new EditorDocument(editor);
     connect(doc, &EditorDocument::modificationChanged, this, [this, editor](bool) {
@@ -73,71 +69,10 @@ CodeEditor *EditorManager::createEditor()
     });
     connect(doc, &EditorDocument::filePathChanged, this, [this, editor](const QString &) {
         updateTabLabel(editor);
-        syncHighlighter(editor);
+        HighlighterSync::apply(editor);
     });
 
     return editor;
-}
-
-void EditorManager::applyEditorStyle(CodeEditor *editor) const
-{
-    const AppSettings settings;
-    QFont font(settings.editorFontFamily());
-    font.setPointSize(qMax(8, settings.editorFontSize()));
-    editor->setFont(font);
-
-    const QFontMetrics metrics(font);
-    editor->setTabStopDistance(
-        settings.editorTabSize() * metrics.horizontalAdvance(QLatin1Char(' ')));
-    editor->setLineWrapMode(settings.editorWordWrap()
-                                ? QPlainTextEdit::WidgetWidth
-                                : QPlainTextEdit::NoWrap);
-    editor->setLineNumbersVisible(settings.editorLineNumbers());
-}
-
-void EditorManager::syncHighlighter(CodeEditor *editor)
-{
-    if (!editor) {
-        return;
-    }
-
-    auto *edDoc = EditorDocument::fromEditor(editor);
-    const QString path = edDoc ? edDoc->filePath() : QString();
-    const LanguageId lang = LanguageRegistry::idForPath(path);
-
-    qint64 size = static_cast<qint64>(editor->document()->characterCount());
-    if (!path.isEmpty()) {
-        const QFileInfo info(path);
-        if (info.exists()) {
-            size = info.size();
-        }
-    }
-
-    const auto existing = editor->document()->findChildren<SyntaxHighlighter *>(
-        QString(), Qt::FindDirectChildrenOnly);
-
-    const bool tooLarge = size > AppSettings().largeFileDisableSyntaxBytes();
-    const bool canHighlight = LanguageRegistry::tsLanguage(lang) != nullptr;
-    if (tooLarge || !canHighlight) {
-        for (SyntaxHighlighter *highlighter : existing) {
-            delete highlighter;
-        }
-        if (tooLarge) {
-            qCInfo(lcEditor) << "Skipping syntax highlighter for large file" << path << size;
-        }
-        return;
-    }
-
-    if (existing.size() == 1 && existing.front()->language() == lang) {
-        return;
-    }
-
-    for (SyntaxHighlighter *highlighter : existing) {
-        delete highlighter;
-    }
-
-    qCInfo(lcEditor) << "Highlighter" << LanguageRegistry::displayName(lang) << "for" << path;
-    new SyntaxHighlighter(editor->document(), lang);
 }
 
 void EditorManager::updateTabLabel(CodeEditor *editor)
@@ -245,20 +180,16 @@ bool EditorManager::openTextFile(const QString &filePath)
         }
     }
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    const TextLoadResult loaded = readTextFile(filePath);
+    if (!loaded.ok) {
         QMessageBox::warning(m_dialogParent, tr("Error"),
                              tr("Could not open file:\n%1").arg(filePath));
         return false;
     }
 
-    QTextStream in(&file);
-    const QString content = in.readAll();
-    file.close();
-
     auto *editor = createEditor();
     auto *doc = EditorDocument::fromEditor(editor);
-    editor->setPlainText(content);
+    editor->setPlainText(loaded.text);
     doc->setFilePath(filePath);
     editor->document()->setModified(false);
 
@@ -318,16 +249,12 @@ bool EditorManager::reloadFromDisk(const QString &filePath)
         return false;
     }
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    const TextLoadResult loaded = readTextFile(filePath);
+    if (!loaded.ok) {
         return false;
     }
 
-    QTextStream in(&file);
-    const QString content = in.readAll();
-    file.close();
-
-    editor->setPlainText(content);
+    editor->setPlainText(loaded.text);
     editor->document()->setModified(false);
     updateTabLabel(editor);
     qCInfo(lcEditor) << "Reloaded" << filePath;

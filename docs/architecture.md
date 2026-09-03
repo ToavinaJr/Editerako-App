@@ -34,6 +34,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 |---|---|---|
 | `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs, D&D, câblage des signaux |
 | `core/` | `EditerakoCore` | `AppSettings`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, logs |
+| `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorManager` (onglets), `EditorIo` / `EditorStyle` / `HighlighterSync` ; `features/` (gutter, ligne courante, multi-curseurs, swap de lignes) |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
@@ -52,6 +53,8 @@ Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
 **Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Fermer le dernier onglet masque le panneau. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état).
+
+**Éditeur.** `CodeEditor` délègue gutter, ligne courante, multi-curseurs et swap de lignes à `src/editor/features/`. `EditorManager` orchestre les onglets et les dialogs ; lecture via `readTextFile`, style via `EditorStyle`, highlighter via `HighlighterSync`. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md).
 
 **Chat.** `GEMINI_API_KEY` (`.env` chargé au démarrage). Historique SQLite : `{projet}/.editerako/chat_history.db` (non versionné). Modèle : `gemini-2.0-flash-001`. `AiProvider::create` est le point d’extension pour un autre backend.
 

@@ -64,8 +64,6 @@ signals:
 
 private:
     CodeEditor *createEditor();
-    void applyEditorStyle(CodeEditor *editor) const;
-    void syncHighlighter(CodeEditor *editor);
     void updateTabLabel(CodeEditor *editor);
     [[nodiscard]] QString pathForWidget(QWidget *widget) const;
     [[nodiscard]] QList<CodeEditor *> modifiedEditors() const;

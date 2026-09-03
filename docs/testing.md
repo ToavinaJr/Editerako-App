@@ -33,6 +33,10 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
 | `test_HighlightQuery` | `EditerakoSyntax` | captures et predicates (queries sur disque via `EDITERAKO_QUERY_DIR`) |
+| `test_EditorIo` | `EditerakoEditor` | lecture texte, fichier manquant, Unicode |
+| `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python, C++ sous/seuil, HTML |
+| `test_LineMovementController` | `EditerakoEditor` | swap up/down sur `QPlainTextEdit` (`QT_QPA_PLATFORM=offscreen`) |
+| `test_MultiCursorController` | `EditerakoEditor` | toggle, insert multi, doublon du curseur primaire (`QT_QPA_PLATFORM=offscreen`) |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

@@ -4,12 +4,26 @@ editerako_add_module(EditerakoEditor
         CodeEditor.h
         EditorDocument.cpp
         EditorDocument.h
+        EditorIo.cpp
+        EditorIo.h
         EditorManager.cpp
         EditorManager.h
+        EditorStyle.cpp
+        EditorStyle.h
         FindReplaceDialog.cpp
         FindReplaceDialog.h
         GoToLineDialog.cpp
         GoToLineDialog.h
+        HighlighterSync.cpp
+        HighlighterSync.h
+        features/CurrentLineHighlighter.cpp
+        features/CurrentLineHighlighter.h
+        features/LineMovementController.cpp
+        features/LineMovementController.h
+        features/LineNumberArea.cpp
+        features/LineNumberArea.h
+        features/MultiCursorController.cpp
+        features/MultiCursorController.h
     LIBS
         EditerakoCore
         EditerakoSyntax

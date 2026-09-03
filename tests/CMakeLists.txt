@@ -90,3 +90,31 @@ editerako_add_test(test_HighlightQuery
 target_compile_definitions(test_HighlightQuery PRIVATE
     EDITERAKO_QUERY_DIR="${PROJECT_SOURCE_DIR}/resources/syntax"
 )
+
+editerako_add_test(test_EditorIo
+    SOURCES EditorIoTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_HighlighterSync
+    SOURCES HighlighterSyncTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_LineMovementController
+    SOURCES LineMovementControllerTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_LineMovementController PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+editerako_add_test(test_MultiCursorController
+    SOURCES MultiCursorControllerTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_MultiCursorController PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
