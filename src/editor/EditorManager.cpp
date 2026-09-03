@@ -12,6 +12,8 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QTabWidget>
+#include <QTextBlock>
+#include <QTextCursor>
 
 EditorManager::EditorManager(QWidget *dialogParent)
     : QObject(dialogParent)
@@ -125,6 +127,28 @@ void EditorManager::applySettings()
             EditorStyle::apply(editor);
         }
     }
+}
+
+bool EditorManager::goToLine(int lineNumber)
+{
+    CodeEditor *editor = currentEditor();
+    if (!editor || lineNumber < 1) {
+        return false;
+    }
+
+    QTextBlock block = editor->document()->findBlockByLineNumber(lineNumber - 1);
+    if (!block.isValid()) {
+        block = editor->document()->lastBlock();
+    }
+    if (!block.isValid()) {
+        return false;
+    }
+
+    QTextCursor cursor = editor->textCursor();
+    cursor.setPosition(block.position());
+    editor->setTextCursor(cursor);
+    editor->centerCursor();
+    return true;
 }
 
 void EditorManager::saveDirtyFilesQuietly()

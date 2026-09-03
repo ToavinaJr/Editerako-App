@@ -24,6 +24,8 @@ editerako_add_module(EditerakoCore
         KeybindingModel.h
         KeybindingManager.cpp
         KeybindingManager.h
+        FuzzyMatcher.cpp
+        FuzzyMatcher.h
     LIBS
         Qt6::Widgets
 )

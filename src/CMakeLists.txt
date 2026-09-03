@@ -19,6 +19,12 @@ set(editerako_app_sources
     ui/KeybindingEditor.h
     ui/SettingsDialog.cpp
     ui/SettingsDialog.h
+    ui/FuzzyPickerDialog.cpp
+    ui/FuzzyPickerDialog.h
+    ui/CommandPaletteDialog.cpp
+    ui/CommandPaletteDialog.h
+    ui/QuickOpenDialog.cpp
+    ui/QuickOpenDialog.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})

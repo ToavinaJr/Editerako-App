@@ -19,10 +19,10 @@
 ## Qt
 
 - `Q_OBJECT` + `tr()` pour tout texte UI.
-- Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, `preferences.open`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`.
+- Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, `workbench.commandPalette`, `workbench.quickOpen`, `preferences.open`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`.
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()` ; préférences → `SettingsDialog`.
 - Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O → `readTextFile` / `writeTextFile` (pas `QIODevice::Text`) ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`).
-- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`.
+- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`, `fuzzyPickerDialog`, `commandPaletteDialog`, `quickOpenDialog`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
 - Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage et depuis Préférences.
 

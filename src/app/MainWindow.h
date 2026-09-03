@@ -68,6 +68,8 @@ private slots:
 
     void toggleTerminal();
     void openPreferences();
+    void openCommandPalette();
+    void openQuickOpen();
 
 private:
     Ui::MainWindow *ui;

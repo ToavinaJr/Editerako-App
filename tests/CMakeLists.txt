@@ -82,6 +82,16 @@ set_tests_properties(test_KeybindingModel PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
 
+editerako_add_test(test_FuzzyMatcher
+    SOURCES FuzzyMatcherTest.cpp
+    LIBS EditerakoCore
+)
+
+editerako_add_test(test_WorkspaceFileIndex
+    SOURCES WorkspaceFileIndexTest.cpp
+    LIBS EditerakoProject
+)
+
 editerako_add_test(test_CommandHistory
     SOURCES CommandHistoryTest.cpp
     LIBS EditerakoTerminal

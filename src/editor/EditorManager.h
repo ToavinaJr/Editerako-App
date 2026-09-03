@@ -56,6 +56,7 @@ public:
 
     bool promptSaveAllOnQuit();
     void applySettings();
+    bool goToLine(int lineNumber);
     void saveDirtyFilesQuietly();
 
 signals:

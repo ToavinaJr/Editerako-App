@@ -32,6 +32,8 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("edit.find"), QKeySequence::Find);
     defaults.insert(QStringLiteral("edit.gotoLine"), QKeySequence(QStringLiteral("Ctrl+G")));
     defaults.insert(QStringLiteral("view.terminal"), QKeySequence(QStringLiteral("Ctrl+J")));
+    defaults.insert(QStringLiteral("workbench.commandPalette"), QKeySequence(QStringLiteral("Ctrl+Shift+P")));
+    defaults.insert(QStringLiteral("workbench.quickOpen"), QKeySequence(QStringLiteral("Ctrl+P")));
     defaults.insert(QStringLiteral("preferences.open"), QKeySequence(QStringLiteral("Ctrl+,")));
     return defaults;
 }

@@ -9,6 +9,7 @@ class FileExplorer;
 class FileWatcher;
 class QTreeWidget;
 class Workspace;
+class WorkspaceFileIndex;
 
 class WorkspaceController : public QObject
 {
@@ -19,6 +20,7 @@ public:
 
     [[nodiscard]] Workspace *workspace() const { return m_workspace; }
     [[nodiscard]] FileExplorer *explorer() const { return m_explorer; }
+    [[nodiscard]] WorkspaceFileIndex *fileIndex() const { return m_fileIndex; }
 
     void setRootPath(const QString &path);
     [[nodiscard]] QString rootPath() const;
@@ -39,9 +41,12 @@ signals:
     void fileChangedOnDisk(const QString &path);
 
 private:
+    void rebuildFileIndex();
+
     Workspace *m_workspace = nullptr;
     FileExplorer *m_explorer = nullptr;
     FileWatcher *m_watcher = nullptr;
+    WorkspaceFileIndex *m_fileIndex = nullptr;
 };
 
 #endif

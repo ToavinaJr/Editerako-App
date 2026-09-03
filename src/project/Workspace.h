@@ -24,6 +24,7 @@ public:
     [[nodiscard]] bool isValid() const;
 
     [[nodiscard]] bool isExcludedName(const QString &name) const;
+    [[nodiscard]] QStringList excludedNames() const;
     [[nodiscard]] bool containsPath(const QString &filePath) const;
     [[nodiscard]] QList<Entry> listEntries(const QString &directoryPath) const;
 
@@ -38,8 +39,6 @@ signals:
     void rootPathChanged(const QString &path);
 
 private:
-    [[nodiscard]] QStringList excludedNames() const;
-
     QString m_rootPath;
 };
 

@@ -3,17 +3,22 @@
 #include "project/FileExplorer.h"
 #include "project/FileWatcher.h"
 #include "project/Workspace.h"
+#include "project/WorkspaceFileIndex.h"
 
 WorkspaceController::WorkspaceController(QTreeWidget *tree, QObject *parent)
     : QObject(parent)
     , m_workspace(new Workspace(this))
     , m_explorer(new FileExplorer(tree, m_workspace, this))
     , m_watcher(new FileWatcher(this))
+    , m_fileIndex(new WorkspaceFileIndex(this))
 {
     connect(m_explorer, &FileExplorer::fileActivated, this, &WorkspaceController::fileActivated);
     connect(m_explorer, &FileExplorer::fileSelected, this, &WorkspaceController::fileSelected);
     connect(m_explorer, &FileExplorer::directoryPopulated, m_watcher, &FileWatcher::watchDirectory);
-    connect(m_watcher, &FileWatcher::rootContentsChanged, m_explorer, &FileExplorer::reload);
+    connect(m_watcher, &FileWatcher::rootContentsChanged, this, [this]() {
+        m_explorer->reload();
+        rebuildFileIndex();
+    });
     connect(m_watcher, &FileWatcher::fileChangedOnDisk, this, &WorkspaceController::fileChangedOnDisk);
 }
 
@@ -23,6 +28,7 @@ void WorkspaceController::setRootPath(const QString &path)
     const QString root = m_workspace->rootPath();
     m_explorer->reload();
     m_watcher->setRootPath(root);
+    rebuildFileIndex();
     emit rootPathChanged(root);
 }
 
@@ -44,6 +50,7 @@ bool WorkspaceController::createEmptyFile(const QString &fileName, QString *abso
     }
     m_explorer->reload();
     m_explorer->revealPath(created);
+    rebuildFileIndex();
     if (absolutePath) {
         *absolutePath = created;
     }
@@ -58,6 +65,7 @@ bool WorkspaceController::createDirectory(const QString &folderName, QString *ab
     }
     m_explorer->reload();
     m_explorer->revealPath(created);
+    rebuildFileIndex();
     if (absolutePath) {
         *absolutePath = created;
     }
@@ -85,4 +93,12 @@ void WorkspaceController::refreshIfContains(const QString &path)
 void WorkspaceController::reloadExplorer()
 {
     m_explorer->reload();
+    rebuildFileIndex();
+}
+
+void WorkspaceController::rebuildFileIndex()
+{
+    m_fileIndex->setRootPath(rootPath());
+    m_fileIndex->setExcludedNames(m_workspace->excludedNames());
+    m_fileIndex->rebuild();
 }

@@ -41,4 +41,4 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
 
 Les clés API ne vont **pas** dans ce fichier. Utiliser `.env` (`GEMINI_API_KEY`).
 
-Raccourcis : overrides user sous `keybindings/<commandId>` (QSettings). Les conflits sont refusés. Détail : [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md).
+Raccourcis : overrides user sous `keybindings/<commandId>` (QSettings). Les conflits sont refusés. Défauts Phase 6 : `workbench.commandPalette` = `Ctrl+Shift+P`, `workbench.quickOpen` = `Ctrl+P`. Détail : [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md), [adr/0006-command-palette-quick-open.md](adr/0006-command-palette-quick-open.md).

@@ -15,12 +15,15 @@
 #include "editor/GoToLineDialog.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
+#include "ui/CommandPaletteDialog.h"
+#include "ui/QuickOpenDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
 
 #include <QApplication>
 #include <QAction>
+#include <QDialog>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QDragEnterEvent>
@@ -104,6 +107,16 @@ void MainWindow::connectActions()
         tr("Toggle Terminal"));
     connect(toggleTerminal, &QAction::triggered, this, &MainWindow::toggleTerminal);
 
+    QAction *commandPalette = m_commands->create(
+        QStringLiteral("workbench.commandPalette"),
+        tr("Command Palette"));
+    connect(commandPalette, &QAction::triggered, this, &MainWindow::openCommandPalette);
+
+    QAction *quickOpen = m_commands->create(
+        QStringLiteral("workbench.quickOpen"),
+        tr("Quick Open"));
+    connect(quickOpen, &QAction::triggered, this, &MainWindow::openQuickOpen);
+
     QAction *preferences = m_commands->create(
         QStringLiteral("preferences.open"),
         tr("Preferences..."));
@@ -113,6 +126,9 @@ void MainWindow::connectActions()
     m_keybindings->apply();
 
     QMenu *viewMenu = menuBar()->addMenu(tr("View"));
+    viewMenu->addAction(commandPalette);
+    viewMenu->addAction(quickOpen);
+    viewMenu->addSeparator();
     viewMenu->addAction(toggleTerminal);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
@@ -345,6 +361,38 @@ void MainWindow::openPreferences()
     SettingsDialog dialog(m_keybindings, m_commands, this);
     connect(&dialog, &SettingsDialog::settingsApplied, this, &MainWindow::applyPreferences);
     dialog.exec();
+}
+
+void MainWindow::openCommandPalette()
+{
+    CommandPaletteDialog dialog(m_commands, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    QAction *action = m_commands ? m_commands->action(dialog.selectedId()) : nullptr;
+    if (action && action->isEnabled()) {
+        action->trigger();
+    }
+}
+
+void MainWindow::openQuickOpen()
+{
+    if (!m_workspaceController) {
+        return;
+    }
+    const QStringList extra = m_editorManager ? m_editorManager->openFilePaths() : QStringList{};
+    QuickOpenDialog dialog(m_workspaceController->fileIndex(), extra, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const QString path = dialog.selectedPath();
+    if (path.isEmpty()) {
+        return;
+    }
+    openFileInEditor(path);
+    if (dialog.selectedLine() > 0 && m_editorManager) {
+        m_editorManager->goToLine(dialog.selectedLine());
+    }
 }
 
 void MainWindow::applyPreferences()

@@ -8,7 +8,10 @@ editerako_add_module(EditerakoProject
         FileWatcher.h
         WorkspaceController.cpp
         WorkspaceController.h
+        WorkspaceFileIndex.cpp
+        WorkspaceFileIndex.h
     LIBS
         EditerakoCore
         Qt6::Widgets
+        Qt6::Concurrent
 )
