@@ -243,3 +243,8 @@ editerako_add_test(test_ProblemModel
     SOURCES ProblemModelTest.cpp
     LIBS EditerakoEditor
 )
+
+editerako_add_test(test_GitParsers
+    SOURCES GitParsersTest.cpp
+    LIBS EditerakoScm
+)

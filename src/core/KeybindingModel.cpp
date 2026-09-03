@@ -43,6 +43,7 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("edit.selectAllOccurrences"), QKeySequence(QStringLiteral("Ctrl+Shift+L")));
     defaults.insert(QStringLiteral("view.terminal"), QKeySequence(QStringLiteral("Ctrl+J")));
     defaults.insert(QStringLiteral("workbench.problems"), QKeySequence(QStringLiteral("Ctrl+Shift+M")));
+    defaults.insert(QStringLiteral("workbench.sourceControl"), QKeySequence(QStringLiteral("Ctrl+Shift+G")));
     defaults.insert(QStringLiteral("workbench.commandPalette"), QKeySequence(QStringLiteral("Ctrl+Shift+P")));
     defaults.insert(QStringLiteral("workbench.quickOpen"), QKeySequence(QStringLiteral("Ctrl+P")));
     defaults.insert(QStringLiteral("workbench.search"), QKeySequence(QStringLiteral("Ctrl+Shift+F")));

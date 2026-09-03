@@ -2,21 +2,28 @@
 
 #include "terminal/TerminalPanel.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/SourceControlPanel.h"
+#include "ui/DiffViewer.h"
+#include "scm/GitCliProvider.h"
 
 #include <QVBoxLayout>
 #include <QTabWidget>
 
-BottomPanel::BottomPanel(QWidget *parent)
+BottomPanel::BottomPanel(GitCliProvider *scm, QWidget *parent)
     : QWidget(parent)
     , m_tabs(new QTabWidget(this))
     , m_problems(new ProblemsPanel(this))
     , m_terminal(new TerminalPanel(this))
+    , m_sourceControl(new SourceControlPanel(scm, this))
+    , m_diff(new DiffViewer(this))
 {
     setObjectName(QStringLiteral("bottomPanel"));
     m_tabs->setObjectName(QStringLiteral("bottomTabs"));
 
     m_problemsIndex = m_tabs->addTab(m_problems, tr("Problems"));
     m_terminalIndex = m_tabs->addTab(m_terminal, tr("Terminal"));
+    m_sourceControlIndex = m_tabs->addTab(m_sourceControl, tr("Source Control"));
+    m_diffIndex = m_tabs->addTab(m_diff, tr("Diff"));
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -34,6 +41,11 @@ BottomPanel::BottomPanel(QWidget *parent)
         showAndSelect(m_terminalIndex);
     });
     connect(m_problems->model(), &ProblemModel::changed, this, &BottomPanel::updateProblemsTitle);
+    connect(m_sourceControl, &SourceControlPanel::diffRequested, scm, &GitCliProvider::requestDiff);
+    connect(scm, &GitCliProvider::diffReady, this, [this](const QString &path, const QString &text) {
+        m_diff->setDiff(path, text);
+        showAndSelect(m_diffIndex);
+    });
 
     m_userVisible = true;
     setVisible(false);
@@ -70,6 +82,17 @@ void BottomPanel::toggleProblems()
 {
     if (!m_userVisible || m_tabs->currentIndex() != m_problemsIndex) {
         showProblems();
+        return;
+    }
+    m_userVisible = false;
+    setVisible(false);
+    emit editorFocusRequested();
+}
+
+void BottomPanel::toggleSourceControl()
+{
+    if (!m_userVisible || m_tabs->currentIndex() != m_sourceControlIndex) {
+        showAndSelect(m_sourceControlIndex);
         return;
     }
     m_userVisible = false;

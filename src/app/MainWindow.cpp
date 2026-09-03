@@ -26,6 +26,8 @@
 #include "ui/WorkspaceSearchDialog.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
+#include "scm/GitCliProvider.h"
+#include "ui/SourceControlPanel.h"
 
 #include <QApplication>
 #include <QAction>
@@ -236,6 +238,10 @@ void MainWindow::connectActions()
         tr("Toggle Problems"));
     connect(toggleProblems, &QAction::triggered, this, &MainWindow::toggleProblems);
 
+    QAction *toggleSourceControl = m_commands->create(
+        QStringLiteral("workbench.sourceControl"), tr("Toggle Source Control"));
+    connect(toggleSourceControl, &QAction::triggered, this, &MainWindow::toggleSourceControl);
+
     QAction *commandPalette = m_commands->create(
         QStringLiteral("workbench.commandPalette"),
         tr("Command Palette"));
@@ -299,6 +305,7 @@ void MainWindow::connectActions()
     viewMenu->addAction(workspaceSearch);
     viewMenu->addSeparator();
     viewMenu->addAction(toggleProblems);
+    viewMenu->addAction(toggleSourceControl);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
@@ -325,6 +332,7 @@ void MainWindow::connectWorkspaceCollaborators()
                 }
                 if (m_bottomPanel) {
                     m_bottomPanel->problemsPanel()->setWorkspaceRoot(path);
+                    m_bottomPanel->sourceControlPanel()->setWorkspace(path);
                 }
                 if (m_terminalPanel) {
                     m_terminalPanel->setWorkingDirectory(path);
@@ -462,7 +470,8 @@ void MainWindow::setupFileTree()
 
 void MainWindow::setupBottomPanel()
 {
-    m_bottomPanel = new BottomPanel(this);
+    m_scm = new GitCliProvider(this);
+    m_bottomPanel = new BottomPanel(m_scm, this);
     m_terminalPanel = m_bottomPanel->terminalPanel();
     if (ui->verticalLayout) {
         ui->verticalLayout->addWidget(m_bottomPanel);
@@ -851,6 +860,13 @@ void MainWindow::toggleProblems()
 {
     if (m_bottomPanel) {
         m_bottomPanel->toggleProblems();
+    }
+}
+
+void MainWindow::toggleSourceControl()
+{
+    if (m_bottomPanel) {
+        m_bottomPanel->toggleSourceControl();
     }
 }
 
