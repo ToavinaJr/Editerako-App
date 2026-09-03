@@ -1,17 +1,15 @@
 #include "app/MainWindow.h"
 #include "ui_MainWindow.h"
 #include "ai/ChatWidget.h"
-#include "editor/CodeEditor.h"
-#include "editor/FindReplaceDialog.h"
-#include "editor/GoToLineDialog.h"
 #include "core/CommandRegistry.h"
+#include "core/DiskChangePolicy.h"
 #include "core/DropPaths.h"
-#include "core/SessionStore.h"
+#include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
-#include "project/FileExplorer.h"
-#include "project/FileWatcher.h"
-#include "project/Workspace.h"
+#include "editor/FindReplaceDialog.h"
+#include "editor/GoToLineDialog.h"
+#include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
@@ -19,7 +17,6 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QCloseEvent>
-#include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
@@ -37,17 +34,14 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_editorManager(nullptr)
-    , currentWorkingDirectory()
     , isFileTreeVisible(true)
 {
-
     ui->setupUi(this);
     ui->centralStack->setCurrentIndex(CodeViewer);
 
+    setupFileTree();
     setupCodeEditor();
     connectActions();
-    setupFileTree();
     updateWindowTitle();
 
     if (currentEditor()) {
@@ -56,16 +50,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupTerminalPanel();
     installChatWidget();
+    connectWorkspaceCollaborators();
 
     setAcceptDrops(true);
-
-    m_fileWatcher = new FileWatcher(this);
-    connect(m_fileWatcher, &FileWatcher::rootContentsChanged, this, [this]() {
-        if (m_fileExplorer) {
-            m_fileExplorer->reload();
-        }
-    });
-    connect(m_fileWatcher, &FileWatcher::fileChangedOnDisk, this, &MainWindow::onFileChangedOnDisk);
 
     if (!restoreSession()) {
         promptOpenFolderOrFile();
@@ -80,7 +67,6 @@ MainWindow::~MainWindow()
     }
     delete ui;
 }
-
 
 void MainWindow::connectActions()
 {
@@ -129,6 +115,24 @@ void MainWindow::connectActions()
     updateCommandStates();
 }
 
+void MainWindow::connectWorkspaceCollaborators()
+{
+    connect(m_workspaceController, &WorkspaceController::rootPathChanged, this,
+            [this](const QString &path) {
+                if (m_editorManager) {
+                    m_editorManager->setWorkingDirectory(path);
+                }
+                if (m_terminalPanel) {
+                    m_terminalPanel->setWorkingDirectory(path);
+                }
+                if (chatWidget) {
+                    chatWidget->setProjectDirectory(path);
+                }
+                saveSession();
+                updateWindowTitle();
+            });
+}
+
 void MainWindow::updateCommandStates()
 {
     if (!m_commands) {
@@ -170,13 +174,13 @@ void MainWindow::setupCodeEditor()
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncFileWatches);
     connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::aboutToSave, this, [this](const QString &path) {
-        if (m_fileWatcher) {
-            m_fileWatcher->ignoreNextChange(path);
+        if (m_workspaceController) {
+            m_workspaceController->ignoreNextChange(path);
         }
     });
     connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
-        if (m_workspace && m_fileExplorer && m_workspace->containsPath(path)) {
-            m_fileExplorer->reload();
+        if (m_workspaceController) {
+            m_workspaceController->refreshIfContains(path);
         }
         if (statusBar()) {
             statusBar()->showMessage(tr("File saved successfully"), 2000);
@@ -184,19 +188,15 @@ void MainWindow::setupCodeEditor()
     });
 }
 
-
 void MainWindow::setupFileTree()
 {
-    m_workspace = new Workspace(this);
-    m_fileExplorer = new FileExplorer(ui->fileTreeWidget, m_workspace, this);
+    m_workspaceController = new WorkspaceController(ui->fileTreeWidget, this);
 
-    connect(m_fileExplorer, &FileExplorer::fileActivated, this, &MainWindow::openFileInEditor);
-    connect(m_fileExplorer, &FileExplorer::directoryPopulated, this, [this](const QString &path) {
-        if (m_fileWatcher) {
-            m_fileWatcher->watchDirectory(path);
-        }
-    });
-    connect(m_fileExplorer, &FileExplorer::fileSelected, this, [this](const QString &path) {
+    connect(m_workspaceController, &WorkspaceController::fileActivated,
+            this, &MainWindow::openFileInEditor);
+    connect(m_workspaceController, &WorkspaceController::fileChangedOnDisk,
+            this, &MainWindow::onFileChangedOnDisk);
+    connect(m_workspaceController, &WorkspaceController::fileSelected, this, [this](const QString &path) {
         if (statusBar()) {
             statusBar()->showMessage(tr("Selected: %1").arg(QFileInfo(path).fileName()), 2000);
         }
@@ -226,8 +226,9 @@ void MainWindow::setupTerminalPanel()
 void MainWindow::installChatWidget()
 {
     chatWidget = new ChatWidget(this);
-    if (!currentWorkingDirectory.isEmpty()) {
-        chatWidget->setProjectDirectory(currentWorkingDirectory);
+    const QString root = workspaceRoot();
+    if (!root.isEmpty()) {
+        chatWidget->setProjectDirectory(root);
     }
     replacePlaceholder(ui->rightChatPlaceholder, chatWidget, ui->rightSidebar);
 }
@@ -240,16 +241,12 @@ void MainWindow::newFile()
                                         tr("untitled.txt"),
                                         800,
                                         150);
-    if (fileName.isEmpty()) {
+    if (fileName.isEmpty() || !m_workspaceController) {
         return;
     }
 
     QString fullPath;
-    if (Workspace::createEmptyFile(targetDirectory(), fileName, &fullPath)) {
-        if (m_fileExplorer) {
-            m_fileExplorer->reload();
-            m_fileExplorer->revealPath(fullPath);
-        }
+    if (m_workspaceController->createEmptyFile(fileName, &fullPath)) {
         openFileInEditor(fullPath);
         QMessageBox::information(this, tr("Success"), tr("File created successfully!"));
     } else {
@@ -265,29 +262,24 @@ void MainWindow::newFolder()
                                           tr("New Folder"),
                                           400,
                                           150);
-    if (folderName.isEmpty()) {
+    if (folderName.isEmpty() || !m_workspaceController) {
         return;
     }
 
     QString fullPath;
-    if (Workspace::createDirectory(targetDirectory(), folderName, &fullPath)) {
-        if (m_fileExplorer) {
-            m_fileExplorer->reload();
-            m_fileExplorer->revealPath(fullPath);
-        }
+    if (m_workspaceController->createDirectory(folderName, &fullPath)) {
         QMessageBox::information(this, tr("Success"), tr("Folder created successfully!"));
     } else {
         QMessageBox::warning(this, tr("Error"), tr("Could not create folder!"));
     }
 }
 
-
 void MainWindow::openFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open File"),
-                                                    currentWorkingDirectory,
-                                                    tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
+    const QString fileName = QFileDialog::getOpenFileName(this,
+                                                          tr("Open File"),
+                                                          workspaceRoot(),
+                                                          tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
 
     if (!fileName.isEmpty()) {
         openFileInEditor(fileName);
@@ -296,11 +288,10 @@ void MainWindow::openFile()
 
 void MainWindow::openFolder()
 {
-    QString folderPath = QFileDialog::getExistingDirectory(this,
-                                                           tr("Open Folder"),
-                                                           currentWorkingDirectory.isEmpty()
-                                                               ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
-                                                               : currentWorkingDirectory);
+    const QString start = workspaceRoot().isEmpty()
+        ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+        : workspaceRoot();
+    const QString folderPath = QFileDialog::getExistingDirectory(this, tr("Open Folder"), start);
 
     if (!folderPath.isEmpty()) {
         setProjectDirectory(folderPath);
@@ -426,6 +417,11 @@ CodeEditor *MainWindow::currentEditor()
     return m_editorManager ? m_editorManager->currentEditor() : nullptr;
 }
 
+QString MainWindow::workspaceRoot() const
+{
+    return m_workspaceController ? m_workspaceController->rootPath() : QString();
+}
+
 QString MainWindow::editorDirectoryOrWorkspace() const
 {
     if (m_editorManager) {
@@ -434,16 +430,11 @@ QString MainWindow::editorDirectoryOrWorkspace() const
             return QFileInfo(path).absolutePath();
         }
     }
-    return currentWorkingDirectory;
+    return workspaceRoot();
 }
 
-QString MainWindow::targetDirectory() const
+void MainWindow::onActionFindReplace()
 {
-    return m_fileExplorer ? m_fileExplorer->selectedDirectory()
-                          : currentWorkingDirectory;
-}
-
-void MainWindow::onActionFindReplace() {
     CodeEditor *ed = currentEditor();
     if (!ed) {
         QMessageBox::information(this, tr("Find"), tr("No text editor is active."));
@@ -453,7 +444,8 @@ void MainWindow::onActionFindReplace() {
     dlg.exec();
 }
 
-void MainWindow::onActionGoToLine() {
+void MainWindow::onActionGoToLine()
+{
     CodeEditor *ed = currentEditor();
     if (!ed) {
         QMessageBox::information(this, tr("Go to Line"), tr("No text editor is active."));
@@ -513,13 +505,13 @@ void MainWindow::promptOpenFolderOrFile()
     const QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
     if (msgBox.clickedButton() == folderBtn) {
-        QString folderPath = QFileDialog::getExistingDirectory(this, tr("Open Folder"), documents);
+        const QString folderPath = QFileDialog::getExistingDirectory(this, tr("Open Folder"), documents);
         setProjectDirectory(folderPath.isEmpty() ? documents : folderPath);
     } else if (msgBox.clickedButton() == fileBtn) {
-        QString fileName = QFileDialog::getOpenFileName(this,
-                                                        tr("Open File"),
-                                                        documents,
-                                                        tr("All Files (*.*)"));
+        const QString fileName = QFileDialog::getOpenFileName(this,
+                                                              tr("Open File"),
+                                                              documents,
+                                                              tr("All Files (*.*)"));
         if (!fileName.isEmpty()) {
             setProjectDirectory(QFileInfo(fileName).absolutePath());
             openFileInEditor(fileName);
@@ -535,33 +527,9 @@ void MainWindow::promptOpenFolderOrFile()
 
 void MainWindow::setProjectDirectory(const QString &path)
 {
-    if (m_workspace) {
-        m_workspace->setRootPath(path);
-        currentWorkingDirectory = m_workspace->rootPath();
-    } else {
-        currentWorkingDirectory = path;
+    if (m_workspaceController) {
+        m_workspaceController->setRootPath(path);
     }
-    if (m_editorManager) {
-        m_editorManager->setWorkingDirectory(currentWorkingDirectory);
-    }
-    if (m_fileExplorer) {
-        m_fileExplorer->reload();
-    }
-
-    if (m_terminalPanel) {
-        m_terminalPanel->setWorkingDirectory(currentWorkingDirectory);
-    }
-
-    if (chatWidget) {
-        chatWidget->setProjectDirectory(currentWorkingDirectory);
-    }
-
-    if (m_fileWatcher) {
-        m_fileWatcher->setRootPath(currentWorkingDirectory);
-    }
-    saveSession();
-
-    updateWindowTitle();
 }
 
 void MainWindow::syncChatContext()
@@ -588,24 +556,20 @@ void MainWindow::syncChatContext()
 
 void MainWindow::saveSession()
 {
-    if (m_restoringSession) {
-        return;
-    }
-
     SessionState state;
-    state.workspace = currentWorkingDirectory;
+    state.workspace = workspaceRoot();
     if (m_editorManager) {
         state.openFiles = m_editorManager->openFilePaths();
         state.activeFile = m_editorManager->currentFilePath();
     }
     state.geometry = saveGeometry();
     state.windowState = saveState();
-    SessionStore().save(state);
+    m_session.save(state);
 }
 
 bool MainWindow::restoreSession()
 {
-    const SessionState state = SessionStore().load();
+    const SessionState state = m_session.load();
     if (!state.geometry.isEmpty()) {
         restoreGeometry(state.geometry);
     }
@@ -613,21 +577,18 @@ bool MainWindow::restoreSession()
         restoreState(state.windowState);
     }
 
-    if (state.workspace.isEmpty() || !QDir(state.workspace).exists()) {
+    if (!SessionController::workspaceIsRestorable(state)) {
         return false;
     }
 
-    m_restoringSession = true;
+    SessionController::RestoreGuard guard(m_session);
     setProjectDirectory(state.workspace);
 
-    int opened = 0;
-    for (const QString &path : state.openFiles) {
-        if (QFileInfo::exists(path)) {
-            openFileInEditor(path);
-            ++opened;
-        }
+    const QStringList toOpen = SessionController::existingFiles(state.openFiles);
+    for (const QString &path : toOpen) {
+        openFileInEditor(path);
     }
-    if (opened > 0 && m_editorManager) {
+    if (!toOpen.isEmpty() && m_editorManager) {
         m_editorManager->closeUntitledIfPristine();
     }
     if (m_editorManager && !state.activeFile.isEmpty()) {
@@ -635,7 +596,6 @@ bool MainWindow::restoreSession()
         ui->centralStack->setCurrentIndex(CodeViewer);
     }
 
-    m_restoringSession = false;
     syncFileWatches();
     updateCommandStates();
     return true;
@@ -643,13 +603,11 @@ bool MainWindow::restoreSession()
 
 void MainWindow::syncFileWatches()
 {
-    if (!m_fileWatcher) {
+    if (!m_workspaceController) {
         return;
     }
-    m_fileWatcher->setRootPath(currentWorkingDirectory);
-    if (m_editorManager) {
-        m_fileWatcher->setFilePaths(m_editorManager->openFilePaths());
-    }
+    const QStringList openFiles = m_editorManager ? m_editorManager->openFilePaths() : QStringList();
+    m_workspaceController->syncWatchedFiles(openFiles);
 }
 
 void MainWindow::onFileChangedOnDisk(const QString &path)
@@ -663,24 +621,24 @@ void MainWindow::onFileChangedOnDisk(const QString &path)
         return;
     }
 
-    if (!QFileInfo::exists(path)) {
-        if (editor->document()->isModified()) {
-            QMessageBox::warning(
-                this,
-                tr("File deleted"),
-                tr("The file \"%1\" was deleted on disk. Your unsaved changes are still in the editor.")
-                    .arg(QFileInfo(path).fileName()));
-        } else {
-            const int idx = m_editorManager->tabWidget()->indexOf(editor);
-            if (idx >= 0) {
-                m_editorManager->closeTab(idx);
-            }
+    switch (diskChangeAction(QFileInfo::exists(path), editor->document()->isModified())) {
+    case DiskChangeAction::WarnDeletedDirty:
+        QMessageBox::warning(
+            this,
+            tr("File deleted"),
+            tr("The file \"%1\" was deleted on disk. Your unsaved changes are still in the editor.")
+                .arg(QFileInfo(path).fileName()));
+        syncFileWatches();
+        return;
+    case DiskChangeAction::CloseTab: {
+        const int idx = m_editorManager->tabWidget()->indexOf(editor);
+        if (idx >= 0) {
+            m_editorManager->closeTab(idx);
         }
         syncFileWatches();
         return;
     }
-
-    if (editor->document()->isModified()) {
+    case DiskChangeAction::PromptReload: {
         const auto result = QMessageBox::question(
             this,
             tr("File changed"),
@@ -691,6 +649,10 @@ void MainWindow::onFileChangedOnDisk(const QString &path)
         if (result != QMessageBox::Yes) {
             return;
         }
+        break;
+    }
+    case DiskChangeAction::Reload:
+        break;
     }
 
     if (m_editorManager->reloadFromDisk(path)) {

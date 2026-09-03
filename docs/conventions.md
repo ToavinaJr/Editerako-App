@@ -20,6 +20,7 @@
 
 - `Q_OBJECT` + `tr()` pour tout texte UI.
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `view.terminal`, …).
+- `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()`.
 - Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
 - Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage.

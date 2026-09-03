@@ -10,6 +10,10 @@ editerako_add_module(EditerakoCore
         CommandRegistry.h
         SessionStore.cpp
         SessionStore.h
+        SessionController.cpp
+        SessionController.h
+        DiskChangePolicy.cpp
+        DiskChangePolicy.h
         DropPaths.cpp
         DropPaths.h
         AtomicFile.cpp

@@ -10,6 +10,25 @@ editerako_add_test(test_Workspace
     LIBS EditerakoProject
 )
 
+editerako_add_test(test_WorkspaceController
+    SOURCES WorkspaceControllerTest.cpp
+    LIBS EditerakoProject
+)
+
+set_tests_properties(test_WorkspaceController PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+editerako_add_test(test_SessionController
+    SOURCES SessionControllerTest.cpp
+    LIBS EditerakoCore
+)
+
+editerako_add_test(test_DiskChangePolicy
+    SOURCES DiskChangePolicyTest.cpp
+    LIBS EditerakoCore
+)
+
 editerako_add_test(test_DropPaths
     SOURCES DropPathsTest.cpp
     LIBS EditerakoCore

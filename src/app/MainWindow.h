@@ -1,17 +1,17 @@
 #ifndef EDITERAKO_MAINWINDOW_H
 #define EDITERAKO_MAINWINDOW_H
 
+#include "core/SessionController.h"
+
 #include <QMainWindow>
 
 class ChatWidget;
 class CodeEditor;
 class CommandRegistry;
 class EditorManager;
-class FileExplorer;
-class FileWatcher;
 class TerminalPanel;
 class ViewerManager;
-class Workspace;
+class WorkspaceController;
 
 class QCloseEvent;
 class QDragEnterEvent;
@@ -70,20 +70,18 @@ private:
     CommandRegistry *m_commands = nullptr;
     EditorManager *m_editorManager = nullptr;
     ViewerManager *m_viewerManager = nullptr;
-    Workspace *m_workspace = nullptr;
-    FileExplorer *m_fileExplorer = nullptr;
-    FileWatcher *m_fileWatcher = nullptr;
+    WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;
-    QString currentWorkingDirectory;
     ChatWidget *chatWidget = nullptr;
+    SessionController m_session;
     bool isFileTreeVisible = true;
-    bool m_restoringSession = false;
 
     CodeEditor *currentEditor();
     QString editorDirectoryOrWorkspace() const;
-    QString targetDirectory() const;
+    QString workspaceRoot() const;
 
     void connectActions();
+    void connectWorkspaceCollaborators();
     void updateCommandStates();
     void updateWindowTitle();
     void setupFileTree();

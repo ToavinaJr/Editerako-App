@@ -9,4 +9,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [conventions.md](conventions.md) | Includes, nommage, QSS, CMake, journalisation |
 | [testing.md](testing.md) | `ctest`, comment ajouter un test Qt Test |
 | [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md) | Cibles CMake par module |
+| [adr/0002-mainwindow-composition-root.md](adr/0002-mainwindow-composition-root.md) | MainWindow composition root |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

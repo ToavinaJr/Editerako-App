@@ -20,6 +20,9 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 |---|---|---|
 | `test_LanguageRegistry` | `EditerakoSyntax` | extensions C++ / HTML, pointeurs Tree-sitter |
 | `test_Workspace` | `EditerakoProject` | racine, `containsPath`, exclusions, création fichier/dossier |
+| `test_WorkspaceController` | `EditerakoProject` | `setRootPath`, create file/folder (`QT_QPA_PLATFORM=offscreen`) |
+| `test_SessionController` | `EditerakoCore` | restore guard, fichiers existants, workspace restorable |
+| `test_DiskChangePolicy` | `EditerakoCore` | deleted/dirty → action |
 | `test_DropPaths` | `EditerakoCore` | extraction de chemins depuis `QMimeData` |
 | `test_SessionStore` | `EditerakoCore` | round-trip via `QSettings` Ini temporaire |
 | `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |

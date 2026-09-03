@@ -1,6 +1,16 @@
 # Architecture
 
-Editerako est **un exécutable Qt Widgets** (`Editerako`) qui lie des **bibliothèques statiques** internes, une par module. `MainWindow` orchestre ; la logique métier vit dans les modules.
+Editerako est **un exécutable Qt Widgets** (`Editerako`) qui lie des **bibliothèques statiques** internes, une par module. `MainWindow` est le **composition root** : il crée les services, connecte les signaux et affiche les dialogs. La logique métier vit dans les modules.
+
+```
+src/main.cpp + src/app/MainWindow + src/ui/     cible Editerako
+        │
+        ├── WorkspaceController  (project : Workspace + Explorer + Watcher)
+        ├── SessionController    (core)
+        ├── EditorManager / ViewerManager
+        ├── TerminalPanel
+        └── ChatWidget
+```
 
 ```
 src/main.cpp + src/app/ + src/ui/     cible Editerako
@@ -22,11 +32,9 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 
 | Dossier | Cible CMake | Responsabilité |
 |---|---|---|
-| `app/` + `ui/` | `Editerako` (exe) | Fenêtre principale, menus, drag-and-drop, helpers de layout |
-| `core/` | `EditerakoCore` | `AppSettings`, `SessionStore`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, logs |
-| `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument`, `EditorManager`, find / go-to-line |
-| `syntax/` | `EditerakoSyntax` | `LanguageRegistry` (C++ / HTML), `TreeSitterDocument`, `SyntaxHighlighter` |
-| `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher` |
+| `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs, D&D, câblage des signaux |
+| `core/` | `EditerakoCore` | `AppSettings`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, logs |
+| `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
@@ -39,9 +47,9 @@ Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` 
 
 **PDF.** Ne pas appeler `QPdfView::setDocument` avant `QPdfDocument::Status::Ready` (crash sinon). L’onglet est ajouté d’abord, le document ensuite.
 
-**Session.** `SessionStore` lit/écrit `QSettings` (org/app `Editerako`). Restaure workspace, onglets existants, fichier actif, géométrie. Les *untitled* ne sont pas restaurés. Le dialogue d’accueil n’apparaît que s’il n’y a pas de session valide.
+**Session.** `SessionController` s’appuie sur `SessionStore` (`QSettings` org/app `Editerako`). Pendant un restore, `save` est un no-op (`RestoreGuard`). Restaure workspace, onglets existants, fichier actif, géométrie. Les *untitled* ne sont pas restaurés. Le dialogue d’accueil n’apparaît que s’il n’y a pas de session valide.
 
-**Disque.** `FileWatcher` surveille la racine (debounce 250 ms) et les fichiers ouverts. `EditorManager::aboutToSave` appelle `ignoreNextChange` pour ne pas recharger nos propres sauvegardes.
+**Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
 **Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Fermer le dernier onglet masque le panneau. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état).
 
@@ -49,4 +57,4 @@ Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` 
 
 ## Ce que MainWindow ne doit plus contenir
 
-Pas de logique d’onglets terminal, pas d’I/O fichier brut, pas de classification MIME. Déléguer à `TerminalPanel`, `Workspace`, `fileKindForPath`.
+Pas de fan-out workspace (explorer + watcher), pas d’I/O session brute, pas de politique reload disque, pas de logique d’onglets terminal, pas de classification MIME. Déléguer à `WorkspaceController`, `SessionController`, `diskChangeAction()`, `TerminalPanel`, `fileKindForPath`. Détail : [adr/0002-mainwindow-composition-root.md](adr/0002-mainwindow-composition-root.md).

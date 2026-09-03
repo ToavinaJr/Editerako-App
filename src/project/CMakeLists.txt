@@ -6,6 +6,8 @@ editerako_add_module(EditerakoProject
         FileExplorer.h
         FileWatcher.cpp
         FileWatcher.h
+        WorkspaceController.cpp
+        WorkspaceController.h
     LIBS
         EditerakoCore
         Qt6::Widgets
