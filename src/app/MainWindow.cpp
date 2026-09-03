@@ -18,7 +18,9 @@
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
+#include "ui/BottomPanel.h"
 #include "ui/CommandPaletteDialog.h"
+#include "ui/ProblemsPanel.h"
 #include "ui/QuickOpenDialog.h"
 #include "ui/SettingsDialog.h"
 #include "ui/WorkspaceSearchDialog.h"
@@ -79,7 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
         currentEditor()->setFocus();
     }
 
-    setupTerminalPanel();
+    setupBottomPanel();
     installChatWidget();
     connectWorkspaceCollaborators();
 
@@ -229,6 +231,11 @@ void MainWindow::connectActions()
         tr("Toggle Terminal"));
     connect(toggleTerminal, &QAction::triggered, this, &MainWindow::toggleTerminal);
 
+    QAction *toggleProblems = m_commands->create(
+        QStringLiteral("workbench.problems"),
+        tr("Toggle Problems"));
+    connect(toggleProblems, &QAction::triggered, this, &MainWindow::toggleProblems);
+
     QAction *commandPalette = m_commands->create(
         QStringLiteral("workbench.commandPalette"),
         tr("Command Palette"));
@@ -291,6 +298,7 @@ void MainWindow::connectActions()
     viewMenu->addAction(quickOpen);
     viewMenu->addAction(workspaceSearch);
     viewMenu->addSeparator();
+    viewMenu->addAction(toggleProblems);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
@@ -314,6 +322,9 @@ void MainWindow::connectWorkspaceCollaborators()
                 }
                 if (m_lspSession) {
                     m_lspSession->setWorkspaceRoot(path);
+                }
+                if (m_bottomPanel) {
+                    m_bottomPanel->problemsPanel()->setWorkspaceRoot(path);
                 }
                 if (m_terminalPanel) {
                     m_terminalPanel->setWorkingDirectory(path);
@@ -443,14 +454,18 @@ void MainWindow::setupFileTree()
                 if (m_terminalPanel) {
                     m_terminalPanel->addTerminal(directory);
                 }
+                if (m_bottomPanel) {
+                    m_bottomPanel->showTerminal();
+                }
             });
 }
 
-void MainWindow::setupTerminalPanel()
+void MainWindow::setupBottomPanel()
 {
-    m_terminalPanel = new TerminalPanel(this);
+    m_bottomPanel = new BottomPanel(this);
+    m_terminalPanel = m_bottomPanel->terminalPanel();
     if (ui->verticalLayout) {
-        ui->verticalLayout->addWidget(m_terminalPanel);
+        ui->verticalLayout->addWidget(m_bottomPanel);
     }
 
     connect(m_terminalPanel, &TerminalPanel::addRequested, this, [this]() {
@@ -459,11 +474,33 @@ void MainWindow::setupTerminalPanel()
     connect(m_terminalPanel, &TerminalPanel::currentTabChanged, this, [this]() {
         m_terminalPanel->setCurrentWorkingDirectory(editorDirectoryOrWorkspace());
     });
-    connect(m_terminalPanel, &TerminalPanel::editorFocusRequested, this, [this]() {
+    connect(m_bottomPanel, &BottomPanel::editorFocusRequested, this, [this]() {
         if (currentEditor()) {
             currentEditor()->setFocus();
         }
     });
+    connect(m_bottomPanel->problemsPanel(), &ProblemsPanel::problemActivated, this,
+            [this](const QString &path, int line, int column) {
+                if (m_editorManager) {
+                    m_editorManager->revealLocation(path, line, column);
+                }
+            });
+    if (m_lspSession) {
+        connect(m_lspSession, &LspSession::problemsChanged, this,
+                [this](const QString &path, const QVector<ProblemItem> &items) {
+                    m_bottomPanel->problemsPanel()->model()->setFileProblems(path, items);
+                });
+    }
+    connect(m_bottomPanel->problemsPanel()->model(), &ProblemModel::changed, this, [this]() {
+        auto *model = m_bottomPanel->problemsPanel()->model();
+        if (m_editorStatus) {
+            m_editorStatus->setProblemCounts(model->errorCount(), model->warningCount());
+        }
+    });
+    if (m_editorStatus) {
+        connect(m_editorStatus, &EditorStatusWidget::problemsActivated, this,
+                &MainWindow::toggleProblems);
+    }
 }
 
 void MainWindow::installChatWidget()
@@ -807,6 +844,13 @@ void MainWindow::toggleTerminal()
 {
     if (m_terminalPanel) {
         m_terminalPanel->toggle(editorDirectoryOrWorkspace());
+    }
+}
+
+void MainWindow::toggleProblems()
+{
+    if (m_bottomPanel) {
+        m_bottomPanel->toggleProblems();
     }
 }
 

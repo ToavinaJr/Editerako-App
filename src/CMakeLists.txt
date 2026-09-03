@@ -30,6 +30,10 @@ set(editerako_app_sources
     ui/QuickOpenDialog.h
     ui/WorkspaceSearchDialog.cpp
     ui/WorkspaceSearchDialog.h
+    ui/ProblemsPanel.cpp
+    ui/ProblemsPanel.h
+    ui/BottomPanel.cpp
+    ui/BottomPanel.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})

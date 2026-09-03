@@ -20,4 +20,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md) | Grammaires Tree-sitter réelles + LanguageDefinition |
 | [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) | JSON-RPC LSP, client, tests mock |
 | [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md) | clangd, completion, hover, diagnostics, navigation |
+| [adr/0012-problems-panel.md](adr/0012-problems-panel.md) | Problems Panel, BottomPanel, filtres Errors/Warnings |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

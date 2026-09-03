@@ -1,6 +1,8 @@
 #ifndef EDITERAKO_LSPSESSION_H
 #define EDITERAKO_LSPSESSION_H
 
+#include "editor/ProblemModel.h"
+
 #include <QJsonObject>
 #include <QObject>
 #include <QPoint>
@@ -43,6 +45,7 @@ public slots:
 signals:
     void statusMessage(const QString &message, int timeoutMs);
     void lspStatusChanged(const QString &text);
+    void problemsChanged(const QString &path, const QVector<ProblemItem> &items);
 
 private:
     void onDocumentOpened(CodeEditor *editor);

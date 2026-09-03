@@ -7,6 +7,7 @@
 
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QTextCursor>
 
 EditorStatusWidget::EditorStatusWidget(QWidget *parent)
@@ -30,6 +31,15 @@ EditorStatusWidget::EditorStatusWidget(QWidget *parent)
     m_eol = makeLabel(QStringLiteral("editorStatusEol"));
     m_language = makeLabel(QStringLiteral("editorStatusLanguage"));
     m_lsp = makeLabel(QStringLiteral("editorStatusLsp"));
+
+    m_problems = new QPushButton(this);
+    m_problems->setObjectName(QStringLiteral("editorStatusProblems"));
+    m_problems->setFlat(true);
+    m_problems->setCursor(Qt::PointingHandCursor);
+    m_problems->setFocusPolicy(Qt::NoFocus);
+    layout->addWidget(m_problems);
+    connect(m_problems, &QPushButton::clicked, this, &EditorStatusWidget::problemsActivated);
+    setProblemCounts(0, 0);
 }
 
 void EditorStatusWidget::setEditor(CodeEditor *editor)
@@ -79,4 +89,21 @@ void EditorStatusWidget::refresh()
 void EditorStatusWidget::setLspStatus(const QString &text)
 {
     m_lsp->setText(text);
+}
+
+void EditorStatusWidget::setProblemCounts(int errors, int warnings)
+{
+    if (errors <= 0 && warnings <= 0) {
+        m_problems->setText(tr("No Problems"));
+        return;
+    }
+    if (errors > 0 && warnings > 0) {
+        m_problems->setText(tr("%1 Errors, %2 Warnings").arg(errors).arg(warnings));
+        return;
+    }
+    if (errors > 0) {
+        m_problems->setText(tr("%1 Errors").arg(errors));
+        return;
+    }
+    m_problems->setText(tr("%1 Warnings").arg(warnings));
 }

@@ -21,11 +21,14 @@ public:
     void toggle(const QString &focusCwd);
     void addTerminal(const QString &cwd);
     void shutdownAll();
+    void focusCurrent(const QString &cwd);
 
 signals:
     void addRequested();
     void currentTabChanged();
     void editorFocusRequested();
+    void hideRequested();
+    void showRequested();
 
 private:
     void closeTab(int index);

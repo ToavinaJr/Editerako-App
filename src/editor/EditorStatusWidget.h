@@ -5,6 +5,7 @@
 
 class CodeEditor;
 class QLabel;
+class QPushButton;
 
 class EditorStatusWidget : public QWidget
 {
@@ -15,6 +16,10 @@ public:
 
     void setEditor(CodeEditor *editor);
     void setLspStatus(const QString &text);
+    void setProblemCounts(int errors, int warnings);
+
+signals:
+    void problemsActivated();
 
 private:
     void refresh();
@@ -25,6 +30,7 @@ private:
     QLabel *m_eol = nullptr;
     QLabel *m_language = nullptr;
     QLabel *m_lsp = nullptr;
+    QPushButton *m_problems = nullptr;
 };
 
 #endif

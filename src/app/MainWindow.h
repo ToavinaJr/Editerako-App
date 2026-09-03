@@ -13,6 +13,7 @@ class EditorStatusWidget;
 class KeybindingManager;
 class LspServerManager;
 class LspSession;
+class BottomPanel;
 class TerminalPanel;
 class ViewerManager;
 class WorkspaceController;
@@ -70,6 +71,7 @@ private slots:
     void onActionGoToLine();
 
     void toggleTerminal();
+    void toggleProblems();
     void openPreferences();
     void openCommandPalette();
     void openQuickOpen();
@@ -84,6 +86,7 @@ private:
     ViewerManager *m_viewerManager = nullptr;
     LspServerManager *m_lsp = nullptr;
     LspSession *m_lspSession = nullptr;
+    BottomPanel *m_bottomPanel = nullptr;
     WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;
     WorkspaceSearchDialog *m_searchDialog = nullptr;
@@ -104,7 +107,7 @@ private:
     void updateWindowTitle();
     void setupFileTree();
     void setupCodeEditor();
-    void setupTerminalPanel();
+    void setupBottomPanel();
     void installChatWidget();
     void focusMainWindowAndEditor();
     void openFileInEditor(const QString &filePath);

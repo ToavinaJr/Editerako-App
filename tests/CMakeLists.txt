@@ -238,3 +238,8 @@ editerako_add_test(test_DiagnosticMarkup
 set_tests_properties(test_DiagnosticMarkup PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+editerako_add_test(test_ProblemModel
+    SOURCES ProblemModelTest.cpp
+    LIBS EditerakoEditor
+)

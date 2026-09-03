@@ -276,6 +276,7 @@ void LspSession::closeOnServer(const QString &path)
     if (auto *sync = m_manager->documentSyncForLanguage(lang)) {
         sync->didClose(uri);
     }
+    emit problemsChanged(path, {});
 }
 
 void LspSession::onDocumentOpened(CodeEditor *editor)
@@ -325,19 +326,33 @@ void LspSession::onInitialized(bool initialized)
 
 void LspSession::onDiagnostics(const QString &uri, const QVector<LspDiagnostic> &diagnostics)
 {
+    const QString path = lspUriToPath(uri);
+    QVector<EditorDiagnostic> mapped;
+    QVector<ProblemItem> problems;
+    mapped.reserve(diagnostics.size());
+    problems.reserve(diagnostics.size());
+    for (const LspDiagnostic &diag : diagnostics) {
+        const EditorDiagnostic editorDiag = toEditorDiagnostic(diag);
+        mapped.append(editorDiag);
+        ProblemItem problem;
+        problem.path = path;
+        problem.line = diag.range.start.line;
+        problem.column = diag.range.start.character;
+        problem.severity = editorDiag.severity;
+        problem.message = diag.message;
+        problem.source = diag.source;
+        problem.code = diag.code;
+        problems.append(problem);
+    }
+    if (!path.isEmpty()) {
+        emit problemsChanged(path, problems);
+    }
     if (!m_editors) {
         return;
     }
-    CodeEditor *editor = m_editors->editorForPath(lspUriToPath(uri));
-    if (!editor) {
-        return;
+    if (CodeEditor *editor = m_editors->editorForPath(path)) {
+        editor->setDiagnostics(mapped);
     }
-    QVector<EditorDiagnostic> mapped;
-    mapped.reserve(diagnostics.size());
-    for (const LspDiagnostic &diag : diagnostics) {
-        mapped.append(toEditorDiagnostic(diag));
-    }
-    editor->setDiagnostics(mapped);
 }
 
 void LspSession::onEditorContentsChanged(CodeEditor *editor)

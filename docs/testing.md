@@ -57,6 +57,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_LspServerProcess` | `EditerakoLsp` | commande vide, binaire absent, spec inconnue |
 | `test_CompletionModel` | `EditerakoEditor` | filtre, sortText, insert / textEdit (`offscreen`) |
 | `test_DiagnosticMarkup` | `EditerakoEditor` | underline range, clamp position, gutter (`offscreen`) |
+| `test_ProblemModel` | `EditerakoEditor` | store par fichier, filtres Errors/Warnings, counts |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

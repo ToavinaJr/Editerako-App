@@ -27,6 +27,8 @@ editerako_add_module(EditerakoEditor
         EditorDiagnostic.h
         DiagnosticMarkup.cpp
         DiagnosticMarkup.h
+        ProblemModel.cpp
+        ProblemModel.h
         features/CurrentLineHighlighter.cpp
         features/CurrentLineHighlighter.h
         features/LineMovementController.cpp

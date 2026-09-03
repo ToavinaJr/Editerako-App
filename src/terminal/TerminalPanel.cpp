@@ -48,7 +48,6 @@ TerminalPanel::TerminalPanel(QWidget *parent)
     firstTerminal->setWorkingDirectory(QString());
     firstTerminal->setVisible(true);
     m_userVisible = true;
-    setVisible(false);
 }
 
 void TerminalPanel::setWorkingDirectory(const QString &path)
@@ -68,6 +67,20 @@ void TerminalPanel::setCurrentWorkingDirectory(const QString &cwd)
     }
 }
 
+void TerminalPanel::focusCurrent(const QString &cwd)
+{
+    if (m_terminals.isEmpty()) {
+        addTerminal(cwd);
+        return;
+    }
+    const int index = m_tabs ? m_tabs->currentIndex() : -1;
+    if (index >= 0 && index < m_terminals.size()) {
+        Terminal *currentTerminal = m_terminals.at(index);
+        currentTerminal->setWorkingDirectory(cwd);
+        currentTerminal->focusTerminal();
+    }
+}
+
 void TerminalPanel::toggle(const QString &focusCwd)
 {
     if (!m_userVisible) {
@@ -75,17 +88,11 @@ void TerminalPanel::toggle(const QString &focusCwd)
             addTerminal(focusCwd);
         }
         m_userVisible = true;
-        setVisible(true);
-
-        const int index = m_tabs ? m_tabs->currentIndex() : -1;
-        if (index >= 0 && index < m_terminals.size()) {
-            Terminal *currentTerminal = m_terminals.at(index);
-            currentTerminal->setWorkingDirectory(focusCwd);
-            currentTerminal->focusTerminal();
-        }
+        emit showRequested();
+        focusCurrent(focusCwd);
     } else {
         m_userVisible = false;
-        setVisible(false);
+        emit hideRequested();
         emit editorFocusRequested();
     }
 }
@@ -101,8 +108,8 @@ void TerminalPanel::addTerminal(const QString &cwd)
     const int tabIndex = m_tabs->addTab(newTerminal, QStringLiteral("⚡ Terminal %1").arg(m_terminals.size()));
     attachCloseButton(newTerminal);
 
-    setVisible(true);
     m_userVisible = true;
+    emit showRequested();
 
     m_tabs->setCurrentIndex(tabIndex);
     newTerminal->focusTerminal();
@@ -132,8 +139,8 @@ void TerminalPanel::closeTab(int index)
     updateTabTitles();
 
     if (m_terminals.isEmpty()) {
-        setVisible(false);
         m_userVisible = false;
+        emit hideRequested();
         emit editorFocusRequested();
     }
 }

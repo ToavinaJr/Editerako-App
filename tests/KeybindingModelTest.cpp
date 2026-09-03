@@ -25,6 +25,8 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
     QVERIFY(defaults.contains(QStringLiteral("file.save")));
     QCOMPARE(defaults.value(QStringLiteral("view.terminal")),
              QKeySequence(QStringLiteral("Ctrl+J")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.problems")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+M")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.commandPalette")),
              QKeySequence(QStringLiteral("Ctrl+Shift+P")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.quickOpen")),

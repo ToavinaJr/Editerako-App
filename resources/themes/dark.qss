@@ -227,6 +227,33 @@ QTabWidget#terminalTabs QTabBar::tab:hover:!selected {
     background-color: #2a2d2e;
 }
 
+QTabWidget#bottomTabs::pane {
+    border: 1px solid #3e3e42;
+    background-color: #1e1e1e;
+}
+
+QTabWidget#bottomTabs QTabBar::tab {
+    background-color: #2d2d30;
+    color: #cccccc;
+    padding: 6px 14px;
+}
+
+QTabWidget#bottomTabs QTabBar::tab:selected {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QTreeWidget#problemsTree {
+    background-color: #1e1e1e;
+    color: #cccccc;
+    border: none;
+}
+
+QPushButton#editorStatusProblems {
+    color: #cccccc;
+    padding: 0 4px;
+}
+
 QPushButton#addTerminalButton {
     background-color: transparent;
     border: none;
