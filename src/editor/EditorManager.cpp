@@ -14,6 +14,7 @@
 #include <QTabWidget>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <QtGlobal>
 
 EditorManager::EditorManager(QWidget *dialogParent)
     : QObject(dialogParent)
@@ -129,7 +130,7 @@ void EditorManager::applySettings()
     }
 }
 
-bool EditorManager::goToLine(int lineNumber)
+bool EditorManager::goToLine(int lineNumber, int column)
 {
     CodeEditor *editor = currentEditor();
     if (!editor || lineNumber < 1) {
@@ -144,8 +145,10 @@ bool EditorManager::goToLine(int lineNumber)
         return false;
     }
 
+    const int lineLen = qMax(0, block.length() - 1);
+    const int offset = qBound(0, column, lineLen);
     QTextCursor cursor = editor->textCursor();
-    cursor.setPosition(block.position());
+    cursor.setPosition(block.position() + offset);
     editor->setTextCursor(cursor);
     editor->centerCursor();
     return true;

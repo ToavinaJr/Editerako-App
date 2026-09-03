@@ -4,6 +4,10 @@
 #include "project/FileWatcher.h"
 #include "project/Workspace.h"
 #include "project/WorkspaceFileIndex.h"
+#include "project/WorkspacePath.h"
+
+#include <QDir>
+#include <QFile>
 
 WorkspaceController::WorkspaceController(QTreeWidget *tree, QObject *parent)
     : QObject(parent)
@@ -15,6 +19,7 @@ WorkspaceController::WorkspaceController(QTreeWidget *tree, QObject *parent)
     connect(m_explorer, &FileExplorer::fileActivated, this, &WorkspaceController::fileActivated);
     connect(m_explorer, &FileExplorer::fileSelected, this, &WorkspaceController::fileSelected);
     connect(m_explorer, &FileExplorer::directoryPopulated, m_watcher, &FileWatcher::watchDirectory);
+    connect(m_explorer, &FileExplorer::treeMutated, this, &WorkspaceController::rebuildFileIndex);
     connect(m_watcher, &FileWatcher::rootContentsChanged, this, [this]() {
         m_explorer->reload();
         rebuildFileIndex();
@@ -44,8 +49,15 @@ QString WorkspaceController::targetDirectory() const
 
 bool WorkspaceController::createEmptyFile(const QString &fileName, QString *absolutePath)
 {
+    if (resolveInsideWorkspace(rootPath(), targetDirectory(), fileName).isEmpty()) {
+        return false;
+    }
     QString created;
     if (!Workspace::createEmptyFile(targetDirectory(), fileName, &created)) {
+        return false;
+    }
+    if (!isInsideWorkspace(rootPath(), created)) {
+        QFile::remove(created);
         return false;
     }
     m_explorer->reload();
@@ -59,8 +71,15 @@ bool WorkspaceController::createEmptyFile(const QString &fileName, QString *abso
 
 bool WorkspaceController::createDirectory(const QString &folderName, QString *absolutePath)
 {
+    if (resolveInsideWorkspace(rootPath(), targetDirectory(), folderName).isEmpty()) {
+        return false;
+    }
     QString created;
     if (!Workspace::createDirectory(targetDirectory(), folderName, &created)) {
+        return false;
+    }
+    if (!isInsideWorkspace(rootPath(), created)) {
+        QDir(created).removeRecursively();
         return false;
     }
     m_explorer->reload();

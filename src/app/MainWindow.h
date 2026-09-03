@@ -14,6 +14,7 @@ class KeybindingManager;
 class TerminalPanel;
 class ViewerManager;
 class WorkspaceController;
+class WorkspaceSearchDialog;
 
 class QCloseEvent;
 class QDragEnterEvent;
@@ -70,6 +71,7 @@ private slots:
     void openPreferences();
     void openCommandPalette();
     void openQuickOpen();
+    void openWorkspaceSearch();
 
 private:
     Ui::MainWindow *ui;
@@ -80,6 +82,7 @@ private:
     ViewerManager *m_viewerManager = nullptr;
     WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;
+    WorkspaceSearchDialog *m_searchDialog = nullptr;
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
     QTimer *m_autoSaveTimer = nullptr;

@@ -15,4 +15,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md) | Encoding, BOM, EOL, modèle document |
 | [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md) | Settings UI et raccourcis |
 | [adr/0006-command-palette-quick-open.md](adr/0006-command-palette-quick-open.md) | Command Palette et Quick Open |
+| [adr/0007-workspace-search-explorer-ops.md](adr/0007-workspace-search-explorer-ops.md) | Search workspace et ops explorateur |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

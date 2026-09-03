@@ -10,6 +10,14 @@ editerako_add_module(EditerakoProject
         WorkspaceController.h
         WorkspaceFileIndex.cpp
         WorkspaceFileIndex.h
+        WorkspacePath.cpp
+        WorkspacePath.h
+        WorkspaceOps.cpp
+        WorkspaceOps.h
+        GitIgnore.cpp
+        GitIgnore.h
+        WorkspaceSearch.cpp
+        WorkspaceSearch.h
     LIBS
         EditerakoCore
         Qt6::Widgets

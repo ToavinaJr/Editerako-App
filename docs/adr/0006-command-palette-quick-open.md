@@ -22,4 +22,4 @@ Rebuild de l’index : `setRootPath`, `reloadExplorer` (exclusions), création f
 
 - `EditerakoProject` lie `Qt6::Concurrent`.
 - L’index n’est pas un snapshot synchrone : Quick Open affiche le dernier résultat et se rafraîchit sur `indexUpdated`.
-- Overlay language-specific et recherche workspace (Phase 7) restent hors scope.
+- Overlay language-specific reste hors scope.

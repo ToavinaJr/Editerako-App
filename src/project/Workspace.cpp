@@ -2,6 +2,7 @@
 
 #include "core/AppSettings.h"
 #include "core/Logging.h"
+#include "project/WorkspacePath.h"
 
 #include <QDir>
 #include <QFile>
@@ -49,21 +50,7 @@ bool Workspace::isExcludedName(const QString &name) const
 
 bool Workspace::containsPath(const QString &filePath) const
 {
-    if (m_rootPath.isEmpty() || filePath.isEmpty()) {
-        return false;
-    }
-    const QString root = QDir::cleanPath(m_rootPath);
-    const QString abs = QDir::cleanPath(QFileInfo(filePath).absoluteFilePath());
-#ifdef Q_OS_WIN
-    constexpr auto kCs = Qt::CaseInsensitive;
-#else
-    constexpr auto kCs = Qt::CaseSensitive;
-#endif
-    if (abs.compare(root, kCs) == 0) {
-        return true;
-    }
-    const QString prefix = root.endsWith(QLatin1Char('/')) ? root : root + QLatin1Char('/');
-    return abs.startsWith(prefix, kCs);
+    return isInsideWorkspace(m_rootPath, filePath);
 }
 
 QList<Workspace::Entry> Workspace::listEntries(const QString &directoryPath) const

@@ -92,6 +92,26 @@ editerako_add_test(test_WorkspaceFileIndex
     LIBS EditerakoProject
 )
 
+editerako_add_test(test_WorkspacePath
+    SOURCES WorkspacePathTest.cpp
+    LIBS EditerakoProject
+)
+
+editerako_add_test(test_GitIgnore
+    SOURCES GitIgnoreTest.cpp
+    LIBS EditerakoProject
+)
+
+editerako_add_test(test_WorkspaceSearch
+    SOURCES WorkspaceSearchTest.cpp
+    LIBS EditerakoProject
+)
+
+editerako_add_test(test_WorkspaceOps
+    SOURCES WorkspaceOpsTest.cpp
+    LIBS EditerakoProject
+)
+
 editerako_add_test(test_CommandHistory
     SOURCES CommandHistoryTest.cpp
     LIBS EditerakoTerminal

@@ -25,6 +25,8 @@ set(editerako_app_sources
     ui/CommandPaletteDialog.h
     ui/QuickOpenDialog.cpp
     ui/QuickOpenDialog.h
+    ui/WorkspaceSearchDialog.cpp
+    ui/WorkspaceSearchDialog.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})

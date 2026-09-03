@@ -18,6 +18,7 @@ private slots:
     void setRootPathReloadsAndEmits();
     void createFileAndFolder();
     void refreshIfContains();
+    void rejectsPathTraversal();
 };
 
 void WorkspaceControllerTest::setRootPathReloadsAndEmits()
@@ -69,6 +70,19 @@ void WorkspaceControllerTest::refreshIfContains()
     QVERIFY(QFile(inside).open(QIODevice::WriteOnly));
     controller.refreshIfContains(inside);
     controller.refreshIfContains(QStringLiteral("/somewhere/else"));
+}
+
+void WorkspaceControllerTest::rejectsPathTraversal()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+
+    QTreeWidget tree;
+    WorkspaceController controller(&tree);
+    controller.setRootPath(temp.path());
+
+    QVERIFY(!controller.createEmptyFile(QStringLiteral("../escape.txt"), nullptr));
+    QVERIFY(!controller.createDirectory(QStringLiteral("../escape-dir"), nullptr));
 }
 
 QTEST_MAIN(WorkspaceControllerTest)

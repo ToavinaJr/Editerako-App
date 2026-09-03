@@ -10,8 +10,8 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 - Coloration syntaxique Tree-sitter (grammaires **C++** et **HTML** actuellement)
 - Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop
 - Recherche, remplacement, regex, Go To Line
-- Command Palette (`Ctrl+Shift+P`) et Quick Open (`Ctrl+P`, `fichier:ligne`)
-- Explorateur de fichiers, création de fichiers et de dossiers, ouverture de dossier
+- Command Palette (`Ctrl+Shift+P`), Quick Open (`Ctrl+P`, `fichier:ligne`), Search workspace (`Ctrl+Shift+F`)
+- Explorateur de fichiers, menu contextuel (rename, delete, copy/cut/paste, …), création de fichiers et de dossiers
 - Prévisualisation PDF et images
 - Terminal intégré (plusieurs sessions, historique, autocomplete, découverte de commandes via `QProcess`)
 - Chat IA Gemini, historique SQLite par projet (`.editerako/`, non versionné)

@@ -13,11 +13,13 @@
 #include "editor/EditorStatusWidget.h"
 #include "editor/FindReplaceDialog.h"
 #include "editor/GoToLineDialog.h"
+#include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
 #include "ui/CommandPaletteDialog.h"
 #include "ui/QuickOpenDialog.h"
 #include "ui/SettingsDialog.h"
+#include "ui/WorkspaceSearchDialog.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
 
@@ -117,6 +119,11 @@ void MainWindow::connectActions()
         tr("Quick Open"));
     connect(quickOpen, &QAction::triggered, this, &MainWindow::openQuickOpen);
 
+    QAction *workspaceSearch = m_commands->create(
+        QStringLiteral("workbench.search"),
+        tr("Search in Workspace"));
+    connect(workspaceSearch, &QAction::triggered, this, &MainWindow::openWorkspaceSearch);
+
     QAction *preferences = m_commands->create(
         QStringLiteral("preferences.open"),
         tr("Preferences..."));
@@ -128,6 +135,7 @@ void MainWindow::connectActions()
     QMenu *viewMenu = menuBar()->addMenu(tr("View"));
     viewMenu->addAction(commandPalette);
     viewMenu->addAction(quickOpen);
+    viewMenu->addAction(workspaceSearch);
     viewMenu->addSeparator();
     viewMenu->addAction(toggleTerminal);
     viewMenu->addSeparator();
@@ -236,6 +244,16 @@ void MainWindow::setupFileTree()
             statusBar()->showMessage(tr("Selected: %1").arg(QFileInfo(path).fileName()), 2000);
         }
     });
+    connect(m_workspaceController->explorer(), &FileExplorer::newFileRequested,
+            this, &MainWindow::newFile);
+    connect(m_workspaceController->explorer(), &FileExplorer::newFolderRequested,
+            this, &MainWindow::newFolder);
+    connect(m_workspaceController->explorer(), &FileExplorer::openInTerminalRequested,
+            this, [this](const QString &directory) {
+                if (m_terminalPanel) {
+                    m_terminalPanel->addTerminal(directory);
+                }
+            });
 }
 
 void MainWindow::setupTerminalPanel()
@@ -393,6 +411,33 @@ void MainWindow::openQuickOpen()
     if (dialog.selectedLine() > 0 && m_editorManager) {
         m_editorManager->goToLine(dialog.selectedLine());
     }
+}
+
+void MainWindow::openWorkspaceSearch()
+{
+    if (!m_workspaceController || !m_editorManager) {
+        return;
+    }
+    if (!m_searchDialog) {
+        m_searchDialog = new WorkspaceSearchDialog(m_workspaceController, m_editorManager, this);
+        connect(m_searchDialog, &WorkspaceSearchDialog::openHitRequested, this,
+                [this](const QString &path, int line, int column) {
+                    openFileInEditor(path);
+                    if (m_editorManager) {
+                        m_editorManager->goToLine(line, column);
+                    }
+                });
+        connect(m_searchDialog, &WorkspaceSearchDialog::fileMutated, this,
+                [this](const QString &path) {
+                    if (m_workspaceController) {
+                        m_workspaceController->ignoreNextChange(path);
+                        m_workspaceController->refreshIfContains(path);
+                    }
+                });
+    }
+    m_searchDialog->show();
+    m_searchDialog->raise();
+    m_searchDialog->activateWindow();
 }
 
 void MainWindow::applyPreferences()

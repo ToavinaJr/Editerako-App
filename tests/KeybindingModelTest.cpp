@@ -29,6 +29,8 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+Shift+P")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.quickOpen")),
              QKeySequence(QStringLiteral("Ctrl+P")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.search")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+F")));
 }
 
 void KeybindingModelTest::overrideAndReset()
