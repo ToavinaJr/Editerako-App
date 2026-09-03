@@ -60,8 +60,20 @@ qt_add_resources(Editerako editerako_syntax
     PREFIX "/editerako"
     BASE "${PROJECT_SOURCE_DIR}/resources"
     FILES
+        "${PROJECT_SOURCE_DIR}/resources/syntax/c/highlights.scm"
         "${PROJECT_SOURCE_DIR}/resources/syntax/cpp/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/cmake/highlights.scm"
         "${PROJECT_SOURCE_DIR}/resources/syntax/html/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/css/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/javascript/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/typescript/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/tsx/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/json/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/markdown/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/python/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/bash/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/sql/highlights.scm"
+        "${PROJECT_SOURCE_DIR}/resources/syntax/yaml/highlights.scm"
 )
 
 set_target_properties(Editerako PROPERTIES

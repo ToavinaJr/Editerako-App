@@ -30,11 +30,11 @@ CMakeLists.txt          projet, find_package, qt_standard_project_setup, enable_
 CMakePresets.json       debug / release (Ninja), CMAKE_EXPORT_COMPILE_COMMANDS
 cmake/Warnings.cmake    -Wall ou /W4 sur les cibles app/tests, pas sur Tree-sitter
 cmake/Libraries.cmake   editerako_add_module() — libs statiques internes
-cmake/TreeSitter.cmake  lib statique vendor
+cmake/TreeSitter.cmake  runtime + OBJECT libs par grammaire
 cmake/Testing.cmake     editerako_add_test()
 src/<module>/CMakeLists.txt  EditerakoCore, Editor, Syntax, Project, Terminal, Viewers, AI
 src/CMakeLists.txt      sous-modules, cible Editerako, qt_add_resources, install / deploy
-tests/CMakeLists.txt    12 exécutables Qt Test (lient les libs de module)
+tests/CMakeLists.txt    exécutables Qt Test (lient les libs de module)
 ```
 
 Presets :

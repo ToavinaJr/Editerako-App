@@ -7,7 +7,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 ## Features
 
 - Éditeur `QPlainTextEdit` personnalisé, numéros de ligne, multi-onglets, multi-curseurs, déplacement de lignes, indent, commentaires, paires auto
-- Coloration syntaxique Tree-sitter (grammaires **C++** et **HTML** actuellement)
+- Coloration syntaxique Tree-sitter (C, C++, CMake, Python, JS, TS, TSX, JSON, HTML, CSS, Markdown, Shell, SQL, YAML)
 - Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop
 - Recherche, remplacement, regex, Go To Line
 - Command Palette (`Ctrl+Shift+P`), Quick Open (`Ctrl+P`, `fichier:ligne`), Search workspace (`Ctrl+Shift+F`)

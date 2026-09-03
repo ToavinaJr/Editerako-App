@@ -18,7 +18,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 
 | Cible | Module lié | Fichiers sous test |
 |---|---|---|
-| `test_LanguageRegistry` | `EditerakoSyntax` | extensions C++ / HTML, pointeurs Tree-sitter |
+| `test_LanguageRegistry` | `EditerakoSyntax` | extensions, `LanguageDefinition`, pointeurs Tree-sitter pour chaque langage |
 | `test_Workspace` | `EditerakoProject` | racine, `containsPath`, exclusions, création fichier/dossier |
 | `test_WorkspaceController` | `EditerakoProject` | `setRootPath`, create file/folder (`QT_QPA_PLATFORM=offscreen`) |
 | `test_SessionController` | `EditerakoCore` | restore guard, fichiers existants, workspace restorable |
@@ -41,9 +41,9 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_CommandHistory` | `EditerakoTerminal` | historique, navigation |
 | `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
-| `test_HighlightQuery` | `EditerakoSyntax` | captures et predicates (queries sur disque via `EDITERAKO_QUERY_DIR`) |
+| `test_HighlightQuery` | `EditerakoSyntax` | captures, predicates, queries SCM de tous les langages (`EDITERAKO_QUERY_DIR`) |
 | `test_EditorIo` | `EditerakoEditor` | lecture texte, Unicode, conservation CRLF, `diskMatches` |
-| `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python, C++ sous/seuil, HTML |
+| `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python / C++ / HTML, seuil gros fichier |
 | `test_LineMovementController` | `EditerakoEditor` | swap up/down sur `QPlainTextEdit` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_IndentOps` | `EditerakoEditor` | indent/outdent, smart indent, convert, trim, sort |
 | `test_CommentOps` | `EditerakoEditor` | toggle ligne / bloc |

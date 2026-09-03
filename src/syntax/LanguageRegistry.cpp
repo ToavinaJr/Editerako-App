@@ -4,9 +4,116 @@
 #include <QFileInfo>
 
 extern "C" {
-struct TSLanguage;
-TSLanguage *tree_sitter_cpp();
-TSLanguage *tree_sitter_html();
+const TSLanguage *tree_sitter_c(void);
+const TSLanguage *tree_sitter_cpp(void);
+const TSLanguage *tree_sitter_cmake(void);
+const TSLanguage *tree_sitter_html(void);
+const TSLanguage *tree_sitter_css(void);
+const TSLanguage *tree_sitter_javascript(void);
+const TSLanguage *tree_sitter_typescript(void);
+const TSLanguage *tree_sitter_tsx(void);
+const TSLanguage *tree_sitter_json(void);
+const TSLanguage *tree_sitter_markdown(void);
+const TSLanguage *tree_sitter_python(void);
+const TSLanguage *tree_sitter_bash(void);
+const TSLanguage *tree_sitter_sql(void);
+const TSLanguage *tree_sitter_yaml(void);
+}
+
+namespace {
+
+LanguageDefinition makeDef(LanguageId id, const QString &name, const QStringList &exts,
+                           const QStringList &filenames, const TSLanguage *(*tsLang)(),
+                           const QString &queryDir, const CommentTokens &comments,
+                           const QString &brackets, const QString &indentTriggers,
+                           const QString &languageServer)
+{
+    LanguageDefinition def;
+    def.id = id;
+    def.displayName = name;
+    def.extensions = exts;
+    def.filenames = filenames;
+    def.treeSitterLanguage = tsLang;
+    if (!queryDir.isEmpty()) {
+        def.highlightQueryResourcePath =
+            QStringLiteral(":/editerako/syntax/") + queryDir + QStringLiteral("/highlights.scm");
+    }
+    def.commentTokens = comments;
+    def.brackets = brackets;
+    def.indentTriggers = indentTriggers;
+    def.languageServer = languageServer;
+    return def;
+}
+
+const QString kBrackets = QStringLiteral("()[]{}");
+const QString kCLikeIndent = QStringLiteral("{([:");
+const CommentTokens kCFamily{QStringLiteral("//"), QStringLiteral("/*"), QStringLiteral("*/")};
+const CommentTokens kHash{QStringLiteral("#"), {}, {}};
+const CommentTokens kHtml{{}, QStringLiteral("<!--"), QStringLiteral("-->")};
+
+} // namespace
+
+const QList<LanguageDefinition> &LanguageRegistry::all()
+{
+    static const QList<LanguageDefinition> kDefs = {
+        makeDef(LanguageId::PlainText, QStringLiteral("Plain Text"), {}, {}, nullptr, {}, {}, {}, {},
+                {}),
+        makeDef(LanguageId::C, QStringLiteral("C"), {QStringLiteral("c")}, {}, tree_sitter_c,
+                QStringLiteral("c"), kCFamily, kBrackets, kCLikeIndent, QStringLiteral("clangd")),
+        makeDef(LanguageId::Cpp, QStringLiteral("C++"),
+                {QStringLiteral("cpp"), QStringLiteral("cc"), QStringLiteral("cxx"),
+                 QStringLiteral("c++"), QStringLiteral("h"), QStringLiteral("hpp"),
+                 QStringLiteral("hh"), QStringLiteral("hxx")},
+                {}, tree_sitter_cpp, QStringLiteral("cpp"), kCFamily, kBrackets, kCLikeIndent,
+                QStringLiteral("clangd")),
+        makeDef(LanguageId::CMake, QStringLiteral("CMake"), {QStringLiteral("cmake")},
+                {QStringLiteral("CMakeLists.txt")}, tree_sitter_cmake, QStringLiteral("cmake"),
+                kHash, kBrackets, kCLikeIndent, {}),
+        makeDef(LanguageId::Html, QStringLiteral("HTML"),
+                {QStringLiteral("html"), QStringLiteral("htm")}, {}, tree_sitter_html,
+                QStringLiteral("html"), kHtml, kBrackets, QStringLiteral("<"), {}),
+        makeDef(LanguageId::Css, QStringLiteral("CSS"), {QStringLiteral("css")}, {}, tree_sitter_css,
+                QStringLiteral("css"), {{}, QStringLiteral("/*"), QStringLiteral("*/")}, kBrackets,
+                kCLikeIndent, {}),
+        makeDef(LanguageId::JavaScript, QStringLiteral("JavaScript"),
+                {QStringLiteral("js"), QStringLiteral("mjs"), QStringLiteral("cjs")}, {},
+                tree_sitter_javascript, QStringLiteral("javascript"), kCFamily, kBrackets,
+                kCLikeIndent, {}),
+        makeDef(LanguageId::TypeScript, QStringLiteral("TypeScript"), {QStringLiteral("ts")}, {},
+                tree_sitter_typescript, QStringLiteral("typescript"), kCFamily, kBrackets,
+                kCLikeIndent, {}),
+        makeDef(LanguageId::Tsx, QStringLiteral("TSX"), {QStringLiteral("tsx")}, {}, tree_sitter_tsx,
+                QStringLiteral("tsx"), kCFamily, kBrackets, kCLikeIndent, {}),
+        makeDef(LanguageId::Json, QStringLiteral("JSON"), {QStringLiteral("json")}, {},
+                tree_sitter_json, QStringLiteral("json"), {}, kBrackets, kCLikeIndent, {}),
+        makeDef(LanguageId::Markdown, QStringLiteral("Markdown"),
+                {QStringLiteral("md"), QStringLiteral("markdown")}, {}, tree_sitter_markdown,
+                QStringLiteral("markdown"), kHtml, kBrackets, {}, {}),
+        makeDef(LanguageId::Python, QStringLiteral("Python"), {QStringLiteral("py")}, {},
+                tree_sitter_python, QStringLiteral("python"), kHash, kBrackets,
+                QStringLiteral(":"), {}),
+        makeDef(LanguageId::Shell, QStringLiteral("Shell"),
+                {QStringLiteral("sh"), QStringLiteral("bash"), QStringLiteral("zsh")}, {},
+                tree_sitter_bash, QStringLiteral("bash"), kHash, kBrackets, kCLikeIndent, {}),
+        makeDef(LanguageId::Sql, QStringLiteral("SQL"), {QStringLiteral("sql")}, {}, tree_sitter_sql,
+                QStringLiteral("sql"),
+                {QStringLiteral("--"), QStringLiteral("/*"), QStringLiteral("*/")}, kBrackets,
+                kCLikeIndent, {}),
+        makeDef(LanguageId::Yaml, QStringLiteral("YAML"),
+                {QStringLiteral("yml"), QStringLiteral("yaml")}, {}, tree_sitter_yaml,
+                QStringLiteral("yaml"), kHash, kBrackets, QStringLiteral(":"), {}),
+    };
+    return kDefs;
+}
+
+const LanguageDefinition &LanguageRegistry::definition(LanguageId id)
+{
+    for (const LanguageDefinition &def : all()) {
+        if (def.id == id) {
+            return def;
+        }
+    }
+    return all().front();
 }
 
 LanguageId LanguageRegistry::idForPath(const QString &path)
@@ -17,8 +124,12 @@ LanguageId LanguageRegistry::idForPath(const QString &path)
 
     const QFileInfo info(path);
     const QString name = info.fileName();
-    if (name.compare(QLatin1String("CMakeLists.txt"), Qt::CaseInsensitive) == 0) {
-        return LanguageId::CMake;
+    for (const LanguageDefinition &def : all()) {
+        for (const QString &filename : def.filenames) {
+            if (name.compare(filename, Qt::CaseInsensitive) == 0) {
+                return def.id;
+            }
+        }
     }
     return idForExtension(info.suffix());
 }
@@ -26,138 +137,31 @@ LanguageId LanguageRegistry::idForPath(const QString &path)
 LanguageId LanguageRegistry::idForExtension(const QString &extension)
 {
     const QString ext = extension.toLower();
-    if (ext == QLatin1String("c")) {
-        return LanguageId::C;
+    if (ext.isEmpty()) {
+        return LanguageId::PlainText;
     }
-    if (ext == QLatin1String("cpp") || ext == QLatin1String("cc") || ext == QLatin1String("cxx")
-        || ext == QLatin1String("c++") || ext == QLatin1String("h") || ext == QLatin1String("hpp")
-        || ext == QLatin1String("hh") || ext == QLatin1String("hxx")) {
-        return LanguageId::Cpp;
-    }
-    if (ext == QLatin1String("cmake")) {
-        return LanguageId::CMake;
-    }
-    if (ext == QLatin1String("html") || ext == QLatin1String("htm")) {
-        return LanguageId::Html;
-    }
-    if (ext == QLatin1String("css")) {
-        return LanguageId::Css;
-    }
-    if (ext == QLatin1String("js") || ext == QLatin1String("mjs") || ext == QLatin1String("cjs")) {
-        return LanguageId::JavaScript;
-    }
-    if (ext == QLatin1String("ts")) {
-        return LanguageId::TypeScript;
-    }
-    if (ext == QLatin1String("tsx")) {
-        return LanguageId::Tsx;
-    }
-    if (ext == QLatin1String("json")) {
-        return LanguageId::Json;
-    }
-    if (ext == QLatin1String("md") || ext == QLatin1String("markdown")) {
-        return LanguageId::Markdown;
-    }
-    if (ext == QLatin1String("py")) {
-        return LanguageId::Python;
-    }
-    if (ext == QLatin1String("sh") || ext == QLatin1String("bash") || ext == QLatin1String("zsh")) {
-        return LanguageId::Shell;
-    }
-    if (ext == QLatin1String("sql")) {
-        return LanguageId::Sql;
-    }
-    if (ext == QLatin1String("yml") || ext == QLatin1String("yaml")) {
-        return LanguageId::Yaml;
+    for (const LanguageDefinition &def : all()) {
+        if (def.extensions.contains(ext)) {
+            return def.id;
+        }
     }
     return LanguageId::PlainText;
 }
 
 QString LanguageRegistry::displayName(LanguageId id)
 {
-    switch (id) {
-    case LanguageId::C:
-        return QStringLiteral("C");
-    case LanguageId::Cpp:
-        return QStringLiteral("C++");
-    case LanguageId::CMake:
-        return QStringLiteral("CMake");
-    case LanguageId::Html:
-        return QStringLiteral("HTML");
-    case LanguageId::Css:
-        return QStringLiteral("CSS");
-    case LanguageId::JavaScript:
-        return QStringLiteral("JavaScript");
-    case LanguageId::TypeScript:
-        return QStringLiteral("TypeScript");
-    case LanguageId::Tsx:
-        return QStringLiteral("TSX");
-    case LanguageId::Json:
-        return QStringLiteral("JSON");
-    case LanguageId::Markdown:
-        return QStringLiteral("Markdown");
-    case LanguageId::Python:
-        return QStringLiteral("Python");
-    case LanguageId::Shell:
-        return QStringLiteral("Shell");
-    case LanguageId::Sql:
-        return QStringLiteral("SQL");
-    case LanguageId::Yaml:
-        return QStringLiteral("YAML");
-    case LanguageId::PlainText:
-        break;
-    }
-    return QStringLiteral("Plain Text");
+    return definition(id).displayName;
 }
 
 const TSLanguage *LanguageRegistry::tsLanguage(LanguageId id)
 {
-    switch (id) {
-    case LanguageId::C:
-    case LanguageId::Cpp:
-        return tree_sitter_cpp();
-    case LanguageId::Html:
-        return tree_sitter_html();
-    case LanguageId::PlainText:
-    case LanguageId::CMake:
-    case LanguageId::Css:
-    case LanguageId::JavaScript:
-    case LanguageId::TypeScript:
-    case LanguageId::Tsx:
-    case LanguageId::Json:
-    case LanguageId::Markdown:
-    case LanguageId::Python:
-    case LanguageId::Shell:
-    case LanguageId::Sql:
-    case LanguageId::Yaml:
-        break;
-    }
-    return nullptr;
+    const auto fn = definition(id).treeSitterLanguage;
+    return fn ? fn() : nullptr;
 }
 
 QString LanguageRegistry::highlightQueryResourcePath(LanguageId id)
 {
-    switch (id) {
-    case LanguageId::C:
-    case LanguageId::Cpp:
-        return QStringLiteral(":/editerako/syntax/cpp/highlights.scm");
-    case LanguageId::Html:
-        return QStringLiteral(":/editerako/syntax/html/highlights.scm");
-    case LanguageId::PlainText:
-    case LanguageId::CMake:
-    case LanguageId::Css:
-    case LanguageId::JavaScript:
-    case LanguageId::TypeScript:
-    case LanguageId::Tsx:
-    case LanguageId::Json:
-    case LanguageId::Markdown:
-    case LanguageId::Python:
-    case LanguageId::Shell:
-    case LanguageId::Sql:
-    case LanguageId::Yaml:
-        break;
-    }
-    return {};
+    return definition(id).highlightQueryResourcePath;
 }
 
 QByteArray LanguageRegistry::highlightQuerySource(LanguageId id)
@@ -175,28 +179,5 @@ QByteArray LanguageRegistry::highlightQuerySource(LanguageId id)
 
 CommentTokens LanguageRegistry::commentTokens(LanguageId id)
 {
-    switch (id) {
-    case LanguageId::C:
-    case LanguageId::Cpp:
-    case LanguageId::JavaScript:
-    case LanguageId::TypeScript:
-    case LanguageId::Tsx:
-        return {QStringLiteral("//"), QStringLiteral("/*"), QStringLiteral("*/")};
-    case LanguageId::Css:
-        return {{}, QStringLiteral("/*"), QStringLiteral("*/")};
-    case LanguageId::Html:
-    case LanguageId::Markdown:
-        return {{}, QStringLiteral("<!--"), QStringLiteral("-->")};
-    case LanguageId::CMake:
-    case LanguageId::Python:
-    case LanguageId::Shell:
-    case LanguageId::Yaml:
-        return {QStringLiteral("#"), {}, {}};
-    case LanguageId::Sql:
-        return {QStringLiteral("--"), QStringLiteral("/*"), QStringLiteral("*/")};
-    case LanguageId::Json:
-    case LanguageId::PlainText:
-        break;
-    }
-    return {};
+    return definition(id).commentTokens;
 }

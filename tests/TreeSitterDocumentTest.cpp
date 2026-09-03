@@ -28,6 +28,7 @@ private slots:
     void unicodeAndEmoji();
     void multilineAndRawString();
     void htmlMultilineComment();
+    void parsesPython();
     void plainTextHasNoParser();
 };
 
@@ -134,6 +135,20 @@ void TreeSitterDocumentTest::htmlMultilineComment()
     uint32_t start = 0;
     uint32_t end = 0;
     QVERIFY(tree.utf8RangeForBlock(0, &start, &end));
+}
+
+void TreeSitterDocumentTest::parsesPython()
+{
+    QTextDocument document;
+    attachEditorLayout(&document);
+    document.setPlainText(QStringLiteral("def f():\n    return 1\n"));
+    TreeSitterDocument tree(&document, LanguageId::Python);
+    QVERIFY(tree.isReady());
+
+    uint32_t start = 0;
+    uint32_t end = 0;
+    QVERIFY(tree.utf8RangeForBlock(0, &start, &end));
+    QVERIFY(nodeCountInRange(tree, start, end) > 1);
 }
 
 void TreeSitterDocumentTest::plainTextHasNoParser()

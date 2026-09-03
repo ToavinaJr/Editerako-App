@@ -40,7 +40,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 
-Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake`. Seul `tree_sitter/api.h` est PUBLIC.
+Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake` (une OBJECT lib par grammaire). Seul `tree_sitter/api.h` est PUBLIC. Metadata : `LanguageDefinition` dans `LanguageRegistry`. Détail : [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md).
 
 ## Flux importants
 

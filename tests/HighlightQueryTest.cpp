@@ -1,14 +1,17 @@
 #include "syntax/HighlightQuery.h"
+#include "syntax/LanguageRegistry.h"
 
 #include <QFile>
 #include <QtTest>
 
 #include <cstring>
 
+Q_DECLARE_METATYPE(LanguageId)
+
 extern "C" {
 struct TSLanguage;
-TSLanguage *tree_sitter_cpp();
-TSLanguage *tree_sitter_html();
+const TSLanguage *tree_sitter_cpp(void);
+const TSLanguage *tree_sitter_html(void);
 }
 
 class HighlightQueryTest : public QObject
@@ -70,6 +73,9 @@ private slots:
     void matchPredicate();
     void shippedCppQueryCompilesAndHighlights();
     void shippedHtmlQueryCompilesAndHighlights();
+    void allShippedQueriesCompile();
+    void shippedLanguageCaptures_data();
+    void shippedLanguageCaptures();
 };
 
 void HighlightQueryTest::invalidQuery()
@@ -157,6 +163,74 @@ void HighlightQueryTest::shippedHtmlQueryCompilesAndHighlights()
     QVERIFY(hasCapture(caps, QStringLiteral("attribute")));
     QVERIFY(hasCapture(caps, QStringLiteral("string")));
     QVERIFY(hasCapture(caps, QStringLiteral("comment")));
+}
+
+void HighlightQueryTest::allShippedQueriesCompile()
+{
+    const QString prefix = QStringLiteral(":/editerako/syntax/");
+    for (const LanguageDefinition &def : LanguageRegistry::all()) {
+        if (def.id == LanguageId::PlainText) {
+            continue;
+        }
+        QVERIFY2(def.treeSitterLanguage != nullptr, qPrintable(def.displayName));
+        QVERIFY2(def.highlightQueryResourcePath.startsWith(prefix), qPrintable(def.displayName));
+        const QString rel = def.highlightQueryResourcePath.mid(prefix.size());
+        const QByteArray scm = readQueryFile(rel);
+        QVERIFY2(!scm.isEmpty(), qPrintable(def.displayName));
+        HighlightQuery query(def.treeSitterLanguage(), scm);
+        QVERIFY2(query.isValid(), qPrintable(def.displayName + QLatin1Char(' ') + query.errorString()));
+    }
+}
+
+void HighlightQueryTest::shippedLanguageCaptures_data()
+{
+    QTest::addColumn<LanguageId>("language");
+    QTest::addColumn<QByteArray>("source");
+    QTest::addColumn<QString>("capture");
+
+    QTest::newRow("c") << LanguageId::C << QByteArray("int main() { return 0; /* c */ }\n")
+                       << QStringLiteral("comment");
+    QTest::newRow("python") << LanguageId::Python << QByteArray("def f():\n    return 1  # hi\n")
+                            << QStringLiteral("comment");
+    QTest::newRow("javascript") << LanguageId::JavaScript
+                                << QByteArray("const x = \"hi\"; // c\n") << QStringLiteral("string");
+    QTest::newRow("typescript") << LanguageId::TypeScript
+                                << QByteArray("const x: number = 1; // c\n") << QStringLiteral("comment");
+    QTest::newRow("tsx") << LanguageId::Tsx << QByteArray("const n = <div/>;\n")
+                         << QStringLiteral("tag");
+    QTest::newRow("json") << LanguageId::Json << QByteArray("{\"a\": 1}\n")
+                          << QStringLiteral("number");
+    QTest::newRow("css") << LanguageId::Css << QByteArray("div { color: red; /* c */ }\n")
+                         << QStringLiteral("comment");
+    QTest::newRow("bash") << LanguageId::Shell << QByteArray("echo hello # c\n")
+                          << QStringLiteral("comment");
+    QTest::newRow("cmake") << LanguageId::CMake << QByteArray("project(Foo) # c\n")
+                           << QStringLiteral("comment");
+    QTest::newRow("yaml") << LanguageId::Yaml << QByteArray("a: 1 # c\n")
+                          << QStringLiteral("comment");
+    QTest::newRow("markdown") << LanguageId::Markdown << QByteArray("# Title\n")
+                              << QStringLiteral("keyword");
+    QTest::newRow("sql") << LanguageId::Sql << QByteArray("SELECT 1 FROM t; -- c\n")
+                         << QStringLiteral("comment");
+}
+
+void HighlightQueryTest::shippedLanguageCaptures()
+{
+    QFETCH(LanguageId, language);
+    QFETCH(QByteArray, source);
+    QFETCH(QString, capture);
+
+    const LanguageDefinition &def = LanguageRegistry::definition(language);
+    const QString rel =
+        def.highlightQueryResourcePath.mid(QStringLiteral(":/editerako/syntax/").size());
+    HighlightQuery query(def.treeSitterLanguage(), readQueryFile(rel));
+    QVERIFY2(query.isValid(), qPrintable(query.errorString()));
+
+    Parsed parsed = parse(def.treeSitterLanguage(), source);
+    QVERIFY(parsed.tree);
+    const auto caps = query.captures(ts_tree_root_node(parsed.tree), 0,
+                                     static_cast<uint32_t>(source.size()), parsed.utf8);
+    QVERIFY2(hasCapture(caps, capture), qPrintable(def.displayName + QLatin1Char(' ') + capture));
 }
 
 QTEST_GUILESS_MAIN(HighlightQueryTest)

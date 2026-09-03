@@ -1,0 +1,58 @@
+[
+  {
+    "repo": "tree-sitter/tree-sitter-c",
+    "tag": "v0.23.6",
+    "dest": "tree-sitter-c"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-python",
+    "tag": "v0.23.6",
+    "dest": "tree-sitter-python"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-javascript",
+    "tag": "v0.23.1",
+    "dest": "tree-sitter-javascript"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-typescript",
+    "tag": "v0.23.2",
+    "dest": "tree-sitter-typescript"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-json",
+    "tag": "v0.24.8",
+    "dest": "tree-sitter-json"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-css",
+    "tag": "v0.23.2",
+    "dest": "tree-sitter-css"
+  },
+  {
+    "repo": "tree-sitter/tree-sitter-bash",
+    "tag": "v0.23.3",
+    "dest": "tree-sitter-bash"
+  },
+  {
+    "repo": "uyha/tree-sitter-cmake",
+    "tag": "v0.7.1",
+    "dest": "tree-sitter-cmake"
+  },
+  {
+    "repo": "tree-sitter-grammars/tree-sitter-yaml",
+    "tag": "v0.7.1",
+    "dest": "tree-sitter-yaml"
+  },
+  {
+    "repo": "tree-sitter-grammars/tree-sitter-markdown",
+    "tag": "v0.3.2",
+    "dest": "tree-sitter-markdown"
+  },
+  {
+    "repo": "DerekStride/tree-sitter-sql",
+    "tag": "gh-pages",
+    "dest": "tree-sitter-sql",
+    "note": "parser.c is published on the gh-pages branch, not main"
+  }
+]

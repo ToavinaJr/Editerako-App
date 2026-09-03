@@ -7,15 +7,15 @@ class HighlighterSyncTest : public QObject
     Q_OBJECT
 
 private slots:
-    void pythonHasNoGrammar();
+    void pythonHighlightsWhenSmall();
     void cppBelowThresholdHighlights();
     void cppAboveThresholdSkipped();
     void htmlHighlightsWhenSmall();
 };
 
-void HighlighterSyncTest::pythonHasNoGrammar()
+void HighlighterSyncTest::pythonHighlightsWhenSmall()
 {
-    QVERIFY(!HighlighterSync::shouldHighlight(LanguageId::Python, 100, 1000));
+    QVERIFY(HighlighterSync::shouldHighlight(LanguageId::Python, 100, 1000));
 }
 
 void HighlighterSyncTest::cppBelowThresholdHighlights()

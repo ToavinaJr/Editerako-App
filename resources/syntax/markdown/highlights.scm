@@ -1,0 +1,13 @@
+(atx_heading) @keyword
+(setext_heading) @keyword
+(atx_h1_marker) @punctuation
+(atx_h2_marker) @punctuation
+(atx_h3_marker) @punctuation
+(fenced_code_block) @string
+(fenced_code_block_delimiter) @punctuation
+(info_string) @type
+(indented_code_block) @string
+(block_quote_marker) @punctuation
+(thematic_break) @punctuation
+(pipe_table) @variable
+(html_block) @tag

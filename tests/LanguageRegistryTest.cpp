@@ -17,6 +17,7 @@ private slots:
     void treeSitterLanguages();
     void highlightQueryPaths();
     void commentTokens();
+    void definitionTableCoversEveryId();
 };
 
 void LanguageRegistryTest::emptyPathIsPlainText()
@@ -78,9 +79,20 @@ void LanguageRegistryTest::treeSitterLanguages()
 {
     QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Cpp) != nullptr);
     QVERIFY(LanguageRegistry::tsLanguage(LanguageId::C) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::C) != LanguageRegistry::tsLanguage(LanguageId::Cpp));
     QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Html) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Python) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::JavaScript) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::TypeScript) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Tsx) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Json) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Css) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Markdown) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Shell) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Sql) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Yaml) != nullptr);
+    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::CMake) != nullptr);
     QVERIFY(LanguageRegistry::tsLanguage(LanguageId::PlainText) == nullptr);
-    QVERIFY(LanguageRegistry::tsLanguage(LanguageId::Python) == nullptr);
 }
 
 void LanguageRegistryTest::highlightQueryPaths()
@@ -88,10 +100,12 @@ void LanguageRegistryTest::highlightQueryPaths()
     QCOMPARE(LanguageRegistry::highlightQueryResourcePath(LanguageId::Cpp),
              QStringLiteral(":/editerako/syntax/cpp/highlights.scm"));
     QCOMPARE(LanguageRegistry::highlightQueryResourcePath(LanguageId::C),
-             QStringLiteral(":/editerako/syntax/cpp/highlights.scm"));
+             QStringLiteral(":/editerako/syntax/c/highlights.scm"));
     QCOMPARE(LanguageRegistry::highlightQueryResourcePath(LanguageId::Html),
              QStringLiteral(":/editerako/syntax/html/highlights.scm"));
-    QVERIFY(LanguageRegistry::highlightQueryResourcePath(LanguageId::Python).isEmpty());
+    QCOMPARE(LanguageRegistry::highlightQueryResourcePath(LanguageId::Python),
+             QStringLiteral(":/editerako/syntax/python/highlights.scm"));
+    QVERIFY(LanguageRegistry::highlightQueryResourcePath(LanguageId::PlainText).isEmpty());
 }
 
 void LanguageRegistryTest::commentTokens()
@@ -100,6 +114,23 @@ void LanguageRegistryTest::commentTokens()
     QCOMPARE(LanguageRegistry::commentTokens(LanguageId::Python).line, QStringLiteral("#"));
     QCOMPARE(LanguageRegistry::commentTokens(LanguageId::Html).blockOpen, QStringLiteral("<!--"));
     QVERIFY(LanguageRegistry::commentTokens(LanguageId::PlainText).line.isEmpty());
+}
+
+void LanguageRegistryTest::definitionTableCoversEveryId()
+{
+    const auto &defs = LanguageRegistry::all();
+    QVERIFY(defs.size() >= 15);
+    for (const LanguageDefinition &def : defs) {
+        QCOMPARE(LanguageRegistry::definition(def.id).displayName, def.displayName);
+        if (def.id == LanguageId::PlainText) {
+            QVERIFY(def.treeSitterLanguage == nullptr);
+            QVERIFY(def.highlightQueryResourcePath.isEmpty());
+            continue;
+        }
+        QVERIFY2(def.treeSitterLanguage != nullptr, qPrintable(def.displayName));
+        QVERIFY2(!def.highlightQueryResourcePath.isEmpty(), qPrintable(def.displayName));
+        QVERIFY2(LanguageRegistry::tsLanguage(def.id) != nullptr, qPrintable(def.displayName));
+    }
 }
 
 QTEST_GUILESS_MAIN(LanguageRegistryTest)
