@@ -16,6 +16,7 @@ private slots:
     void displayNames();
     void treeSitterLanguages();
     void highlightQueryPaths();
+    void commentTokens();
 };
 
 void LanguageRegistryTest::emptyPathIsPlainText()
@@ -91,6 +92,14 @@ void LanguageRegistryTest::highlightQueryPaths()
     QCOMPARE(LanguageRegistry::highlightQueryResourcePath(LanguageId::Html),
              QStringLiteral(":/editerako/syntax/html/highlights.scm"));
     QVERIFY(LanguageRegistry::highlightQueryResourcePath(LanguageId::Python).isEmpty());
+}
+
+void LanguageRegistryTest::commentTokens()
+{
+    QCOMPARE(LanguageRegistry::commentTokens(LanguageId::Cpp).line, QStringLiteral("//"));
+    QCOMPARE(LanguageRegistry::commentTokens(LanguageId::Python).line, QStringLiteral("#"));
+    QCOMPARE(LanguageRegistry::commentTokens(LanguageId::Html).blockOpen, QStringLiteral("<!--"));
+    QVERIFY(LanguageRegistry::commentTokens(LanguageId::PlainText).line.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(LanguageRegistryTest)

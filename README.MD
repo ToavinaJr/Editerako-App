@@ -6,7 +6,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 
 ## Features
 
-- Éditeur `QPlainTextEdit` personnalisé, numéros de ligne, multi-onglets, multi-curseurs, déplacement de lignes
+- Éditeur `QPlainTextEdit` personnalisé, numéros de ligne, multi-onglets, multi-curseurs, déplacement de lignes, indent, commentaires, paires auto
 - Coloration syntaxique Tree-sitter (grammaires **C++** et **HTML** actuellement)
 - Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop
 - Recherche, remplacement, regex, Go To Line

@@ -159,6 +159,30 @@ set_tests_properties(test_LineMovementController PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
 
+editerako_add_test(test_IndentOps
+    SOURCES IndentOpsTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_CommentOps
+    SOURCES CommentOpsTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_BracketMatcher
+    SOURCES BracketMatcherTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_LineEditCommands
+    SOURCES LineEditCommandsTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_LineEditCommands PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
 editerako_add_test(test_MultiCursorController
     SOURCES MultiCursorControllerTest.cpp
     LIBS EditerakoEditor

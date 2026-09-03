@@ -54,7 +54,7 @@ Tree-sitter (runtime + grammaires C++ et HTML) est vendored dans `tree-sitter/` 
 
 **Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Fermer le dernier onglet masque le panneau. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état).
 
-**Éditeur.** `CodeEditor` délègue gutter, ligne courante, multi-curseurs et swap de lignes à `src/editor/features/`. `EditorManager` orchestre les onglets et les dialogs. Lecture/écriture via `readTextFile` / `writeTextFile` : encoding, BOM et EOL sont stockés sur `EditorDocument` ; le buffer est en LF. Status bar : Ln/Col, encoding, EOL, language. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).
+**Éditeur.** `CodeEditor` délègue à `src/editor/features/` : gutter, ligne courante (+ matching de brackets), multi-curseurs, indent, commentaires, paires auto, commandes de lignes, occurrences. Swap de lignes : **même algorithme** `toPlainText().mid`. Menu Edit + `CommandRegistry`. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).
 
 **Settings.** Défaut < user QSettings < `{workspace}/.editerako/settings.json`. UI Préférences (`Ctrl+,`). Raccourcis via `KeybindingManager` (plus de `setShortcut` dans `MainWindow`). Détail : [settings.md](settings.md), [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md).
 

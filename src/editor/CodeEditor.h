@@ -1,8 +1,12 @@
 #ifndef EDITERAKO_CODEEDITOR_H
 #define EDITERAKO_CODEEDITOR_H
 
+#include "editor/features/CommentController.h"
+#include "editor/features/IndentController.h"
+#include "editor/features/LineEditCommands.h"
 #include "editor/features/LineMovementController.h"
 #include "editor/features/MultiCursorController.h"
+#include "editor/features/OccurrenceController.h"
 
 #include <QPlainTextEdit>
 
@@ -20,6 +24,23 @@ public:
     void setLineNumbersVisible(bool visible);
     [[nodiscard]] bool isLineNumbersVisible() const;
 
+    void indentSelection();
+    void outdentSelection();
+    void toggleLineComment();
+    void toggleBlockComment();
+    void duplicateLine();
+    void deleteLine();
+    void moveLineUp();
+    void moveLineDown();
+    void selectLine();
+    void joinLines();
+    void sortSelectedLines();
+    void trimTrailingWhitespace();
+    void convertIndentationToSpaces();
+    void convertIndentationToTabs();
+    void selectNextOccurrence();
+    void selectAllOccurrences();
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -36,6 +57,10 @@ private:
     bool m_lineNumbersVisible = true;
     MultiCursorController m_multiCursor;
     LineMovementController m_lineMovement;
+    IndentController m_indent;
+    CommentController m_comments;
+    LineEditCommands m_lineEdits;
+    OccurrenceController m_occurrences;
 };
 
 #endif

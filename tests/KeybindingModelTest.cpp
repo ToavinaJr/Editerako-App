@@ -31,6 +31,10 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+P")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.search")),
              QKeySequence(QStringLiteral("Ctrl+Shift+F")));
+    QCOMPARE(defaults.value(QStringLiteral("edit.toggleLineComment")),
+             QKeySequence(QStringLiteral("Ctrl+/")));
+    QCOMPARE(defaults.value(QStringLiteral("edit.moveLineUp")),
+             QKeySequence(QStringLiteral("Ctrl+Up")));
 }
 
 void KeybindingModelTest::overrideAndReset()

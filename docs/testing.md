@@ -45,6 +45,10 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_EditorIo` | `EditerakoEditor` | lecture texte, Unicode, conservation CRLF, `diskMatches` |
 | `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python, C++ sous/seuil, HTML |
 | `test_LineMovementController` | `EditerakoEditor` | swap up/down sur `QPlainTextEdit` (`QT_QPA_PLATFORM=offscreen`) |
+| `test_IndentOps` | `EditerakoEditor` | indent/outdent, smart indent, convert, trim, sort |
+| `test_CommentOps` | `EditerakoEditor` | toggle ligne / bloc |
+| `test_BracketMatcher` | `EditerakoEditor` | matching `()[]{}`, auto-close |
+| `test_LineEditCommands` | `EditerakoEditor` | duplicate/delete/join/sort, occurrence (`offscreen`) |
 | `test_MultiCursorController` | `EditerakoEditor` | toggle, insert multi, doublon du curseur primaire (`QT_QPA_PLATFORM=offscreen`) |
 | `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
 

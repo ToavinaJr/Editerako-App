@@ -58,6 +58,20 @@ void MultiCursorController::toggleAt(const QTextCursor &clicked)
     m_editor->viewport()->update();
 }
 
+void MultiCursorController::addExtra(const QTextCursor &cursor)
+{
+    m_extraCursors.append(cursor);
+    normalize();
+    m_editor->viewport()->update();
+}
+
+void MultiCursorController::setExtras(const QList<QTextCursor> &cursors)
+{
+    m_extraCursors = cursors;
+    normalize();
+    m_editor->viewport()->update();
+}
+
 bool MultiCursorController::handleMousePress(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ControlModifier)) {

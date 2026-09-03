@@ -1,14 +1,22 @@
 #include "editor/CodeEditor.h"
 
 #include "core/AppSettings.h"
+#include "editor/EditorDocument.h"
+#include "editor/features/AutoClosingPairs.h"
+#include "editor/features/BracketMatcher.h"
 #include "editor/features/CurrentLineHighlighter.h"
+#include "editor/features/IndentOps.h"
 #include "editor/features/LineNumberArea.h"
+#include "syntax/LanguageRegistry.h"
 
 #include <QColor>
 #include <QKeyEvent>
+#include <QList>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QTextBlock>
+#include <QTextCursor>
+#include <QTextEdit>
 
 CodeEditor::CodeEditor(QWidget *parent)
     : QPlainTextEdit(parent)
@@ -16,6 +24,10 @@ CodeEditor::CodeEditor(QWidget *parent)
     , m_lineNumbersVisible(true)
     , m_multiCursor(this)
     , m_lineMovement(this)
+    , m_indent(this)
+    , m_comments(this)
+    , m_lineEdits(this)
+    , m_occurrences(this, &m_multiCursor)
 {
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
@@ -70,7 +82,22 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 
 void CodeEditor::highlightCurrentLine()
 {
-    CurrentLineHighlighter::apply(this);
+    QList<QTextEdit::ExtraSelection> extras;
+    const BracketMatch match = findBracketMatch(toPlainText(), textCursor().position());
+    if (match.isValid()) {
+        QTextEdit::ExtraSelection open;
+        open.format.setBackground(QColor(120, 120, 200, 90));
+        open.cursor = textCursor();
+        open.cursor.setPosition(match.open);
+        open.cursor.setPosition(match.open + 1, QTextCursor::KeepAnchor);
+        extras.append(open);
+
+        QTextEdit::ExtraSelection closeSel = open;
+        closeSel.cursor.setPosition(match.close);
+        closeSel.cursor.setPosition(match.close + 1, QTextCursor::KeepAnchor);
+        extras.append(closeSel);
+    }
+    CurrentLineHighlighter::apply(this, extras);
 }
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -133,26 +160,39 @@ void CodeEditor::paintEvent(QPaintEvent *event)
 
 void CodeEditor::keyPressEvent(QKeyEvent *event)
 {
-    if (event->modifiers() & Qt::ControlModifier) {
-        if (event->key() == Qt::Key_Up) {
-            m_lineMovement.moveUp();
-            return;
-        }
-        if (event->key() == Qt::Key_Down) {
-            m_lineMovement.moveDown();
-            return;
-        }
+    if (event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier
+        && !textCursor().hasSelection() && !m_multiCursor.isEmpty()
+        && AppSettings().editorInsertSpaces()) {
+        m_multiCursor.insertText(indentUnit(AppSettings().editorTabSize(), true));
+        return;
     }
 
-    if (event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier
-        && AppSettings().editorInsertSpaces()) {
-        const QString spaces(qMax(1, AppSettings().editorTabSize()), QLatin1Char(' '));
-        if (!m_multiCursor.isEmpty()) {
-            m_multiCursor.insertText(spaces);
-        } else {
-            insertPlainText(spaces);
-        }
+    if (m_indent.handleKeyPress(event)) {
         return;
+    }
+
+    if (m_multiCursor.isEmpty() && !event->text().isEmpty()) {
+        const QChar typed = event->text().at(0);
+        QTextCursor cursor = textCursor();
+        const QString text = toPlainText();
+        const int pos = cursor.position();
+        if (shouldSkipClosingPair(text, pos, typed)) {
+            cursor.movePosition(QTextCursor::NextCharacter);
+            setTextCursor(cursor);
+            return;
+        }
+        const QChar closer = closingPairFor(typed);
+        if (!closer.isNull() && cursor.hasSelection()) {
+            const QString selected = cursor.selectedText();
+            cursor.insertText(typed + selected + closer);
+            return;
+        }
+        if (shouldInsertClosingPair(text, pos, typed)) {
+            cursor.insertText(QString(typed) + closer);
+            cursor.movePosition(QTextCursor::PreviousCharacter);
+            setTextCursor(cursor);
+            return;
+        }
     }
 
     if (m_multiCursor.handleKeyPress(event)) {
@@ -163,4 +203,90 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
     if (!m_multiCursor.isEmpty()) {
         viewport()->update();
     }
+}
+
+void CodeEditor::indentSelection()
+{
+    m_indent.indent();
+}
+
+void CodeEditor::outdentSelection()
+{
+    m_indent.outdent();
+}
+
+void CodeEditor::toggleLineComment()
+{
+    const auto *doc = EditorDocument::fromEditor(this);
+    const CommentTokens tokens = LanguageRegistry::commentTokens(
+        doc ? doc->language() : LanguageId::PlainText);
+    m_comments.toggleLineComment(tokens.line);
+}
+
+void CodeEditor::toggleBlockComment()
+{
+    const auto *doc = EditorDocument::fromEditor(this);
+    const CommentTokens tokens = LanguageRegistry::commentTokens(
+        doc ? doc->language() : LanguageId::PlainText);
+    m_comments.toggleBlockComment(tokens.blockOpen, tokens.blockClose);
+}
+
+void CodeEditor::duplicateLine()
+{
+    m_lineEdits.duplicateLine();
+}
+
+void CodeEditor::deleteLine()
+{
+    m_lineEdits.deleteLine();
+}
+
+void CodeEditor::moveLineUp()
+{
+    m_lineMovement.moveUp();
+}
+
+void CodeEditor::moveLineDown()
+{
+    m_lineMovement.moveDown();
+}
+
+void CodeEditor::selectLine()
+{
+    m_lineEdits.selectLine();
+}
+
+void CodeEditor::joinLines()
+{
+    m_lineEdits.joinLines();
+}
+
+void CodeEditor::sortSelectedLines()
+{
+    m_lineEdits.sortLines();
+}
+
+void CodeEditor::trimTrailingWhitespace()
+{
+    m_lineEdits.trimTrailingWhitespace();
+}
+
+void CodeEditor::convertIndentationToSpaces()
+{
+    m_indent.convertToSpaces();
+}
+
+void CodeEditor::convertIndentationToTabs()
+{
+    m_indent.convertToTabs();
+}
+
+void CodeEditor::selectNextOccurrence()
+{
+    m_occurrences.selectNext();
+}
+
+void CodeEditor::selectAllOccurrences()
+{
+    m_occurrences.selectAll();
 }

@@ -16,4 +16,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md) | Settings UI et raccourcis |
 | [adr/0006-command-palette-quick-open.md](adr/0006-command-palette-quick-open.md) | Command Palette et Quick Open |
 | [adr/0007-workspace-search-explorer-ops.md](adr/0007-workspace-search-explorer-ops.md) | Search workspace et ops explorateur |
+| [adr/0008-editing-commands.md](adr/0008-editing-commands.md) | Indent, commentaires, paires, lignes, occurrences |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

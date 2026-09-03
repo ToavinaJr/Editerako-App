@@ -3,16 +3,16 @@
 #include <QColor>
 #include <QPlainTextEdit>
 #include <QTextCursor>
-#include <QTextEdit>
 #include <QTextFormat>
 
-void CurrentLineHighlighter::apply(QPlainTextEdit *editor)
+void CurrentLineHighlighter::apply(QPlainTextEdit *editor,
+                                   const QList<QTextEdit::ExtraSelection> &additional)
 {
     if (!editor) {
         return;
     }
 
-    QList<QTextEdit::ExtraSelection> extraSelections;
+    QList<QTextEdit::ExtraSelection> extraSelections = additional;
     if (!editor->isReadOnly()) {
         QTextEdit::ExtraSelection selection;
         QColor lineColor = QColor(Qt::yellow).lighter(160);

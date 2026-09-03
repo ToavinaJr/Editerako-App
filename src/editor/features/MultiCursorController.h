@@ -23,6 +23,8 @@ public:
     void paint(QPaintEvent *event) const;
 
     void toggleAt(const QTextCursor &clicked);
+    void addExtra(const QTextCursor &cursor);
+    void setExtras(const QList<QTextCursor> &cursors);
     void insertText(const QString &text);
     void deleteAtCursors(bool backspace);
 

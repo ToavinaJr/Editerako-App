@@ -172,3 +172,31 @@ QByteArray LanguageRegistry::highlightQuerySource(LanguageId id)
     }
     return file.readAll();
 }
+
+CommentTokens LanguageRegistry::commentTokens(LanguageId id)
+{
+    switch (id) {
+    case LanguageId::C:
+    case LanguageId::Cpp:
+    case LanguageId::JavaScript:
+    case LanguageId::TypeScript:
+    case LanguageId::Tsx:
+        return {QStringLiteral("//"), QStringLiteral("/*"), QStringLiteral("*/")};
+    case LanguageId::Css:
+        return {{}, QStringLiteral("/*"), QStringLiteral("*/")};
+    case LanguageId::Html:
+    case LanguageId::Markdown:
+        return {{}, QStringLiteral("<!--"), QStringLiteral("-->")};
+    case LanguageId::CMake:
+    case LanguageId::Python:
+    case LanguageId::Shell:
+    case LanguageId::Yaml:
+        return {QStringLiteral("#"), {}, {}};
+    case LanguageId::Sql:
+        return {QStringLiteral("--"), QStringLiteral("/*"), QStringLiteral("*/")};
+    case LanguageId::Json:
+    case LanguageId::PlainText:
+        break;
+    }
+    return {};
+}

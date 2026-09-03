@@ -26,6 +26,24 @@ editerako_add_module(EditerakoEditor
         features/LineNumberArea.h
         features/MultiCursorController.cpp
         features/MultiCursorController.h
+        features/IndentOps.cpp
+        features/IndentOps.h
+        features/IndentController.cpp
+        features/IndentController.h
+        features/CommentOps.cpp
+        features/CommentOps.h
+        features/CommentController.cpp
+        features/CommentController.h
+        features/LineBlockOps.cpp
+        features/LineBlockOps.h
+        features/LineEditCommands.cpp
+        features/LineEditCommands.h
+        features/BracketMatcher.cpp
+        features/BracketMatcher.h
+        features/AutoClosingPairs.cpp
+        features/AutoClosingPairs.h
+        features/OccurrenceController.cpp
+        features/OccurrenceController.h
     LIBS
         EditerakoCore
         EditerakoSyntax

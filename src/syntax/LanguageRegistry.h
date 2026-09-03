@@ -26,6 +26,12 @@ enum class LanguageId {
     Yaml,
 };
 
+struct CommentTokens {
+    QString line;
+    QString blockOpen;
+    QString blockClose;
+};
+
 class LanguageRegistry
 {
 public:
@@ -35,6 +41,7 @@ public:
     [[nodiscard]] static const TSLanguage *tsLanguage(LanguageId id);
     [[nodiscard]] static QString highlightQueryResourcePath(LanguageId id);
     [[nodiscard]] static QByteArray highlightQuerySource(LanguageId id);
+    [[nodiscard]] static CommentTokens commentTokens(LanguageId id);
 };
 
 #endif

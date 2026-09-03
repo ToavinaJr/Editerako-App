@@ -41,6 +41,7 @@
 #include <QSignalBlocker>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QStringList>
 #include <QTabWidget>
 #include <QTimer>
 
@@ -104,6 +105,56 @@ void MainWindow::connectActions()
     bind(QStringLiteral("edit.find"), ui->actionFindReplace, &MainWindow::onActionFindReplace);
     bind(QStringLiteral("edit.gotoLine"), ui->actionGoToLine, &MainWindow::onActionGoToLine);
 
+    auto bindEditor = [this](const QString &id, const QString &text, void (CodeEditor::*method)()) {
+        QAction *action = m_commands->create(id, text);
+        connect(action, &QAction::triggered, this, [this, method]() {
+            if (CodeEditor *editor = currentEditor()) {
+                (editor->*method)();
+            }
+        });
+        return action;
+    };
+
+    QAction *toggleLineComment = bindEditor(QStringLiteral("edit.toggleLineComment"),
+                                            tr("Toggle Line Comment"),
+                                            &CodeEditor::toggleLineComment);
+    QAction *toggleBlockComment = bindEditor(QStringLiteral("edit.toggleBlockComment"),
+                                             tr("Toggle Block Comment"),
+                                             &CodeEditor::toggleBlockComment);
+    QAction *indent = bindEditor(QStringLiteral("edit.indent"), tr("Indent"),
+                                 &CodeEditor::indentSelection);
+    QAction *outdent = bindEditor(QStringLiteral("edit.outdent"), tr("Outdent"),
+                                  &CodeEditor::outdentSelection);
+    QAction *duplicateLine = bindEditor(QStringLiteral("edit.duplicateLine"), tr("Duplicate Line"),
+                                        &CodeEditor::duplicateLine);
+    QAction *deleteLine = bindEditor(QStringLiteral("edit.deleteLine"), tr("Delete Line"),
+                                     &CodeEditor::deleteLine);
+    QAction *moveLineUp = bindEditor(QStringLiteral("edit.moveLineUp"), tr("Move Line Up"),
+                                     &CodeEditor::moveLineUp);
+    QAction *moveLineDown = bindEditor(QStringLiteral("edit.moveLineDown"), tr("Move Line Down"),
+                                       &CodeEditor::moveLineDown);
+    QAction *selectLine = bindEditor(QStringLiteral("edit.selectLine"), tr("Select Line"),
+                                     &CodeEditor::selectLine);
+    QAction *joinLines = bindEditor(QStringLiteral("edit.joinLines"), tr("Join Lines"),
+                                    &CodeEditor::joinLines);
+    QAction *sortLines = bindEditor(QStringLiteral("edit.sortLines"), tr("Sort Lines"),
+                                    &CodeEditor::sortSelectedLines);
+    QAction *trimWs = bindEditor(QStringLiteral("edit.trimTrailingWhitespace"),
+                                 tr("Trim Trailing Whitespace"),
+                                 &CodeEditor::trimTrailingWhitespace);
+    QAction *toSpaces = bindEditor(QStringLiteral("edit.convertIndentationToSpaces"),
+                                   tr("Convert Indentation to Spaces"),
+                                   &CodeEditor::convertIndentationToSpaces);
+    QAction *toTabs = bindEditor(QStringLiteral("edit.convertIndentationToTabs"),
+                                 tr("Convert Indentation to Tabs"),
+                                 &CodeEditor::convertIndentationToTabs);
+    QAction *selectNext = bindEditor(QStringLiteral("edit.selectNextOccurrence"),
+                                     tr("Select Next Occurrence"),
+                                     &CodeEditor::selectNextOccurrence);
+    QAction *selectAllOcc = bindEditor(QStringLiteral("edit.selectAllOccurrences"),
+                                       tr("Select All Occurrences"),
+                                       &CodeEditor::selectAllOccurrences);
+
     QAction *toggleTerminal = m_commands->create(
         QStringLiteral("view.terminal"),
         tr("Toggle Terminal"));
@@ -131,6 +182,30 @@ void MainWindow::connectActions()
 
     m_keybindings = new KeybindingManager(m_commands, this);
     m_keybindings->apply();
+
+    QMenu *editMenu = menuBar()->addMenu(tr("Edit"));
+    editMenu->addAction(ui->actionFindReplace);
+    editMenu->addAction(ui->actionGoToLine);
+    editMenu->addSeparator();
+    editMenu->addAction(toggleLineComment);
+    editMenu->addAction(toggleBlockComment);
+    editMenu->addSeparator();
+    editMenu->addAction(indent);
+    editMenu->addAction(outdent);
+    editMenu->addAction(duplicateLine);
+    editMenu->addAction(deleteLine);
+    editMenu->addAction(moveLineUp);
+    editMenu->addAction(moveLineDown);
+    editMenu->addAction(selectLine);
+    editMenu->addAction(joinLines);
+    editMenu->addAction(sortLines);
+    editMenu->addSeparator();
+    editMenu->addAction(selectNext);
+    editMenu->addAction(selectAllOcc);
+    editMenu->addSeparator();
+    editMenu->addAction(trimWs);
+    editMenu->addAction(toSpaces);
+    editMenu->addAction(toTabs);
 
     QMenu *viewMenu = menuBar()->addMenu(tr("View"));
     viewMenu->addAction(commandPalette);
@@ -183,6 +258,27 @@ void MainWindow::updateCommandStates()
     m_commands->setEnabled(QStringLiteral("file.saveAll"), hasEditor);
     m_commands->setEnabled(QStringLiteral("edit.find"), hasEditor);
     m_commands->setEnabled(QStringLiteral("edit.gotoLine"), hasEditor);
+    const QStringList editIds{
+        QStringLiteral("edit.toggleLineComment"),
+        QStringLiteral("edit.toggleBlockComment"),
+        QStringLiteral("edit.indent"),
+        QStringLiteral("edit.outdent"),
+        QStringLiteral("edit.duplicateLine"),
+        QStringLiteral("edit.deleteLine"),
+        QStringLiteral("edit.moveLineUp"),
+        QStringLiteral("edit.moveLineDown"),
+        QStringLiteral("edit.selectLine"),
+        QStringLiteral("edit.joinLines"),
+        QStringLiteral("edit.sortLines"),
+        QStringLiteral("edit.trimTrailingWhitespace"),
+        QStringLiteral("edit.convertIndentationToSpaces"),
+        QStringLiteral("edit.convertIndentationToTabs"),
+        QStringLiteral("edit.selectNextOccurrence"),
+        QStringLiteral("edit.selectAllOccurrences"),
+    };
+    for (const QString &id : editIds) {
+        m_commands->setEnabled(id, hasEditor);
+    }
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
     m_commands->setEnabled(QStringLiteral("file.closeAll"), tabCount > 0);

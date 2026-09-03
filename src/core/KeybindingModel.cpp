@@ -31,6 +31,16 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("file.close"), QKeySequence(QStringLiteral("Ctrl+W")));
     defaults.insert(QStringLiteral("edit.find"), QKeySequence::Find);
     defaults.insert(QStringLiteral("edit.gotoLine"), QKeySequence(QStringLiteral("Ctrl+G")));
+    defaults.insert(QStringLiteral("edit.toggleLineComment"), QKeySequence(QStringLiteral("Ctrl+/")));
+    defaults.insert(QStringLiteral("edit.toggleBlockComment"), QKeySequence(QStringLiteral("Ctrl+Shift+/")));
+    defaults.insert(QStringLiteral("edit.duplicateLine"), QKeySequence(QStringLiteral("Ctrl+Shift+D")));
+    defaults.insert(QStringLiteral("edit.deleteLine"), QKeySequence(QStringLiteral("Ctrl+Shift+K")));
+    defaults.insert(QStringLiteral("edit.moveLineUp"), QKeySequence(QStringLiteral("Ctrl+Up")));
+    defaults.insert(QStringLiteral("edit.moveLineDown"), QKeySequence(QStringLiteral("Ctrl+Down")));
+    defaults.insert(QStringLiteral("edit.selectLine"), QKeySequence(QStringLiteral("Ctrl+L")));
+    defaults.insert(QStringLiteral("edit.joinLines"), QKeySequence(QStringLiteral("Ctrl+Shift+J")));
+    defaults.insert(QStringLiteral("edit.selectNextOccurrence"), QKeySequence(QStringLiteral("Ctrl+D")));
+    defaults.insert(QStringLiteral("edit.selectAllOccurrences"), QKeySequence(QStringLiteral("Ctrl+Shift+L")));
     defaults.insert(QStringLiteral("view.terminal"), QKeySequence(QStringLiteral("Ctrl+J")));
     defaults.insert(QStringLiteral("workbench.commandPalette"), QKeySequence(QStringLiteral("Ctrl+Shift+P")));
     defaults.insert(QStringLiteral("workbench.quickOpen"), QKeySequence(QStringLiteral("Ctrl+P")));
