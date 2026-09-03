@@ -14,6 +14,7 @@ public:
     explicit EditorStatusWidget(QWidget *parent = nullptr);
 
     void setEditor(CodeEditor *editor);
+    void setLspStatus(const QString &text);
 
 private:
     void refresh();
@@ -23,6 +24,7 @@ private:
     QLabel *m_encoding = nullptr;
     QLabel *m_eol = nullptr;
     QLabel *m_language = nullptr;
+    QLabel *m_lsp = nullptr;
 };
 
 #endif

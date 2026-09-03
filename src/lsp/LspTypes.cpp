@@ -109,6 +109,16 @@ LspCompletionItem lspCompletionItemFromJson(const QJsonObject &obj)
     }
     item.sortText = obj.value(QStringLiteral("sortText")).toString();
     item.kind = obj.value(QStringLiteral("kind")).toInt();
+    if (obj.contains(QStringLiteral("textEdit"))) {
+        const QJsonObject edit = obj.value(QStringLiteral("textEdit")).toObject();
+        item.hasTextEdit = edit.contains(QStringLiteral("range"));
+        if (item.hasTextEdit) {
+            item.textEditRange = lspRangeFromJson(edit.value(QStringLiteral("range")).toObject());
+        } else if (edit.contains(QStringLiteral("insert"))) {
+            item.hasTextEdit = true;
+            item.textEditRange = lspRangeFromJson(edit.value(QStringLiteral("insert")).toObject());
+        }
+    }
     return item;
 }
 
@@ -241,4 +251,62 @@ QString lspUriToPath(const QString &uri)
         return url.toLocalFile();
     }
     return {};
+}
+
+LspSignatureHelp lspSignatureHelpFromJson(const QJsonValue &value)
+{
+    LspSignatureHelp help;
+    if (!value.isObject()) {
+        return help;
+    }
+    const QJsonObject obj = value.toObject();
+    const QJsonArray signatures = obj.value(QStringLiteral("signatures")).toArray();
+    if (signatures.isEmpty()) {
+        return help;
+    }
+    const int active = qBound(0, obj.value(QStringLiteral("activeSignature")).toInt(0),
+                              signatures.size() - 1);
+    const QJsonObject signature = signatures.at(active).toObject();
+    help.label = signature.value(QStringLiteral("label")).toString();
+    help.documentation = lspMarkupToString(signature.value(QStringLiteral("documentation")));
+    help.activeParameter = obj.value(QStringLiteral("activeParameter")).toInt(0);
+    help.valid = !help.label.isEmpty();
+    return help;
+}
+
+QVector<LspTextEdit> lspTextEditsFromWorkspaceEdit(const QJsonObject &edit)
+{
+    QVector<LspTextEdit> out;
+    const QJsonObject changes = edit.value(QStringLiteral("changes")).toObject();
+    for (auto it = changes.begin(); it != changes.end(); ++it) {
+        const QString uri = it.key();
+        const QJsonArray edits = it.value().toArray();
+        for (const QJsonValue &item : edits) {
+            const QJsonObject obj = item.toObject();
+            LspTextEdit textEdit;
+            textEdit.uri = uri;
+            textEdit.range = lspRangeFromJson(obj.value(QStringLiteral("range")).toObject());
+            textEdit.newText = obj.value(QStringLiteral("newText")).toString();
+            out.append(textEdit);
+        }
+    }
+    const QJsonArray documentChanges = edit.value(QStringLiteral("documentChanges")).toArray();
+    for (const QJsonValue &change : documentChanges) {
+        const QJsonObject obj = change.toObject();
+        if (!obj.contains(QStringLiteral("edits"))) {
+            continue;
+        }
+        const QString uri =
+            obj.value(QStringLiteral("textDocument")).toObject().value(QStringLiteral("uri")).toString();
+        const QJsonArray edits = obj.value(QStringLiteral("edits")).toArray();
+        for (const QJsonValue &item : edits) {
+            const QJsonObject editObj = item.toObject();
+            LspTextEdit textEdit;
+            textEdit.uri = uri;
+            textEdit.range = lspRangeFromJson(editObj.value(QStringLiteral("range")).toObject());
+            textEdit.newText = editObj.value(QStringLiteral("newText")).toString();
+            out.append(textEdit);
+        }
+    }
+    return out;
 }

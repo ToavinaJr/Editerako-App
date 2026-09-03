@@ -30,6 +30,7 @@ public:
     void exit();
 
 signals:
+    void initializedChanged(bool initialized);
     void notificationReceived(const QString &method, const QJsonValue &params);
     void serverRequestReceived(const QString &method, const QJsonValue &id, const QJsonValue &params);
     void protocolError(const QString &message);

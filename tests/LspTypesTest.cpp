@@ -15,6 +15,9 @@ private slots:
     void completionItemsListAndObject();
     void locationsArrayAndLink();
     void fileUriRoundTrip();
+    void completionTextEditRange();
+    void workspaceEditChangesAndDocumentChanges();
+    void signatureHelpFromJson();
 };
 
 void LspTypesTest::positionRoundTrip()
@@ -86,6 +89,55 @@ void LspTypesTest::fileUriRoundTrip()
     const QString uri = lspFileUri(path);
     QVERIFY(uri.startsWith(QStringLiteral("file:")));
     QVERIFY(lspUriToPath(uri).endsWith(QStringLiteral("hello.cpp")));
+}
+
+void LspTypesTest::completionTextEditRange()
+{
+    const QJsonObject json{
+        {QStringLiteral("label"), QStringLiteral("foo")},
+        {QStringLiteral("textEdit"),
+         QJsonObject{{QStringLiteral("newText"), QStringLiteral("foo()")},
+                     {QStringLiteral("range"),
+                      lspRangeToJson(LspRange{LspPosition{1, 2}, LspPosition{1, 5}})}}}};
+    const LspCompletionItem item = lspCompletionItemFromJson(json);
+    QCOMPARE(item.insertText, QStringLiteral("foo()"));
+    QVERIFY(item.hasTextEdit);
+    QCOMPARE(item.textEditRange.start.character, 2);
+}
+
+void LspTypesTest::workspaceEditChangesAndDocumentChanges()
+{
+    QJsonObject changes;
+    changes.insert(QStringLiteral("file:///a.cpp"),
+                   QJsonArray{QJsonObject{{QStringLiteral("newText"), QStringLiteral("n")},
+                                          {QStringLiteral("range"),
+                                           lspRangeToJson(LspRange{LspPosition{0, 0}, LspPosition{0, 1}})}}});
+    const QVector<LspTextEdit> fromChanges =
+        lspTextEditsFromWorkspaceEdit(QJsonObject{{QStringLiteral("changes"), changes}});
+    QCOMPARE(fromChanges.size(), 1);
+    QCOMPARE(fromChanges.front().newText, QStringLiteral("n"));
+
+    QJsonObject documentEdit;
+    documentEdit.insert(QStringLiteral("textDocument"),
+                        QJsonObject{{QStringLiteral("uri"), QStringLiteral("file:///b.cpp")}});
+    documentEdit.insert(QStringLiteral("edits"),
+                        QJsonArray{QJsonObject{{QStringLiteral("newText"), QStringLiteral("x")},
+                                               {QStringLiteral("range"),
+                                                lspRangeToJson(LspRange{LspPosition{2, 0}, LspPosition{2, 1}})}}});
+    const QVector<LspTextEdit> fromDocs = lspTextEditsFromWorkspaceEdit(
+        QJsonObject{{QStringLiteral("documentChanges"), QJsonArray{documentEdit}}});
+    QCOMPARE(fromDocs.size(), 1);
+    QCOMPARE(fromDocs.front().uri, QStringLiteral("file:///b.cpp"));
+}
+
+void LspTypesTest::signatureHelpFromJson()
+{
+    QJsonObject signature{{QStringLiteral("label"), QStringLiteral("void f(int x)")}};
+    const QJsonObject json{{QStringLiteral("signatures"), QJsonArray{signature}},
+                           {QStringLiteral("activeParameter"), 0}};
+    const LspSignatureHelp help = lspSignatureHelpFromJson(json);
+    QVERIFY(help.valid);
+    QCOMPARE(help.label, QStringLiteral("void f(int x)"));
 }
 
 QTEST_GUILESS_MAIN(LspTypesTest)

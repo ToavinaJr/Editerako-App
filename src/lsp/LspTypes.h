@@ -44,6 +44,21 @@ struct LspCompletionItem {
     QString insertText;
     QString sortText;
     int kind = 0;
+    bool hasTextEdit = false;
+    LspRange textEditRange;
+};
+
+struct LspTextEdit {
+    QString uri;
+    LspRange range;
+    QString newText;
+};
+
+struct LspSignatureHelp {
+    QString label;
+    QString documentation;
+    int activeParameter = 0;
+    bool valid = false;
 };
 
 struct LspHover {
@@ -73,6 +88,8 @@ struct LspSymbol {
 [[nodiscard]] QVector<LspSymbol> lspDocumentSymbolsFromJson(const QJsonValue &value);
 [[nodiscard]] QVector<LspSymbol> lspWorkspaceSymbolsFromJson(const QJsonValue &value);
 [[nodiscard]] QString lspMarkupToString(const QJsonValue &value);
+[[nodiscard]] LspSignatureHelp lspSignatureHelpFromJson(const QJsonValue &value);
+[[nodiscard]] QVector<LspTextEdit> lspTextEditsFromWorkspaceEdit(const QJsonObject &edit);
 [[nodiscard]] QString lspFileUri(const QString &path);
 [[nodiscard]] QString lspUriToPath(const QString &uri);
 

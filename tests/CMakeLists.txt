@@ -220,3 +220,21 @@ editerako_add_test(test_LspServerProcess
     SOURCES LspServerProcessTest.cpp
     LIBS EditerakoLsp
 )
+
+editerako_add_test(test_CompletionModel
+    SOURCES CompletionModelTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_CompletionModel PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+editerako_add_test(test_DiagnosticMarkup
+    SOURCES DiagnosticMarkupTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_DiagnosticMarkup PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)

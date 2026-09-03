@@ -14,6 +14,7 @@
 #include "editor/FindReplaceDialog.h"
 #include "editor/GoToLineDialog.h"
 #include "lsp/LspServerManager.h"
+#include "app/LspSession.h"
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
@@ -56,6 +57,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupFileTree();
     setupCodeEditor();
+
+    m_lsp = new LspServerManager(this);
+    m_lspSession = new LspSession(m_lsp, m_editorManager, this);
+    connect(m_lspSession, &LspSession::statusMessage, this, [this](const QString &message, int timeoutMs) {
+        if (statusBar()) {
+            statusBar()->showMessage(message, timeoutMs);
+        }
+    });
+    connect(m_lspSession, &LspSession::lspStatusChanged, this, [this](const QString &text) {
+        if (m_editorStatus) {
+            m_editorStatus->setLspStatus(text);
+        }
+    });
+
     connectActions();
     restartAutoSave();
     updateWindowTitle();
@@ -67,8 +82,6 @@ MainWindow::MainWindow(QWidget *parent)
     setupTerminalPanel();
     installChatWidget();
     connectWorkspaceCollaborators();
-
-    m_lsp = new LspServerManager(this);
 
     setAcceptDrops(true);
 
@@ -161,6 +174,56 @@ void MainWindow::connectActions()
                                        tr("Select All Occurrences"),
                                        &CodeEditor::selectAllOccurrences);
 
+    QAction *triggerSuggest = m_commands->create(QStringLiteral("editor.triggerSuggest"),
+                                                 tr("Trigger Suggest"));
+    connect(triggerSuggest, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->triggerCompletion();
+        }
+    });
+    QAction *gotoDefinition = m_commands->create(QStringLiteral("editor.gotoDefinition"),
+                                                 tr("Go to Definition"));
+    connect(gotoDefinition, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->goToDefinition();
+        }
+    });
+    QAction *findReferences = m_commands->create(QStringLiteral("editor.findReferences"),
+                                                 tr("Find References"));
+    connect(findReferences, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->findReferences();
+        }
+    });
+    QAction *renameSymbol = m_commands->create(QStringLiteral("editor.renameSymbol"),
+                                               tr("Rename Symbol"));
+    connect(renameSymbol, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->renameSymbol();
+        }
+    });
+    QAction *documentSymbols = m_commands->create(QStringLiteral("editor.documentSymbols"),
+                                                  tr("Go to Symbol in Editor..."));
+    connect(documentSymbols, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->showDocumentSymbols();
+        }
+    });
+    QAction *workspaceSymbols = m_commands->create(QStringLiteral("editor.workspaceSymbols"),
+                                                   tr("Go to Symbol in Workspace..."));
+    connect(workspaceSymbols, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->showWorkspaceSymbols();
+        }
+    });
+    QAction *showHover = m_commands->create(QStringLiteral("editor.showHover"),
+                                            tr("Show Hover"));
+    connect(showHover, &QAction::triggered, this, [this]() {
+        if (m_lspSession) {
+            m_lspSession->triggerHover();
+        }
+    });
+
     QAction *toggleTerminal = m_commands->create(
         QStringLiteral("view.terminal"),
         tr("Toggle Terminal"));
@@ -213,6 +276,16 @@ void MainWindow::connectActions()
     editMenu->addAction(toSpaces);
     editMenu->addAction(toTabs);
 
+    QMenu *goMenu = menuBar()->addMenu(tr("Go"));
+    goMenu->addAction(gotoDefinition);
+    goMenu->addAction(findReferences);
+    goMenu->addAction(documentSymbols);
+    goMenu->addAction(workspaceSymbols);
+    goMenu->addSeparator();
+    goMenu->addAction(triggerSuggest);
+    goMenu->addAction(showHover);
+    goMenu->addAction(renameSymbol);
+
     QMenu *viewMenu = menuBar()->addMenu(tr("View"));
     viewMenu->addAction(commandPalette);
     viewMenu->addAction(quickOpen);
@@ -238,6 +311,9 @@ void MainWindow::connectWorkspaceCollaborators()
                 AppSettings::setWorkspaceRoot(path);
                 if (m_editorManager) {
                     m_editorManager->setWorkingDirectory(path);
+                }
+                if (m_lspSession) {
+                    m_lspSession->setWorkspaceRoot(path);
                 }
                 if (m_terminalPanel) {
                     m_terminalPanel->setWorkingDirectory(path);
@@ -283,6 +359,18 @@ void MainWindow::updateCommandStates()
         QStringLiteral("edit.selectAllOccurrences"),
     };
     for (const QString &id : editIds) {
+        m_commands->setEnabled(id, hasEditor);
+    }
+    const QStringList lspIds{
+        QStringLiteral("editor.triggerSuggest"),
+        QStringLiteral("editor.gotoDefinition"),
+        QStringLiteral("editor.findReferences"),
+        QStringLiteral("editor.renameSymbol"),
+        QStringLiteral("editor.documentSymbols"),
+        QStringLiteral("editor.workspaceSymbols"),
+        QStringLiteral("editor.showHover"),
+    };
+    for (const QString &id : lspIds) {
         m_commands->setEnabled(id, hasEditor);
     }
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);

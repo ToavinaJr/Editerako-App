@@ -42,6 +42,8 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 
+`LspSession` (`src/app/`) démarre clangd pour C/C++, synchronise les buffers, et pilote completion / hover / diagnostics / navigation. [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
+
 Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake` (une OBJECT lib par grammaire). Seul `tree_sitter/api.h` est PUBLIC. Metadata : `LanguageDefinition` dans `LanguageRegistry`. Détail : [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md).
 
 ## Flux importants

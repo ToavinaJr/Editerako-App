@@ -7,8 +7,11 @@
 #include "editor/features/LineMovementController.h"
 #include "editor/features/MultiCursorController.h"
 #include "editor/features/OccurrenceController.h"
+#include "editor/EditorDiagnostic.h"
 
 #include <QPlainTextEdit>
+#include <QPoint>
+#include <QVector>
 
 class LineNumberArea;
 
@@ -41,8 +44,18 @@ public:
     void selectNextOccurrence();
     void selectAllOccurrences();
 
+    void setDiagnostics(const QVector<EditorDiagnostic> &diagnostics);
+    [[nodiscard]] const QVector<EditorDiagnostic> &diagnostics() const { return m_diagnostics; }
+
+signals:
+    void completionRequested();
+    void signatureHelpRequested();
+    void hoverRequested(int line, int character, const QPoint &globalPos);
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void leaveEvent(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -51,6 +64,7 @@ private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &rect, int dy);
+    void emitHover();
 
 private:
     LineNumberArea *m_lineNumberArea = nullptr;
@@ -61,6 +75,9 @@ private:
     CommentController m_comments;
     LineEditCommands m_lineEdits;
     OccurrenceController m_occurrences;
+    QVector<EditorDiagnostic> m_diagnostics;
+    class QTimer *m_hoverTimer = nullptr;
+    QPoint m_hoverLocalPos;
 };
 
 #endif

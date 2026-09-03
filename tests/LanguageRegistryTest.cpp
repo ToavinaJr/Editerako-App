@@ -18,6 +18,7 @@ private slots:
     void highlightQueryPaths();
     void commentTokens();
     void definitionTableCoversEveryId();
+    void languageIdStrings();
 };
 
 void LanguageRegistryTest::emptyPathIsPlainText()
@@ -131,6 +132,13 @@ void LanguageRegistryTest::definitionTableCoversEveryId()
         QVERIFY2(!def.highlightQueryResourcePath.isEmpty(), qPrintable(def.displayName));
         QVERIFY2(LanguageRegistry::tsLanguage(def.id) != nullptr, qPrintable(def.displayName));
     }
+}
+
+void LanguageRegistryTest::languageIdStrings()
+{
+    QCOMPARE(LanguageRegistry::languageIdString(LanguageId::C), QStringLiteral("c"));
+    QCOMPARE(LanguageRegistry::languageIdString(LanguageId::Cpp), QStringLiteral("cpp"));
+    QVERIFY(LanguageRegistry::languageIdString(LanguageId::PlainText).isEmpty());
 }
 
 QTEST_GUILESS_MAIN(LanguageRegistryTest)

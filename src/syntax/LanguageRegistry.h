@@ -56,6 +56,7 @@ public:
     [[nodiscard]] static LanguageId idForPath(const QString &path);
     [[nodiscard]] static LanguageId idForExtension(const QString &extension);
     [[nodiscard]] static QString displayName(LanguageId id);
+    [[nodiscard]] static QString languageIdString(LanguageId id);
     [[nodiscard]] static const TSLanguage *tsLanguage(LanguageId id);
     [[nodiscard]] static QString highlightQueryResourcePath(LanguageId id);
     [[nodiscard]] static QByteArray highlightQuerySource(LanguageId id);

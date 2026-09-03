@@ -109,8 +109,25 @@ bool LspServerManager::startSpec(const QString &specId, const QString &rootUri,
     }
 
     Instance *instance = createInstance(specId, spec.languageIds, process->transport(), process);
-    instance->client->initialize(rootUri, {});
+    connect(process, &LspServerProcess::started, this, [this, specId, rootUri]() {
+        Instance *ready = m_bySpec.value(specId, nullptr);
+        if (ready && ready->client && !ready->client->isInitialized()) {
+            ready->client->initialize(rootUri, {});
+        }
+    });
+    if (process->isRunning()) {
+        instance->client->initialize(rootUri, {});
+    }
     return true;
+}
+
+bool LspServerManager::ensureSpec(const QString &specId, const QString &rootUri,
+                                  const QString &workingDirectory)
+{
+    if (m_bySpec.contains(specId)) {
+        return true;
+    }
+    return startSpec(specId, rootUri, workingDirectory);
 }
 
 void LspServerManager::attachTransport(const QString &specId, const QStringList &languageIds,

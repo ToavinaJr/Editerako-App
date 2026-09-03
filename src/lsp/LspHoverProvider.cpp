@@ -40,3 +40,21 @@ void LspHoverProvider::hover(const QString &uri, int line, int character, const 
                               }
                           });
 }
+
+void LspHoverProvider::signatureHelp(const QString &uri, int line, int character,
+                                     const SignatureCallback &callback)
+{
+    if (!m_client) {
+        if (callback) {
+            callback({});
+        }
+        return;
+    }
+    m_client->sendRequest(QStringLiteral("textDocument/signatureHelp"),
+                          textDocumentPosition(uri, line, character),
+                          [callback](const QJsonValue &result, const QJsonObject &) {
+                              if (callback) {
+                                  callback(lspSignatureHelpFromJson(result));
+                              }
+                          });
+}

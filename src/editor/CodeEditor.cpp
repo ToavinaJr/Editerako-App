@@ -1,6 +1,7 @@
 #include "editor/CodeEditor.h"
 
 #include "core/AppSettings.h"
+#include "editor/DiagnosticMarkup.h"
 #include "editor/EditorDocument.h"
 #include "editor/features/AutoClosingPairs.h"
 #include "editor/features/BracketMatcher.h"
@@ -10,6 +11,8 @@
 #include "syntax/LanguageRegistry.h"
 
 #include <QColor>
+#include <QEvent>
+#include <QHash>
 #include <QKeyEvent>
 #include <QList>
 #include <QMouseEvent>
@@ -17,6 +20,7 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextEdit>
+#include <QTimer>
 
 CodeEditor::CodeEditor(QWidget *parent)
     : QPlainTextEdit(parent)
@@ -28,10 +32,17 @@ CodeEditor::CodeEditor(QWidget *parent)
     , m_comments(this)
     , m_lineEdits(this)
     , m_occurrences(this, &m_multiCursor)
+    , m_hoverTimer(new QTimer(this))
 {
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
     connect(this, &CodeEditor::cursorPositionChanged, this, &CodeEditor::highlightCurrentLine);
+
+    m_hoverTimer->setSingleShot(true);
+    m_hoverTimer->setInterval(400);
+    connect(m_hoverTimer, &QTimer::timeout, this, &CodeEditor::emitHover);
+    viewport()->setMouseTracking(true);
+    setMouseTracking(true);
 
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
@@ -51,6 +62,7 @@ int CodeEditor::lineNumberAreaWidth() const
     }
 
     int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+    space += diagnosticGutterExtraWidth(m_diagnostics);
     return space;
 }
 
@@ -82,7 +94,7 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 
 void CodeEditor::highlightCurrentLine()
 {
-    QList<QTextEdit::ExtraSelection> extras;
+    QList<QTextEdit::ExtraSelection> extras = diagnosticExtraSelections(this, m_diagnostics);
     const BracketMatch match = findBracketMatch(toPlainText(), textCursor().position());
     if (match.isValid()) {
         QTextEdit::ExtraSelection open;
@@ -108,6 +120,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 
     QPainter painter(m_lineNumberArea);
     painter.fillRect(event->rect(), QColor(45, 45, 48));
+    const QHash<int, EditorDiagnostic::Severity> worst = worstDiagnosticByLine(m_diagnostics);
 
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
@@ -116,6 +129,14 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
+            const auto it = worst.constFind(block.blockNumber());
+            if (it != worst.cend()) {
+                painter.setBrush(diagnosticColor(it.value()));
+                painter.setPen(Qt::NoPen);
+                const int size = 6;
+                const int y = top + qMax(0, (fontMetrics().height() - size) / 2);
+                painter.drawEllipse(2, y, size, size);
+            }
             const QString number = QString::number(blockNumber + 1);
             painter.setPen(QColor(128, 128, 128));
             painter.drawText(0, top, m_lineNumberArea->width() - 3, fontMetrics().height(),
@@ -150,6 +171,34 @@ void CodeEditor::mousePressEvent(QMouseEvent *event)
         return;
     }
     QPlainTextEdit::mousePressEvent(event);
+}
+
+void CodeEditor::mouseMoveEvent(QMouseEvent *event)
+{
+    QPlainTextEdit::mouseMoveEvent(event);
+    m_hoverLocalPos = event->pos();
+    m_hoverTimer->start();
+}
+
+void CodeEditor::leaveEvent(QEvent *event)
+{
+    m_hoverTimer->stop();
+    QPlainTextEdit::leaveEvent(event);
+}
+
+void CodeEditor::emitHover()
+{
+    const QTextCursor cursor = cursorForPosition(m_hoverLocalPos);
+    emit hoverRequested(cursor.blockNumber(), cursor.positionInBlock(),
+                        mapToGlobal(m_hoverLocalPos));
+}
+
+void CodeEditor::setDiagnostics(const QVector<EditorDiagnostic> &diagnostics)
+{
+    m_diagnostics = diagnostics;
+    updateLineNumberAreaWidth(0);
+    m_lineNumberArea->update();
+    highlightCurrentLine();
 }
 
 void CodeEditor::paintEvent(QPaintEvent *event)
@@ -202,6 +251,21 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
     QPlainTextEdit::keyPressEvent(event);
     if (!m_multiCursor.isEmpty()) {
         viewport()->update();
+    }
+
+    const QString typed = event->text();
+    if (typed == QLatin1String(".") || typed == QLatin1String(":")) {
+        emit completionRequested();
+    } else if (typed == QLatin1String(">")) {
+        const QTextCursor cursor = textCursor();
+        if (cursor.position() >= 2) {
+            const QString around = toPlainText().mid(cursor.position() - 2, 2);
+            if (around == QLatin1String("->")) {
+                emit completionRequested();
+            }
+        }
+    } else if (typed == QLatin1String("(") || typed == QLatin1String(",")) {
+        emit signatureHelpRequested();
     }
 }
 

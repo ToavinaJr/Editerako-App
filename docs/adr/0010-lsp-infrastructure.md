@@ -23,7 +23,7 @@ Cible `EditerakoLsp` (statique), dépendances `EditerakoCore` + `Qt6::Core`. Auc
 | Providers | diagnostics (notification), completion, hover, definition/references/rename, document/workspace symbols |
 | `LspTypes` | Position/Range/Location/Diagnostic/CompletionItem/Hover/Symbol + URI `file:` |
 
-`MainWindow` crée le manager (composition root) et l’arrête au close. **Aucun serveur n’est démarré** (clangd = phase 11). Pas de popup completion, pas de gutter diagnostics, pas de Problems panel.
+`MainWindow` crée le manager (composition root) et l’arrête au close. **Aucun serveur n’est démarré ici** : clangd est lancé par `LspSession` en phase 11. Pas de Problems panel (phase 12).
 
 Les tests parlent à un `FakeJsonRpcTransport` in-process. Pas de binaire LSP requis.
 
@@ -31,4 +31,4 @@ Les tests parlent à un `FakeJsonRpcTransport` in-process. Pas de binaire LSP re
 
 - clangd absent : aucun impact en phase 10.
 - `waitForStarted` n’est pas utilisé au start (thread UI). Commande vide ou binaire introuvable : `start()` retourne `false` et émet `failed` sans lancer `QProcess`. Un crash ultérieur du process passe encore par `errorOccurred` → `failed`.
-- `languageServer` dans `LanguageDefinition` n’est pas encore consommé.
+- `languageServer` dans `LanguageDefinition` est consommé par `LspSession` (clangd).

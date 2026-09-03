@@ -46,6 +46,12 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("workbench.quickOpen"), QKeySequence(QStringLiteral("Ctrl+P")));
     defaults.insert(QStringLiteral("workbench.search"), QKeySequence(QStringLiteral("Ctrl+Shift+F")));
     defaults.insert(QStringLiteral("preferences.open"), QKeySequence(QStringLiteral("Ctrl+,")));
+    defaults.insert(QStringLiteral("editor.triggerSuggest"), QKeySequence(QStringLiteral("Ctrl+Space")));
+    defaults.insert(QStringLiteral("editor.gotoDefinition"), QKeySequence(QStringLiteral("F12")));
+    defaults.insert(QStringLiteral("editor.findReferences"), QKeySequence(QStringLiteral("Shift+F12")));
+    defaults.insert(QStringLiteral("editor.renameSymbol"), QKeySequence(QStringLiteral("F2")));
+    defaults.insert(QStringLiteral("editor.documentSymbols"), QKeySequence(QStringLiteral("Ctrl+Shift+O")));
+    defaults.insert(QStringLiteral("editor.workspaceSymbols"), QKeySequence(QStringLiteral("Ctrl+T")));
     return defaults;
 }
 

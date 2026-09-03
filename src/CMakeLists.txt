@@ -14,6 +14,8 @@ set(editerako_app_sources
     app/MainWindow.cpp
     app/MainWindow.h
     app/MainWindow.ui
+    app/LspSession.cpp
+    app/LspSession.h
     ui/UiHelpers.cpp
     ui/UiHelpers.h
     ui/KeybindingEditor.cpp

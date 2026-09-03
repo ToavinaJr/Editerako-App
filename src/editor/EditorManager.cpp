@@ -154,6 +154,28 @@ bool EditorManager::goToLine(int lineNumber, int column)
     return true;
 }
 
+bool EditorManager::revealLocation(const QString &filePath, int line, int character)
+{
+    if (filePath.isEmpty()) {
+        return false;
+    }
+    if (!activateExisting(filePath) && !openTextFile(filePath)) {
+        return false;
+    }
+    return goToLine(line + 1, character);
+}
+
+QList<CodeEditor *> EditorManager::editors() const
+{
+    QList<CodeEditor *> result;
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        if (auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i))) {
+            result.append(editor);
+        }
+    }
+    return result;
+}
+
 void EditorManager::saveDirtyFilesQuietly()
 {
     for (CodeEditor *editor : modifiedEditors()) {
@@ -172,6 +194,7 @@ CodeEditor *EditorManager::openUntitled()
     m_tabs->setCurrentIndex(idx);
     updateTabLabel(editor);
     qCInfo(lcEditor) << "Opened untitled document";
+    emit documentOpened(editor);
     return editor;
 }
 
@@ -253,6 +276,7 @@ bool EditorManager::openTextFile(const QString &filePath)
     editor->setFocus();
 
     qCInfo(lcEditor) << "Opened" << doc->filePath();
+    emit documentOpened(editor);
     return true;
 }
 
@@ -388,6 +412,7 @@ bool EditorManager::saveAs(CodeEditor *editor)
 
     if (auto *doc = EditorDocument::fromEditor(editor)) {
         doc->setFilePath(fileName);
+        emit documentOpened(editor);
     }
     return true;
 }
@@ -458,6 +483,7 @@ EditorManager::CloseResult EditorManager::closeTab(int index)
         if (!confirmClose(editor)) {
             return CloseResult::Cancelled;
         }
+        emit documentAboutToClose(editor);
     }
 
     m_tabs->removeTab(index);

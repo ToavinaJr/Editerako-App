@@ -18,6 +18,15 @@ editerako_add_module(EditerakoEditor
         GoToLineDialog.h
         HighlighterSync.cpp
         HighlighterSync.h
+        CompletionModel.cpp
+        CompletionModel.h
+        CompletionPopup.cpp
+        CompletionPopup.h
+        HoverPopup.cpp
+        HoverPopup.h
+        EditorDiagnostic.h
+        DiagnosticMarkup.cpp
+        DiagnosticMarkup.h
         features/CurrentLineHighlighter.cpp
         features/CurrentLineHighlighter.h
         features/LineMovementController.cpp

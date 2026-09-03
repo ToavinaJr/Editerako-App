@@ -41,6 +41,7 @@ QJsonObject clientCapabilities()
                         QJsonObject{{QStringLiteral("didSave"), true}});
     textDocument.insert(QStringLiteral("completion"), completion);
     textDocument.insert(QStringLiteral("hover"), hover);
+    textDocument.insert(QStringLiteral("signatureHelp"), QJsonObject{});
     textDocument.insert(QStringLiteral("definition"), QJsonObject{});
     textDocument.insert(QStringLiteral("references"), QJsonObject{});
     textDocument.insert(QStringLiteral("rename"), QJsonObject{});
@@ -100,6 +101,7 @@ void LspClient::initialize(const QString &rootUri, const ResponseCallback &callb
                     if (error.isEmpty()) {
                         m_initialized = true;
                         sendNotification(QStringLiteral("initialized"), QJsonObject{});
+                        emit initializedChanged(true);
                     }
                     if (callback) {
                         callback(result, error);
@@ -112,6 +114,7 @@ void LspClient::shutdown(const ResponseCallback &callback)
     sendRequest(QStringLiteral("shutdown"), QJsonValue(),
                 [this, callback](const QJsonValue &result, const QJsonObject &error) {
                     m_initialized = false;
+                    emit initializedChanged(false);
                     if (callback) {
                         callback(result, error);
                     }
@@ -121,7 +124,10 @@ void LspClient::shutdown(const ResponseCallback &callback)
 void LspClient::exit()
 {
     sendNotification(QStringLiteral("exit"), QJsonValue());
-    m_initialized = false;
+    if (m_initialized) {
+        m_initialized = false;
+        emit initializedChanged(false);
+    }
 }
 
 void LspClient::replyNull(const QJsonValue &id)

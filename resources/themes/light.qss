@@ -356,3 +356,26 @@ ChatWidget QPushButton#chatSendButton:hover {
 ChatWidget QPushButton#chatSendButton:pressed {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3a8eef, stop:1 #2a6aad);
 }
+
+QFrame#completionPopup {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+    color: #1e1e1e;
+}
+
+QFrame#completionPopup QListView {
+    background-color: #ffffff;
+    color: #1e1e1e;
+    border: none;
+}
+
+QFrame#hoverPopup {
+    background-color: #f3f3f3;
+    border: 1px solid #d0d0d0;
+    color: #1e1e1e;
+}
+
+QFrame#hoverPopup QTextBrowser {
+    background-color: #f3f3f3;
+    color: #1e1e1e;
+}

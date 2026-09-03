@@ -34,6 +34,8 @@ public:
     void registerSpec(const LspServerSpec &spec);
     [[nodiscard]] bool startSpec(const QString &specId, const QString &rootUri,
                                  const QString &workingDirectory = {});
+    [[nodiscard]] bool ensureSpec(const QString &specId, const QString &rootUri,
+                                  const QString &workingDirectory = {});
     void stopAll();
 
     [[nodiscard]] LspClient *clientForLanguage(const QString &languageId) const;

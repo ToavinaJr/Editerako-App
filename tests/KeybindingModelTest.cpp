@@ -35,6 +35,12 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+/")));
     QCOMPARE(defaults.value(QStringLiteral("edit.moveLineUp")),
              QKeySequence(QStringLiteral("Ctrl+Up")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.gotoDefinition")),
+             QKeySequence(QStringLiteral("F12")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.findReferences")),
+             QKeySequence(QStringLiteral("Shift+F12")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.triggerSuggest")),
+             QKeySequence(QStringLiteral("Ctrl+Space")));
 }
 
 void KeybindingModelTest::overrideAndReset()

@@ -153,6 +153,43 @@ QString LanguageRegistry::displayName(LanguageId id)
     return definition(id).displayName;
 }
 
+QString LanguageRegistry::languageIdString(LanguageId id)
+{
+    switch (id) {
+    case LanguageId::C:
+        return QStringLiteral("c");
+    case LanguageId::Cpp:
+        return QStringLiteral("cpp");
+    case LanguageId::CMake:
+        return QStringLiteral("cmake");
+    case LanguageId::Html:
+        return QStringLiteral("html");
+    case LanguageId::Css:
+        return QStringLiteral("css");
+    case LanguageId::JavaScript:
+        return QStringLiteral("javascript");
+    case LanguageId::TypeScript:
+        return QStringLiteral("typescript");
+    case LanguageId::Tsx:
+        return QStringLiteral("typescriptreact");
+    case LanguageId::Json:
+        return QStringLiteral("json");
+    case LanguageId::Markdown:
+        return QStringLiteral("markdown");
+    case LanguageId::Python:
+        return QStringLiteral("python");
+    case LanguageId::Shell:
+        return QStringLiteral("shellscript");
+    case LanguageId::Sql:
+        return QStringLiteral("sql");
+    case LanguageId::Yaml:
+        return QStringLiteral("yaml");
+    case LanguageId::PlainText:
+        break;
+    }
+    return {};
+}
+
 const TSLanguage *LanguageRegistry::tsLanguage(LanguageId id)
 {
     const auto fn = definition(id).treeSitterLanguage;

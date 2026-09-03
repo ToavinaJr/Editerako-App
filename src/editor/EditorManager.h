@@ -57,13 +57,17 @@ public:
     bool promptSaveAllOnQuit();
     void applySettings();
     bool goToLine(int lineNumber, int column = 0);
+    bool revealLocation(const QString &filePath, int line, int character);
     void saveDirtyFilesQuietly();
+    [[nodiscard]] QList<CodeEditor *> editors() const;
 
 signals:
     void currentChanged();
     void modificationChanged();
     void aboutToSave(const QString &path);
     void fileSaved(const QString &path);
+    void documentOpened(CodeEditor *editor);
+    void documentAboutToClose(CodeEditor *editor);
 
 private:
     CodeEditor *createEditor();
