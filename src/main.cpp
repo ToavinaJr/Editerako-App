@@ -6,11 +6,11 @@
 
 #include <QApplication>
 #include <QCoreApplication>
-#include <QFile>
-#include <QTextStream>
-#include <QRegularExpression>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QRegularExpression>
+#include <QTextStream>
 
 static bool tryLoadEnvFile(const QString &envPath)
 {

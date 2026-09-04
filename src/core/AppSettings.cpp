@@ -103,31 +103,24 @@ QJsonObject loadWorkspaceOverlay(const QString &root)
 } // namespace
 
 AppSettings::AppSettings()
-    : m_ownedSettings(std::make_unique<QSettings>())
-    , m_userSettings(m_ownedSettings.get())
-    , m_workspaceOverlay(g_workspaceOverlay)
-{
-}
+    : m_ownedSettings(std::make_unique<QSettings>()), m_userSettings(m_ownedSettings.get()),
+      m_workspaceOverlay(g_workspaceOverlay)
+{}
 
 AppSettings::AppSettings(QSettings &userSettings)
-    : m_userSettings(&userSettings)
-    , m_workspaceOverlay(g_workspaceOverlay)
-{
-}
+    : m_userSettings(&userSettings), m_workspaceOverlay(g_workspaceOverlay)
+{}
 
 AppSettings::AppSettings(QSettings &userSettings, QJsonObject workspaceOverlay)
-    : m_userSettings(&userSettings)
-    , m_workspaceOverlay(std::move(workspaceOverlay))
-{
-}
+    : m_userSettings(&userSettings), m_workspaceOverlay(std::move(workspaceOverlay))
+{}
 
 AppSettings::~AppSettings() = default;
 
 void AppSettings::setWorkspaceRoot(const QString &root)
 {
-    const QString normalized = root.isEmpty()
-        ? QString()
-        : QDir::cleanPath(QFileInfo(root).absoluteFilePath());
+    const QString normalized =
+        root.isEmpty() ? QString() : QDir::cleanPath(QFileInfo(root).absoluteFilePath());
     g_workspaceRoot = normalized;
     g_workspaceOverlay = loadWorkspaceOverlay(normalized);
 }
@@ -168,7 +161,8 @@ QString AppSettings::defaultAiModel()
 
 QVariant AppSettings::value(const char *key, const QVariant &fallback) const
 {
-    const QVariant overlay = variantFromJson(jsonValueForKey(m_workspaceOverlay, QLatin1String(key)));
+    const QVariant overlay =
+        variantFromJson(jsonValueForKey(m_workspaceOverlay, QLatin1String(key)));
     if (overlay.isValid()) {
         return overlay;
     }
@@ -359,7 +353,8 @@ void AppSettings::setAiEndpoint(const QString &endpoint)
 
 qint64 AppSettings::largeFileWarnBytes() const
 {
-    return qMax(qint64(1), value(kLargeFileWarnBytes, QVariant::fromValue(kDefaultWarnBytes)).toLongLong());
+    return qMax(qint64(1),
+                value(kLargeFileWarnBytes, QVariant::fromValue(kDefaultWarnBytes)).toLongLong());
 }
 
 void AppSettings::setLargeFileWarnBytes(qint64 bytes)
@@ -369,8 +364,9 @@ void AppSettings::setLargeFileWarnBytes(qint64 bytes)
 
 qint64 AppSettings::largeFileDisableSyntaxBytes() const
 {
-    return qMax(qint64(1), value(kLargeFileDisableSyntaxBytes,
-                                QVariant::fromValue(kDefaultDisableSyntaxBytes)).toLongLong());
+    return qMax(qint64(1),
+                value(kLargeFileDisableSyntaxBytes, QVariant::fromValue(kDefaultDisableSyntaxBytes))
+                    .toLongLong());
 }
 
 void AppSettings::setLargeFileDisableSyntaxBytes(qint64 bytes)

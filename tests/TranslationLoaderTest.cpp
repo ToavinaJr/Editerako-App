@@ -19,11 +19,16 @@ private slots:
 
 void TranslationLoaderTest::frenchAndEnglishLocales()
 {
-    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("fr")).language(), QLocale::French);
-    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("FR")).language(), QLocale::French);
-    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("fr_FR")).language(), QLocale::French);
-    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("en")).language(), QLocale::English);
-    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("en_US")).language(), QLocale::English);
+    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("fr")).language(),
+             QLocale::French);
+    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("FR")).language(),
+             QLocale::French);
+    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("fr_FR")).language(),
+             QLocale::French);
+    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("en")).language(),
+             QLocale::English);
+    QCOMPARE(TranslationLoader::localeForUiLanguage(QStringLiteral("en_US")).language(),
+             QLocale::English);
 }
 
 void TranslationLoaderTest::systemLocaleFallback()

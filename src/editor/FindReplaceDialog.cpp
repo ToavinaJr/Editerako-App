@@ -1,16 +1,16 @@
 #include "editor/FindReplaceDialog.h"
 #include "editor/CodeEditor.h"
-#include <QVBoxLayout>
+#include <QCheckBox>
+#include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QTextCursor>
-#include <QRegularExpression>
 #include <QMessageBox>
-#include <QFrame>
+#include <QPushButton>
+#include <QRegularExpression>
 #include <QStyle>
+#include <QTextCursor>
+#include <QVBoxLayout>
 
 FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
     : QDialog(parent), editor(editor)
@@ -97,7 +97,7 @@ FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
 void FindReplaceDialog::findNext()
 {
     QString pattern = searchLineEdit->text();
-    if(pattern.isEmpty()) {
+    if (pattern.isEmpty()) {
         searchLineEdit->setProperty("invalid", true);
         searchLineEdit->style()->unpolish(searchLineEdit);
         searchLineEdit->style()->polish(searchLineEdit);
@@ -109,20 +109,20 @@ void FindReplaceDialog::findNext()
     searchLineEdit->style()->polish(searchLineEdit);
 
     QTextDocument::FindFlags flags;
-    if(caseSensitiveCheckBox->isChecked())
+    if (caseSensitiveCheckBox->isChecked())
         flags |= QTextDocument::FindCaseSensitively;
 
     QTextCursor cursor = editor->textCursor();
     bool found = false;
 
-    if(regexCheckBox->isChecked()) {
+    if (regexCheckBox->isChecked()) {
         QRegularExpression regex(pattern,
                                  caseSensitiveCheckBox->isChecked()
                                      ? QRegularExpression::NoPatternOption
                                      : QRegularExpression::CaseInsensitiveOption);
 
         QRegularExpressionMatch match = regex.match(editor->toPlainText(), cursor.position());
-        if(match.hasMatch()) {
+        if (match.hasMatch()) {
             cursor.setPosition(match.capturedStart());
             cursor.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
             editor->setTextCursor(cursor);
@@ -132,9 +132,8 @@ void FindReplaceDialog::findNext()
         int index = editor->toPlainText().indexOf(
             pattern,
             cursor.position(),
-            caseSensitiveCheckBox->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive
-            );
-        if(index != -1) {
+            caseSensitiveCheckBox->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive);
+        if (index != -1) {
             cursor.setPosition(index);
             cursor.setPosition(index + pattern.length(), QTextCursor::KeepAnchor);
             editor->setTextCursor(cursor);
@@ -142,7 +141,7 @@ void FindReplaceDialog::findNext()
         }
     }
 
-    if(!found) {
+    if (!found) {
         QMessageBox msgBox(this);
         msgBox.setWindowTitle(tr("Find"));
         msgBox.setText(tr("No more matches found."));
@@ -154,7 +153,7 @@ void FindReplaceDialog::findNext()
 void FindReplaceDialog::replace()
 {
     QTextCursor cursor = editor->textCursor();
-    if(cursor.hasSelection()) {
+    if (cursor.hasSelection()) {
         cursor.insertText(replaceLineEdit->text());
     }
     findNext();
@@ -164,26 +163,26 @@ void FindReplaceDialog::replaceAll()
 {
     QString text = editor->toPlainText();
     QString pattern = searchLineEdit->text();
-    if(pattern.isEmpty()) return;
+    if (pattern.isEmpty())
+        return;
 
     int count = 0;
 
-    if(regexCheckBox->isChecked()) {
+    if (regexCheckBox->isChecked()) {
         QRegularExpression regex(pattern,
                                  caseSensitiveCheckBox->isChecked()
                                      ? QRegularExpression::NoPatternOption
                                      : QRegularExpression::CaseInsensitiveOption);
 
         QRegularExpressionMatchIterator it = regex.globalMatch(text);
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             it.next();
             count++;
         }
         text.replace(regex, replaceLineEdit->text());
     } else {
-        Qt::CaseSensitivity cs = caseSensitiveCheckBox->isChecked()
-        ? Qt::CaseSensitive
-        : Qt::CaseInsensitive;
+        Qt::CaseSensitivity cs =
+            caseSensitiveCheckBox->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive;
         count = text.count(pattern, cs);
         text.replace(pattern, replaceLineEdit->text(), cs);
     }

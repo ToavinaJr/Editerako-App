@@ -1,8 +1,8 @@
 #include "ui/SettingsDialog.h"
 
+#include "ai/AiCatalog.h"
 #include "core/AppSettings.h"
 #include "core/ThemeManager.h"
-#include "ai/AiCatalog.h"
 #include "plugins/PluginManager.h"
 #include "terminal/PtyTerminalBackend.h"
 #include "terminal/ShellProfiles.h"
@@ -25,9 +25,9 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
-#include <QtGlobal>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QtGlobal>
 
 namespace {
 
@@ -52,10 +52,11 @@ int bytesToMb(qint64 bytes)
 
 } // namespace
 
-SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands,
-                               PluginManager *plugins, QWidget *parent)
-    : QDialog(parent)
-    , m_plugins(plugins)
+SettingsDialog::SettingsDialog(KeybindingManager *keybindings,
+                               CommandRegistry *commands,
+                               PluginManager *plugins,
+                               QWidget *parent)
+    : QDialog(parent), m_plugins(plugins)
 {
     setWindowTitle(tr("Preferences"));
     setObjectName(QStringLiteral("settingsDialog"));
@@ -134,10 +135,9 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         m_shell->setInsertPolicy(QComboBox::NoInsert);
         m_shell->lineEdit()->setPlaceholderText(tr("Leave empty for the platform default"));
         for (const TerminalProfile &profile : detectShellProfiles()) {
-            m_shell->addItem(
-                QStringLiteral("%1 — %2").arg(profile.name,
-                                              QDir::toNativeSeparators(profile.shell)),
-                profile.shell);
+            m_shell->addItem(QStringLiteral("%1 — %2").arg(profile.name,
+                                                           QDir::toNativeSeparators(profile.shell)),
+                             profile.shell);
         }
         m_usePty = new QCheckBox(tr("Use PTY (experimental, for ANSI colors)"), this);
         m_usePty->setEnabled(PtyTerminalBackend::isAvailable());
@@ -168,9 +168,10 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
     {
         auto *page = new QWidget;
         auto *layout = new QVBoxLayout(page);
-        layout->addWidget(new QLabel(tr("Local plugins: user folder and {workspace}/.editerako/plugins. "
-                                        "Uncheck to disable."),
-                                     page));
+        layout->addWidget(
+            new QLabel(tr("Local plugins: user folder and {workspace}/.editerako/plugins. "
+                          "Uncheck to disable."),
+                       page));
         m_pluginList = new QListWidget(page);
         m_pluginList->setObjectName(QStringLiteral("settingsPluginList"));
         layout->addWidget(m_pluginList, 1);
@@ -210,8 +211,8 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         m_aiProvider = new QComboBox(this);
         for (const AiService &service : aiServices()) {
             const QString label = service.kind == AiService::Kind::Account
-                ? tr("Sign in — %1").arg(service.name)
-                : tr("API — %1").arg(service.name);
+                                      ? tr("Sign in — %1").arg(service.name)
+                                      : tr("API — %1").arg(service.name);
             m_aiProvider->addItem(label, service.id);
         }
         m_aiModel = new QLineEdit(this);
@@ -219,9 +220,10 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         form->addRow(tr("Chat"), m_aiProvider);
         form->addRow(tr("API model"), m_aiModel);
         form->addRow(tr("API endpoint"), m_aiEndpoint);
-        form->addRow(new QLabel(tr("Account chat: sign in with your own ChatGPT, Claude, Gemini or Copilot session. "
-                                  "API keys stay in the environment / .env file."),
-                               this));
+        form->addRow(new QLabel(
+            tr("Account chat: sign in with your own ChatGPT, Claude, Gemini or Copilot session. "
+               "API keys stay in the environment / .env file."),
+            this));
         addPage(tr("AI"), wrapForm(form));
     }
 
@@ -241,8 +243,10 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         accept();
     });
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    connect(buttons->button(QDialogButtonBox::Apply), &QPushButton::clicked,
-            this, &SettingsDialog::applyClicked);
+    connect(buttons->button(QDialogButtonBox::Apply),
+            &QPushButton::clicked,
+            this,
+            &SettingsDialog::applyClicked);
 
     load();
 }

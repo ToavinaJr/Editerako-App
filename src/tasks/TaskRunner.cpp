@@ -5,10 +5,8 @@
 #include <QFileInfo>
 #include <QProcess>
 
-TaskRunner::TaskRunner(QObject *parent)
-    : QObject(parent)
-{
-}
+TaskRunner::TaskRunner(QObject *parent) : QObject(parent)
+{}
 
 TaskRunner::~TaskRunner()
 {
@@ -34,7 +32,8 @@ void TaskRunner::start(const ProcessSpec &spec)
     }
 
     if (spec.detach) {
-        const bool ok = QProcess::startDetached(spec.program, spec.arguments, spec.workingDirectory);
+        const bool ok =
+            QProcess::startDetached(spec.program, spec.arguments, spec.workingDirectory);
         if (!ok) {
             emit failed(tr("Failed to start %1").arg(spec.program));
             return;
@@ -67,9 +66,9 @@ void TaskRunner::start(const ProcessSpec &spec)
     m_running = true;
     m_process->setWorkingDirectory(spec.workingDirectory);
     emit started(spec.title);
-    const QString header = QStringLiteral("> %1 %2\n")
-                               .arg(QFileInfo(spec.program).fileName(),
-                                    spec.arguments.join(QLatin1Char(' ')));
+    const QString header =
+        QStringLiteral("> %1 %2\n")
+            .arg(QFileInfo(spec.program).fileName(), spec.arguments.join(QLatin1Char(' ')));
     m_output += header;
     emit outputReceived(header);
     m_process->start(spec.program, spec.arguments);

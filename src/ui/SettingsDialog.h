@@ -20,7 +20,9 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands, PluginManager *plugins,
+    SettingsDialog(KeybindingManager *keybindings,
+                   CommandRegistry *commands,
+                   PluginManager *plugins,
                    QWidget *parent = nullptr);
 
 signals:

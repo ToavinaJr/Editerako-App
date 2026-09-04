@@ -43,7 +43,9 @@ int TranslationLoader::install(QCoreApplication *app, const QString &uiLanguage)
 
     int loaded = 0;
     auto *qtTranslator = new QTranslator(app);
-    if (qtTranslator->load(locale, QStringLiteral("qtbase"), QStringLiteral("_"),
+    if (qtTranslator->load(locale,
+                           QStringLiteral("qtbase"),
+                           QStringLiteral("_"),
                            QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
         app->installTranslator(qtTranslator);
         ++loaded;
@@ -57,8 +59,9 @@ int TranslationLoader::install(QCoreApplication *app, const QString &uiLanguage)
 
     auto *appTranslator = new QTranslator(app);
     const QString prefix = QString::fromLatin1(ResourcePrefix);
-    const bool ok = appTranslator->load(locale, QStringLiteral("editerako"), QStringLiteral("_"), prefix)
-        || appTranslator->load(prefix + QLatin1Char('/') + catalogName(locale));
+    const bool ok =
+        appTranslator->load(locale, QStringLiteral("editerako"), QStringLiteral("_"), prefix) ||
+        appTranslator->load(prefix + QLatin1Char('/') + catalogName(locale));
     if (ok) {
         app->installTranslator(appTranslator);
         ++loaded;

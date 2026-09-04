@@ -476,7 +476,7 @@
     <message>
         <location line="+1"/>
         <source>Close Others</source>
-        <translation type="unfinished"></translation>
+        <translation>Fermer les autres</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -911,13 +911,13 @@ Do you want to save all changes before closing?</source>
     <message>
         <location line="+73"/>
         <source>File</source>
-        <translation type="unfinished"></translation>
+        <translation>Fichier</translation>
     </message>
     <message>
         <location line="+18"/>
         <location filename="../src/app/MainWindowDialogs.cpp" line="+89"/>
         <source>Find</source>
-        <translation type="unfinished">Rechercher</translation>
+        <translation>Rechercher</translation>
     </message>
     <message>
         <location line="+14"/>
@@ -954,19 +954,19 @@ Do you want to save all changes before closing?</source>
         <location line="+5"/>
         <location filename="../src/app/MainWindowWorkspace.cpp" line="+31"/>
         <source>New File</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau fichier</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>New file</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau fichier</translation>
     </message>
     <message>
         <location line="+5"/>
         <location filename="../src/app/MainWindowWorkspace.cpp" line="+21"/>
         <location line="+2"/>
         <source>New Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nouveau dossier</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -974,7 +974,7 @@ Do you want to save all changes before closing?</source>
         <location line="+74"/>
         <location line="+12"/>
         <source>Open File</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir un fichier</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -982,12 +982,12 @@ Do you want to save all changes before closing?</source>
         <location line="+59"/>
         <location line="+9"/>
         <source>Open Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Ouvrir un dossier</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -997,7 +997,7 @@ Do you want to save all changes before closing?</source>
     <message>
         <location line="+5"/>
         <source>Save As...</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer sous...</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1007,12 +1007,12 @@ Do you want to save all changes before closing?</source>
     <message>
         <location line="+5"/>
         <source>Save All</source>
-        <translation type="unfinished"></translation>
+        <translation>Tout enregistrer</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>Fermer</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1022,12 +1022,12 @@ Do you want to save all changes before closing?</source>
     <message>
         <location line="+5"/>
         <source>Close Others</source>
-        <translation type="unfinished"></translation>
+        <translation>Fermer les autres</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Close All</source>
-        <translation type="unfinished"></translation>
+        <translation>Tout fermer</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -1038,7 +1038,7 @@ Do you want to save all changes before closing?</source>
         <location line="+5"/>
         <location filename="../src/app/MainWindowDialogs.cpp" line="+11"/>
         <source>Go to Line</source>
-        <translation type="unfinished"></translation>
+        <translation>Aller à la ligne</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1740,7 +1740,7 @@ Placeholder panel from plugin %2.</source>
     <message>
         <location filename="../src/ui/SettingsDialog.cpp" line="+60"/>
         <source>Preferences</source>
-        <translation type="unfinished"></translation>
+        <translation>Préférences</translation>
     </message>
     <message>
         <location line="+17"/>
@@ -1760,7 +1760,7 @@ Placeholder panel from plugin %2.</source>
     <message>
         <location line="+1"/>
         <source>General</source>
-        <translation type="unfinished"></translation>
+        <translation>Général</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -1871,7 +1871,7 @@ Placeholder panel from plugin %2.</source>
     <message>
         <location line="+3"/>
         <source>Theme</source>
-        <translation type="unfinished"></translation>
+        <translation>Thème</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1881,7 +1881,7 @@ Placeholder panel from plugin %2.</source>
     <message>
         <location line="+2"/>
         <source>Appearance</source>
-        <translation type="unfinished"></translation>
+        <translation>Apparence</translation>
     </message>
     <message>
         <location line="+4"/>

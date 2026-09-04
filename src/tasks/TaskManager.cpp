@@ -6,17 +6,15 @@
 #include "tasks/TaskRunner.h"
 #include "tasks/TaskVariables.h"
 
-TaskManager::TaskManager(QObject *parent)
-    : QObject(parent)
-    , m_runner(new TaskRunner(this))
+TaskManager::TaskManager(QObject *parent) : QObject(parent), m_runner(new TaskRunner(this))
 {
     connect(m_runner, &TaskRunner::started, this, &TaskManager::started);
     connect(m_runner, &TaskRunner::outputReceived, this, &TaskManager::outputReceived);
     connect(m_runner, &TaskRunner::failed, this, &TaskManager::failed);
     connect(m_runner, &TaskRunner::finished, this, [this](int exitCode, const QString &output) {
         if (!m_currentMatcher.isEmpty()) {
-            emit problemsMatched(matchTaskProblems(output, m_currentMatcher, m_workspace,
-                                                   m_currentCwd));
+            emit problemsMatched(
+                matchTaskProblems(output, m_currentMatcher, m_workspace, m_currentCwd));
         }
         emit finished(exitCode);
     });
@@ -41,9 +39,9 @@ void TaskManager::reload()
     m_cmake = inspectCMakeWorkspace(m_workspace);
     const QStringList visible = m_cmake.visiblePresetNames();
     if (!visible.contains(m_preset)) {
-        m_preset = visible.contains(QStringLiteral("debug")) ? QStringLiteral("debug")
-                                                             : (visible.isEmpty() ? QString()
-                                                                                  : visible.first());
+        m_preset = visible.contains(QStringLiteral("debug"))
+                       ? QStringLiteral("debug")
+                       : (visible.isEmpty() ? QString() : visible.first());
     }
     rebuildTaskList();
     emit cmakeChanged();
@@ -148,10 +146,10 @@ ProcessSpec TaskManager::specFor(const TaskDefinition &task) const
     spec.title = task.label;
     spec.program = expandTaskVariables(task.command, context);
     spec.arguments = expandTaskVariables(task.args, context);
-    spec.workingDirectory = expandTaskVariables(
-        task.workingDirectory.isEmpty() ? QStringLiteral("${workspaceFolder}")
-                                        : task.workingDirectory,
-        context);
+    spec.workingDirectory =
+        expandTaskVariables(task.workingDirectory.isEmpty() ? QStringLiteral("${workspaceFolder}")
+                                                            : task.workingDirectory,
+                            context);
     spec.problemMatcher = task.problemMatcher;
     return spec;
 }
