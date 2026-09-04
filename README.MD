@@ -8,7 +8,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 
 - Éditeur `QPlainTextEdit` personnalisé, numéros de ligne, multi-onglets, multi-curseurs, déplacement de lignes, indent, commentaires, paires auto, folding
 - Coloration syntaxique Tree-sitter (C, C++, CMake, Python, JS, TS, TSX, JSON, HTML, CSS, Markdown, Shell, SQL, YAML)
-- Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop
+- Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop ; File > Open Recent et page d’accueil des workspaces récents
 - Recherche, remplacement, regex, Go To Line ; UI en anglais, traduction française via Linguist
 - Command Palette (`Ctrl+Shift+P`), Quick Open (`Ctrl+P`, `fichier:ligne`), Search workspace (`Ctrl+Shift+F`)
 - Explorateur de fichiers, menu contextuel (rename, delete, copy/cut/paste, …), création de fichiers et de dossiers

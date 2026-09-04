@@ -35,4 +35,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0022-file-viewers.md](adr/0022-file-viewers.md) | Viewers Markdown, SVG, CSV |
 | [adr/0023-code-folding.md](adr/0023-code-folding.md) | Code folding Tree-sitter |
 | [adr/0024-i18n.md](adr/0024-i18n.md) | Internationalisation Linguist |
+| [adr/0025-recent-workspaces.md](adr/0025-recent-workspaces.md) | Open Recent et welcome |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

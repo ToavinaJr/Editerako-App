@@ -14,8 +14,11 @@
 
 #include <QAction>
 #include <QCheckBox>
+#include <QDir>
+#include <QList>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QStringList>
@@ -34,6 +37,16 @@ void MainWindow::connectActions()
     bind(QStringLiteral("file.newFolder"), ui->actionNew_Document, &MainWindow::newFolder);
     bind(QStringLiteral("file.open"), ui->actionOpen_File, &MainWindow::openFile);
     bind(QStringLiteral("file.openFolder"), ui->actionOpen_Folder, &MainWindow::openFolder);
+
+    m_recentMenu = new QMenu(tr("Open Recent"), this);
+    const QList<QAction *> fileActions = ui->menuFile->actions();
+    const int openFolderIndex = fileActions.indexOf(ui->actionOpen_Folder);
+    QAction *insertBefore = nullptr;
+    if (openFolderIndex >= 0 && openFolderIndex + 1 < fileActions.size()) {
+        insertBefore = fileActions.at(openFolderIndex + 1);
+    }
+    ui->menuFile->insertMenu(insertBefore, m_recentMenu);
+    connect(m_recentMenu, &QMenu::aboutToShow, this, &MainWindow::rebuildRecentMenu);
     bind(QStringLiteral("file.save"), ui->actionSave, &MainWindow::saveCurrentDocument);
     bind(QStringLiteral("file.saveAs"), ui->actionSave_As, &MainWindow::saveCurrentDocumentAs);
     bind(QStringLiteral("file.saveAll"), ui->actionSave_All, &MainWindow::saveAllDocuments);
@@ -59,24 +72,24 @@ void MainWindow::connectActions()
     QAction *toggleBlockComment = bindEditor(QStringLiteral("edit.toggleBlockComment"),
                                              tr("Toggle Block Comment"),
                                              &CodeEditor::toggleBlockComment);
-    QAction *indent = bindEditor(QStringLiteral("edit.indent"), tr("Indent"),
-                                 &CodeEditor::indentSelection);
-    QAction *outdent = bindEditor(QStringLiteral("edit.outdent"), tr("Outdent"),
-                                  &CodeEditor::outdentSelection);
-    QAction *duplicateLine = bindEditor(QStringLiteral("edit.duplicateLine"), tr("Duplicate Line"),
-                                        &CodeEditor::duplicateLine);
-    QAction *deleteLine = bindEditor(QStringLiteral("edit.deleteLine"), tr("Delete Line"),
-                                     &CodeEditor::deleteLine);
-    QAction *moveLineUp = bindEditor(QStringLiteral("edit.moveLineUp"), tr("Move Line Up"),
-                                     &CodeEditor::moveLineUp);
-    QAction *moveLineDown = bindEditor(QStringLiteral("edit.moveLineDown"), tr("Move Line Down"),
-                                       &CodeEditor::moveLineDown);
-    QAction *selectLine = bindEditor(QStringLiteral("edit.selectLine"), tr("Select Line"),
-                                     &CodeEditor::selectLine);
-    QAction *joinLines = bindEditor(QStringLiteral("edit.joinLines"), tr("Join Lines"),
-                                    &CodeEditor::joinLines);
-    QAction *sortLines = bindEditor(QStringLiteral("edit.sortLines"), tr("Sort Lines"),
-                                    &CodeEditor::sortSelectedLines);
+    QAction *indent =
+        bindEditor(QStringLiteral("edit.indent"), tr("Indent"), &CodeEditor::indentSelection);
+    QAction *outdent =
+        bindEditor(QStringLiteral("edit.outdent"), tr("Outdent"), &CodeEditor::outdentSelection);
+    QAction *duplicateLine = bindEditor(
+        QStringLiteral("edit.duplicateLine"), tr("Duplicate Line"), &CodeEditor::duplicateLine);
+    QAction *deleteLine =
+        bindEditor(QStringLiteral("edit.deleteLine"), tr("Delete Line"), &CodeEditor::deleteLine);
+    QAction *moveLineUp =
+        bindEditor(QStringLiteral("edit.moveLineUp"), tr("Move Line Up"), &CodeEditor::moveLineUp);
+    QAction *moveLineDown = bindEditor(
+        QStringLiteral("edit.moveLineDown"), tr("Move Line Down"), &CodeEditor::moveLineDown);
+    QAction *selectLine =
+        bindEditor(QStringLiteral("edit.selectLine"), tr("Select Line"), &CodeEditor::selectLine);
+    QAction *joinLines =
+        bindEditor(QStringLiteral("edit.joinLines"), tr("Join Lines"), &CodeEditor::joinLines);
+    QAction *sortLines = bindEditor(
+        QStringLiteral("edit.sortLines"), tr("Sort Lines"), &CodeEditor::sortSelectedLines);
     QAction *trimWs = bindEditor(QStringLiteral("edit.trimTrailingWhitespace"),
                                  tr("Trim Trailing Whitespace"),
                                  &CodeEditor::trimTrailingWhitespace);
@@ -93,39 +106,39 @@ void MainWindow::connectActions()
                                        tr("Select All Occurrences"),
                                        &CodeEditor::selectAllOccurrences);
 
-    QAction *toggleFold = bindEditor(QStringLiteral("editor.toggleFold"), tr("Toggle Fold"),
-                                     &CodeEditor::toggleFold);
+    QAction *toggleFold =
+        bindEditor(QStringLiteral("editor.toggleFold"), tr("Toggle Fold"), &CodeEditor::toggleFold);
     QAction *fold = bindEditor(QStringLiteral("editor.fold"), tr("Fold"), &CodeEditor::fold);
-    QAction *unfold = bindEditor(QStringLiteral("editor.unfold"), tr("Unfold"),
-                                 &CodeEditor::unfold);
-    QAction *foldAll = bindEditor(QStringLiteral("editor.foldAll"), tr("Fold All"),
-                                  &CodeEditor::foldAll);
-    QAction *unfoldAll = bindEditor(QStringLiteral("editor.unfoldAll"), tr("Unfold All"),
-                                    &CodeEditor::unfoldAll);
+    QAction *unfold =
+        bindEditor(QStringLiteral("editor.unfold"), tr("Unfold"), &CodeEditor::unfold);
+    QAction *foldAll =
+        bindEditor(QStringLiteral("editor.foldAll"), tr("Fold All"), &CodeEditor::foldAll);
+    QAction *unfoldAll =
+        bindEditor(QStringLiteral("editor.unfoldAll"), tr("Unfold All"), &CodeEditor::unfoldAll);
 
-    QAction *triggerSuggest = m_commands->create(QStringLiteral("editor.triggerSuggest"),
-                                                 tr("Trigger Suggest"));
+    QAction *triggerSuggest =
+        m_commands->create(QStringLiteral("editor.triggerSuggest"), tr("Trigger Suggest"));
     connect(triggerSuggest, &QAction::triggered, this, [this]() {
         if (m_lspSession) {
             m_lspSession->triggerCompletion();
         }
     });
-    QAction *gotoDefinition = m_commands->create(QStringLiteral("editor.gotoDefinition"),
-                                                 tr("Go to Definition"));
+    QAction *gotoDefinition =
+        m_commands->create(QStringLiteral("editor.gotoDefinition"), tr("Go to Definition"));
     connect(gotoDefinition, &QAction::triggered, this, [this]() {
         if (m_lspSession) {
             m_lspSession->goToDefinition();
         }
     });
-    QAction *findReferences = m_commands->create(QStringLiteral("editor.findReferences"),
-                                                 tr("Find References"));
+    QAction *findReferences =
+        m_commands->create(QStringLiteral("editor.findReferences"), tr("Find References"));
     connect(findReferences, &QAction::triggered, this, [this]() {
         if (m_lspSession) {
             m_lspSession->findReferences();
         }
     });
-    QAction *renameSymbol = m_commands->create(QStringLiteral("editor.renameSymbol"),
-                                               tr("Rename Symbol"));
+    QAction *renameSymbol =
+        m_commands->create(QStringLiteral("editor.renameSymbol"), tr("Rename Symbol"));
     connect(renameSymbol, &QAction::triggered, this, [this]() {
         if (m_lspSession) {
             m_lspSession->renameSymbol();
@@ -145,38 +158,36 @@ void MainWindow::connectActions()
             m_lspSession->showWorkspaceSymbols();
         }
     });
-    QAction *showHover = m_commands->create(QStringLiteral("editor.showHover"),
-                                            tr("Show Hover"));
+    QAction *showHover = m_commands->create(QStringLiteral("editor.showHover"), tr("Show Hover"));
     connect(showHover, &QAction::triggered, this, [this]() {
         if (m_lspSession) {
             m_lspSession->triggerHover();
         }
     });
 
-    QAction *toggleTerminal = m_commands->create(
-        QStringLiteral("view.terminal"),
-        tr("Toggle Terminal"));
+    QAction *toggleTerminal =
+        m_commands->create(QStringLiteral("view.terminal"), tr("Toggle Terminal"));
     connect(toggleTerminal, &QAction::triggered, this, &MainWindow::toggleTerminal);
 
-    QAction *toggleProblems = m_commands->create(
-        QStringLiteral("workbench.problems"),
-        tr("Toggle Problems"));
+    QAction *toggleProblems =
+        m_commands->create(QStringLiteral("workbench.problems"), tr("Toggle Problems"));
     connect(toggleProblems, &QAction::triggered, this, &MainWindow::toggleProblems);
 
-    QAction *toggleSourceControl = m_commands->create(
-        QStringLiteral("workbench.sourceControl"), tr("Toggle Source Control"));
+    QAction *toggleSourceControl =
+        m_commands->create(QStringLiteral("workbench.sourceControl"), tr("Toggle Source Control"));
     connect(toggleSourceControl, &QAction::triggered, this, &MainWindow::toggleSourceControl);
 
-    QAction *toggleTasks = m_commands->create(QStringLiteral("workbench.tasks"), tr("Toggle Tasks"));
+    QAction *toggleTasks =
+        m_commands->create(QStringLiteral("workbench.tasks"), tr("Toggle Tasks"));
     connect(toggleTasks, &QAction::triggered, this, &MainWindow::toggleTasks);
-    QAction *toggleOutput = m_commands->create(QStringLiteral("workbench.output"),
-                                               tr("Toggle Output"));
+    QAction *toggleOutput =
+        m_commands->create(QStringLiteral("workbench.output"), tr("Toggle Output"));
     connect(toggleOutput, &QAction::triggered, this, &MainWindow::toggleOutput);
-    QAction *toggleDebug = m_commands->create(QStringLiteral("workbench.debug"),
-                                              tr("Toggle Debug"));
+    QAction *toggleDebug =
+        m_commands->create(QStringLiteral("workbench.debug"), tr("Toggle Debug"));
     connect(toggleDebug, &QAction::triggered, this, &MainWindow::toggleDebug);
-    QAction *buildTask = m_commands->create(QStringLiteral("workbench.build"),
-                                            tr("Run Build Task"));
+    QAction *buildTask =
+        m_commands->create(QStringLiteral("workbench.build"), tr("Run Build Task"));
     connect(buildTask, &QAction::triggered, this, &MainWindow::runBuildTask);
 
     auto bindCMake = [this](const QString &id, const QString &text) {
@@ -194,32 +205,28 @@ void MainWindow::connectActions()
     QAction *cmakeTest = bindCMake(QStringLiteral("cmake.test"), tr("CMake: Test"));
     QAction *cmakeRun = bindCMake(QStringLiteral("cmake.run"), tr("CMake: Run"));
 
-    QAction *compareWithDisk = m_commands->create(
-        QStringLiteral("file.compareWithDisk"), tr("Compare with Disk"));
+    QAction *compareWithDisk =
+        m_commands->create(QStringLiteral("file.compareWithDisk"), tr("Compare with Disk"));
     connect(compareWithDisk, &QAction::triggered, this, &MainWindow::compareWithDisk);
 
-    QAction *markdownPreview = m_commands->create(
-        QStringLiteral("file.markdownPreview"), tr("Open Markdown Preview"));
+    QAction *markdownPreview =
+        m_commands->create(QStringLiteral("file.markdownPreview"), tr("Open Markdown Preview"));
     connect(markdownPreview, &QAction::triggered, this, &MainWindow::openMarkdownPreview);
 
-    QAction *commandPalette = m_commands->create(
-        QStringLiteral("workbench.commandPalette"),
-        tr("Command Palette"));
+    QAction *commandPalette =
+        m_commands->create(QStringLiteral("workbench.commandPalette"), tr("Command Palette"));
     connect(commandPalette, &QAction::triggered, this, &MainWindow::openCommandPalette);
 
-    QAction *quickOpen = m_commands->create(
-        QStringLiteral("workbench.quickOpen"),
-        tr("Quick Open"));
+    QAction *quickOpen =
+        m_commands->create(QStringLiteral("workbench.quickOpen"), tr("Quick Open"));
     connect(quickOpen, &QAction::triggered, this, &MainWindow::openQuickOpen);
 
-    QAction *workspaceSearch = m_commands->create(
-        QStringLiteral("workbench.search"),
-        tr("Search in Workspace"));
+    QAction *workspaceSearch =
+        m_commands->create(QStringLiteral("workbench.search"), tr("Search in Workspace"));
     connect(workspaceSearch, &QAction::triggered, this, &MainWindow::openWorkspaceSearch);
 
-    QAction *preferences = m_commands->create(
-        QStringLiteral("preferences.open"),
-        tr("Preferences..."));
+    QAction *preferences =
+        m_commands->create(QStringLiteral("preferences.open"), tr("Preferences..."));
     connect(preferences, &QAction::triggered, this, &MainWindow::openPreferences);
 
     QAction *zoomIn = m_commands->create(QStringLiteral("editor.zoomIn"), tr("Zoom In"));
@@ -234,29 +241,28 @@ void MainWindow::connectActions()
             m_editorManager->adjustFontSize(-1);
         }
     });
-    QAction *zoomReset = m_commands->create(QStringLiteral("editor.zoomReset"),
-                                            tr("Reset Zoom"));
+    QAction *zoomReset = m_commands->create(QStringLiteral("editor.zoomReset"), tr("Reset Zoom"));
     connect(zoomReset, &QAction::triggered, this, [this]() {
         if (m_editorManager) {
             m_editorManager->resetFontSize();
         }
     });
 
-    QAction *splitRight = m_commands->create(QStringLiteral("workbench.splitEditorRight"),
-                                             tr("Split Right"));
+    QAction *splitRight =
+        m_commands->create(QStringLiteral("workbench.splitEditorRight"), tr("Split Right"));
     connect(splitRight, &QAction::triggered, this, &MainWindow::splitEditorRight);
-    QAction *splitDown = m_commands->create(QStringLiteral("workbench.splitEditorDown"),
-                                            tr("Split Down"));
+    QAction *splitDown =
+        m_commands->create(QStringLiteral("workbench.splitEditorDown"), tr("Split Down"));
     connect(splitDown, &QAction::triggered, this, &MainWindow::splitEditorDown);
-    QAction *moveEditor = m_commands->create(QStringLiteral("workbench.moveEditor"),
-                                             tr("Move Editor"));
+    QAction *moveEditor =
+        m_commands->create(QStringLiteral("workbench.moveEditor"), tr("Move Editor"));
     connect(moveEditor, &QAction::triggered, this, &MainWindow::moveEditor);
-    QAction *closeGroup = m_commands->create(QStringLiteral("workbench.closeEditorGroup"),
-                                             tr("Close Editor Group"));
+    QAction *closeGroup =
+        m_commands->create(QStringLiteral("workbench.closeEditorGroup"), tr("Close Editor Group"));
     connect(closeGroup, &QAction::triggered, this, &MainWindow::closeEditorGroup);
 
-    QAction *debugStart = m_commands->create(QStringLiteral("debug.startContinue"),
-                                             tr("Start Debugging"));
+    QAction *debugStart =
+        m_commands->create(QStringLiteral("debug.startContinue"), tr("Start Debugging"));
     connect(debugStart, &QAction::triggered, this, [this]() {
         if (m_debugSession) {
             m_debugSession->start();
@@ -292,15 +298,15 @@ void MainWindow::connectActions()
             m_debugSession->stepOut();
         }
     });
-    QAction *debugToggleBp = m_commands->create(QStringLiteral("debug.toggleBreakpoint"),
-                                                tr("Toggle Breakpoint"));
+    QAction *debugToggleBp =
+        m_commands->create(QStringLiteral("debug.toggleBreakpoint"), tr("Toggle Breakpoint"));
     connect(debugToggleBp, &QAction::triggered, this, [this]() {
         if (m_debugSession) {
             m_debugSession->toggleBreakpointAtCursor();
         }
     });
-    QAction *debugLaunchJson = m_commands->create(QStringLiteral("debug.createLaunchJson"),
-                                                  tr("Create launch.json"));
+    QAction *debugLaunchJson =
+        m_commands->create(QStringLiteral("debug.createLaunchJson"), tr("Create launch.json"));
     connect(debugLaunchJson, &QAction::triggered, this, [this]() {
         if (!m_debugSession) {
             return;
@@ -406,7 +412,8 @@ void MainWindow::connectActions()
 
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);
-    connect(ui->closeExplorerButton, &QPushButton::clicked, this, &MainWindow::onCloseExplorerClicked);
+    connect(
+        ui->closeExplorerButton, &QPushButton::clicked, this, &MainWindow::onCloseExplorerClicked);
     connect(ui->checkBox, &QCheckBox::toggled, this, &MainWindow::onShowLinesToggled);
     ui->checkBox->setChecked(AppSettings().editorLineNumbers());
 
@@ -475,12 +482,12 @@ void MainWindow::updateCommandStates()
     for (const QString &id : zoomIds) {
         m_commands->setEnabled(id, hasEditor);
     }
-    const bool hasSavedEditor = hasEditor && m_editorManager
-        && !m_editorManager->currentFilePath().isEmpty();
+    const bool hasSavedEditor =
+        hasEditor && m_editorManager && !m_editorManager->currentFilePath().isEmpty();
     m_commands->setEnabled(QStringLiteral("file.compareWithDisk"), hasSavedEditor);
-    m_commands->setEnabled(QStringLiteral("file.markdownPreview"),
-                           isMarkdownPath(m_editorManager ? m_editorManager->currentFilePath()
-                                                         : QString()));
+    m_commands->setEnabled(
+        QStringLiteral("file.markdownPreview"),
+        isMarkdownPath(m_editorManager ? m_editorManager->currentFilePath() : QString()));
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
     m_commands->setEnabled(QStringLiteral("file.closeAll"), totalTabs > 0);
@@ -490,16 +497,54 @@ void MainWindow::updateCommandStates()
     m_commands->setEnabled(QStringLiteral("workbench.closeEditorGroup"), groups > 1);
 
     const auto debugState = m_debugSession ? m_debugSession->state() : DebugSession::State::Idle;
-    const bool debugActive = debugState == DebugSession::State::Starting
-        || debugState == DebugSession::State::Running
-        || debugState == DebugSession::State::Stopped;
+    const bool debugActive = debugState == DebugSession::State::Starting ||
+                             debugState == DebugSession::State::Running ||
+                             debugState == DebugSession::State::Stopped;
     m_commands->setEnabled(QStringLiteral("debug.startContinue"),
-                           debugState != DebugSession::State::Starting
-                               && debugState != DebugSession::State::Running);
+                           debugState != DebugSession::State::Starting &&
+                               debugState != DebugSession::State::Running);
     m_commands->setEnabled(QStringLiteral("debug.stop"), debugActive);
-    m_commands->setEnabled(QStringLiteral("debug.pause"), debugState == DebugSession::State::Running);
-    m_commands->setEnabled(QStringLiteral("debug.stepOver"), debugState == DebugSession::State::Stopped);
-    m_commands->setEnabled(QStringLiteral("debug.stepInto"), debugState == DebugSession::State::Stopped);
-    m_commands->setEnabled(QStringLiteral("debug.stepOut"), debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.pause"),
+                           debugState == DebugSession::State::Running);
+    m_commands->setEnabled(QStringLiteral("debug.stepOver"),
+                           debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.stepInto"),
+                           debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.stepOut"),
+                           debugState == DebugSession::State::Stopped);
     m_commands->setEnabled(QStringLiteral("debug.toggleBreakpoint"), hasEditor);
+}
+
+void MainWindow::rebuildRecentMenu()
+{
+    if (!m_recentMenu) {
+        return;
+    }
+    m_recentMenu->clear();
+    const QStringList recents = m_recents.prune();
+    if (recents.isEmpty()) {
+        QAction *empty = m_recentMenu->addAction(tr("No Recent Workspaces"));
+        empty->setEnabled(false);
+        return;
+    }
+    for (const QString &path : recents) {
+        QAction *action = m_recentMenu->addAction(QDir::toNativeSeparators(path));
+        connect(action, &QAction::triggered, this, [this, path]() { openRecentWorkspace(path); });
+    }
+    m_recentMenu->addSeparator();
+    QAction *clear = m_recentMenu->addAction(tr("Clear Recently Opened"));
+    connect(clear, &QAction::triggered, this, [this]() { m_recents.clear(); });
+}
+
+void MainWindow::openRecentWorkspace(const QString &path)
+{
+    if (QDir(path).exists()) {
+        setProjectDirectory(path);
+        return;
+    }
+    m_recents.remove(path);
+    QMessageBox::warning(
+        this,
+        tr("Open Recent"),
+        tr("The folder \"%1\" no longer exists.").arg(QDir::toNativeSeparators(path)));
 }

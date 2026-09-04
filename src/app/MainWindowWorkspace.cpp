@@ -11,28 +11,25 @@
 #include "scm/TextDiff.h"
 #include "ui/BottomPanel.h"
 #include "ui/UiHelpers.h"
+#include "ui/WelcomeDialog.h"
 #include "viewers/FileKind.h"
 #include "viewers/ViewerManager.h"
 
+#include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QMimeData>
-#include <QPushButton>
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QTabWidget>
 
 void MainWindow::newFile()
 {
-    const QString fileName = promptText(this,
-                                        tr("New File"),
-                                        tr("Enter file name:"),
-                                        tr("untitled.txt"),
-                                        800,
-                                        150);
+    const QString fileName =
+        promptText(this, tr("New File"), tr("Enter file name:"), tr("untitled.txt"), 800, 150);
     if (fileName.isEmpty() || !m_workspaceController) {
         return;
     }
@@ -48,12 +45,8 @@ void MainWindow::newFile()
 
 void MainWindow::newFolder()
 {
-    const QString folderName = promptText(this,
-                                          tr("New Folder"),
-                                          tr("Enter folder name:"),
-                                          tr("New Folder"),
-                                          400,
-                                          150);
+    const QString folderName =
+        promptText(this, tr("New Folder"), tr("Enter folder name:"), tr("New Folder"), 400, 150);
     if (folderName.isEmpty() || !m_workspaceController) {
         return;
     }
@@ -68,10 +61,11 @@ void MainWindow::newFolder()
 
 void MainWindow::openFile()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this,
-                                                          tr("Open File"),
-                                                          workspaceRoot(),
-                                                          tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
+    const QString fileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Open File"),
+        workspaceRoot(),
+        tr("All Files (*.*);;Text Files (*.txt);;C++ Files (*.cpp *.h);;Python Files (*.py)"));
 
     if (!fileName.isEmpty()) {
         openFileInEditor(fileName);
@@ -81,8 +75,8 @@ void MainWindow::openFile()
 void MainWindow::openFolder()
 {
     const QString start = workspaceRoot().isEmpty()
-        ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
-        : workspaceRoot();
+                              ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+                              : workspaceRoot();
     const QString folderPath = QFileDialog::getExistingDirectory(this, tr("Open Folder"), start);
 
     if (!folderPath.isEmpty()) {
@@ -137,44 +131,66 @@ void MainWindow::openFileInEditor(const QString &filePath)
 
 void MainWindow::promptOpenFolderOrFile()
 {
-    QMessageBox msgBox(this);
-    msgBox.setWindowTitle(tr("Welcome to Editerako"));
-    msgBox.setText(tr("What would you like to open?"));
-    msgBox.setIcon(QMessageBox::Question);
-
-    QPushButton *folderBtn = msgBox.addButton(tr("Open Folder"), QMessageBox::AcceptRole);
-    QPushButton *fileBtn = msgBox.addButton(tr("Open File"), QMessageBox::AcceptRole);
-    msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-
-    msgBox.exec();
+    WelcomeDialog dialog(m_recents.prune(), this);
+    connect(&dialog, &WelcomeDialog::removeRequested, this, [this](const QString &path) {
+        m_recents.remove(path);
+    });
+    dialog.exec();
 
     const QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
-    if (msgBox.clickedButton() == folderBtn) {
-        const QString folderPath = QFileDialog::getExistingDirectory(this, tr("Open Folder"), documents);
-        setProjectDirectory(folderPath.isEmpty() ? documents : folderPath);
-    } else if (msgBox.clickedButton() == fileBtn) {
-        const QString fileName = QFileDialog::getOpenFileName(this,
-                                                              tr("Open File"),
-                                                              documents,
-                                                              tr("All Files (*.*)"));
+    switch (dialog.choice()) {
+    case WelcomeDialog::OpenRecent: {
+        const QString path = dialog.selectedRecent();
+        if (QDir(path).exists()) {
+            setProjectDirectory(path);
+        } else {
+            m_recents.remove(path);
+            QMessageBox::warning(
+                this,
+                tr("Open Recent"),
+                tr("The folder \"%1\" no longer exists.").arg(QDir::toNativeSeparators(path)));
+            setProjectDirectory(documents, false);
+        }
+        break;
+    }
+    case WelcomeDialog::OpenFolder: {
+        const QString folderPath =
+            QFileDialog::getExistingDirectory(this, tr("Open Folder"), documents);
+        if (folderPath.isEmpty()) {
+            setProjectDirectory(documents, false);
+        } else {
+            setProjectDirectory(folderPath);
+        }
+        break;
+    }
+    case WelcomeDialog::OpenFile: {
+        const QString fileName =
+            QFileDialog::getOpenFileName(this, tr("Open File"), documents, tr("All Files (*.*)"));
         if (!fileName.isEmpty()) {
             setProjectDirectory(QFileInfo(fileName).absolutePath());
             openFileInEditor(fileName);
         } else {
-            setProjectDirectory(documents);
+            setProjectDirectory(documents, false);
         }
-    } else {
-        setProjectDirectory(documents);
+        break;
+    }
+    case WelcomeDialog::Canceled:
+    default:
+        setProjectDirectory(documents, false);
+        break;
     }
 
     focusMainWindowAndEditor();
 }
 
-void MainWindow::setProjectDirectory(const QString &path)
+void MainWindow::setProjectDirectory(const QString &path, bool remember)
 {
     if (m_workspaceController) {
         m_workspaceController->setRootPath(path);
+    }
+    if (remember && QDir(path).exists()) {
+        m_recents.remember(path);
     }
 }
 
@@ -186,8 +202,8 @@ void MainWindow::compareWithDisk()
     }
     const QString path = m_editorManager->currentFilePath();
     if (path.isEmpty()) {
-        QMessageBox::information(this, tr("Compare with Disk"),
-                                 tr("Save the file before comparing it with disk."));
+        QMessageBox::information(
+            this, tr("Compare with Disk"), tr("Save the file before comparing it with disk."));
         return;
     }
     const TextLoadResult loaded = readTextFile(path);
@@ -195,9 +211,10 @@ void MainWindow::compareWithDisk()
         QMessageBox::warning(this, tr("Compare with Disk"), loaded.error);
         return;
     }
-    m_bottomPanel->showDiff(tr("%1 (disk ↔ editor)").arg(QFileInfo(path).fileName()),
-                            TextDiff::unified(loaded.text, editor->toPlainText(),
-                                              QStringLiteral("disk"), QStringLiteral("editor")));
+    m_bottomPanel->showDiff(
+        tr("%1 (disk ↔ editor)").arg(QFileInfo(path).fileName()),
+        TextDiff::unified(
+            loaded.text, editor->toPlainText(), QStringLiteral("disk"), QStringLiteral("editor")));
 }
 
 void MainWindow::openMarkdownPreview()

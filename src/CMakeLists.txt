@@ -54,6 +54,8 @@ set(editerako_app_sources
     ui/OutputPanel.h
     ui/TasksPanel.cpp
     ui/TasksPanel.h
+    ui/WelcomeDialog.cpp
+    ui/WelcomeDialog.h
     ui/DebugPanel.cpp
     ui/DebugPanel.h
 )

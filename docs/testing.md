@@ -28,6 +28,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_DiskChangePolicy` | `EditerakoCore` | deleted/dirty → action |
 | `test_DropPaths` | `EditerakoCore` | extraction de chemins depuis `QMimeData` |
 | `test_SessionStore` | `EditerakoCore` | round-trip via `QSettings` Ini temporaire |
+| `test_RecentWorkspaces` | `EditerakoCore` | mémorisation, plafond 10, prune des dossiers disparus |
 | `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |
 | `test_AiCatalog` | `EditerakoAI` | défaut compte ChatGPT, kinds account/API |
 | `test_AiResponseParse` | `EditerakoAI` | JSON Gemini / OpenAI / Anthropic, SSE |

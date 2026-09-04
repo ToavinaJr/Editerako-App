@@ -8,6 +8,8 @@ editerako_add_module(EditerakoCore
         ThemeManager.h
         TranslationLoader.cpp
         TranslationLoader.h
+        RecentWorkspaces.cpp
+        RecentWorkspaces.h
         CommandRegistry.cpp
         CommandRegistry.h
         SessionStore.cpp

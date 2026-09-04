@@ -24,7 +24,7 @@
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `edit.toggleLineComment`, `edit.moveLineUp`, `view.terminal`, `workbench.commandPalette`, `workbench.quickOpen`, `workbench.search`, `workbench.problems`, `workbench.sourceControl`, `workbench.tasks`, `workbench.output`, `workbench.build`, `cmake.configure`, `file.compareWithDisk`, `preferences.open`, `editor.gotoDefinition`, `editor.triggerSuggest`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`. Tab / Shift+Tab d’indent restent dans `CodeEditor::keyPressEvent`. Completion Tab/Enter : `CompletionPopup` (filtre d’événements).
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()` ; préférences → `SettingsDialog`.
 - Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O → `readTextFile` / `writeTextFile` (pas `QIODevice::Text`) ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`). Commandes d’édition : [adr/0008-editing-commands.md](adr/0008-editing-commands.md).
-- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`, `editorStatusProblems`, `editorStatusGit`, `fuzzyPickerDialog`, `commandPaletteDialog`, `quickOpenDialog`, `workspaceSearchDialog`, `searchResultsTree`, `searchPreview`, `completionPopup`, `hoverPopup`, `bottomPanel`, `bottomTabs`, `problemsPanel`, `problemsTree`, `sourceControlPanel`, `sourceControlTree`, `diffViewer`, `diffText`, `outputPanel`, `outputText`, `tasksPanel`, `tasksList`.
+- Styles : `resources/themes/dark.qss` et `light.qss`. Object names stables pour le QSS : `terminalTabs`, `addTerminalButton`, `terminalCloseButton`, `pdfStatusLabel`, `editorStatusWidget`, `editorStatusProblems`, `editorStatusGit`, `fuzzyPickerDialog`, `commandPaletteDialog`, `quickOpenDialog`, `workspaceSearchDialog`, `searchResultsTree`, `searchPreview`, `completionPopup`, `hoverPopup`, `bottomPanel`, `bottomTabs`, `problemsPanel`, `problemsTree`, `sourceControlPanel`, `sourceControlTree`, `diffViewer`, `diffText`, `outputPanel`, `outputText`, `tasksPanel`, `tasksList`, `welcomeDialog`, `welcomeRecentList`.
 - Pas de feuille de style inline sauf bulles HTML du chat (contenu dynamique).
 - Thème : `AppSettings::themeId()` (`dark` / `light`), appliqué par `ThemeManager` au démarrage et depuis Préférences.
 
@@ -40,7 +40,7 @@ Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject
 | `{projet}/.editerako/` | `chat_history.db`, `settings.json`, `tasks.json` (overlay workspace) |
 | `build/` | artefacts CMake |
 
-`QSettings` organisation/application : `Editerako`. Les tests de session / settings passent un `QSettings` fichier temporaire, pas le profil utilisateur. Overlay workspace : [settings.md](settings.md).
+`QSettings` organisation/application : `Editerako`. Les tests de session / settings / récents passent un `QSettings` fichier temporaire, pas le profil utilisateur. Overlay workspace : [settings.md](settings.md). Workspaces récents : `recent/workspaces` (max 10). [adr/0025-recent-workspaces.md](adr/0025-recent-workspaces.md).
 
 ## Comportements à ne pas « corriger » à la légère
 

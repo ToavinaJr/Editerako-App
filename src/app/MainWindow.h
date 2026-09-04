@@ -1,6 +1,7 @@
 #ifndef EDITERAKO_MAINWINDOW_H
 #define EDITERAKO_MAINWINDOW_H
 
+#include "core/RecentWorkspaces.h"
 #include "core/SessionController.h"
 
 #include <QList>
@@ -40,7 +41,8 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    enum ViewerIndex {
+    enum ViewerIndex
+    {
         CodeViewer = 0,
         UnsupportedViewer
     };
@@ -114,6 +116,8 @@ private:
     QMenu *m_pluginMenu = nullptr;
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
+    RecentWorkspaces m_recents;
+    QMenu *m_recentMenu = nullptr;
     QTimer *m_autoSaveTimer = nullptr;
     QTimer *m_backupTimer = nullptr;
     bool isFileTreeVisible = true;
@@ -136,7 +140,9 @@ private:
     void focusMainWindowAndEditor();
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();
-    void setProjectDirectory(const QString &path);
+    void setProjectDirectory(const QString &path, bool remember = true);
+    void rebuildRecentMenu();
+    void openRecentWorkspace(const QString &path);
     void syncChatContext();
     void saveSession();
     bool restoreSession();

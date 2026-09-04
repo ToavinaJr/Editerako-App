@@ -48,6 +48,8 @@ Les clés API ne vont **pas** dans ce fichier. Le chat par défaut est un **sign
 
 `ui/language` (vide = locale système, `en`, `fr`) : catalogues Linguist. Un changement dans Préférences → Apparence s’applique au prochain lancement. [adr/0024-i18n.md](adr/0024-i18n.md).
 
+Workspaces récents : clé QSettings user `recent/workspaces` (max 10), pas dans l’overlay workspace. [adr/0025-recent-workspaces.md](adr/0025-recent-workspaces.md).
+
 `files/hotExit` (défaut true) : quitter sans dialogue Save All ; les unsaved (hors secrets) sont restaurés au prochain lancement. Les backups vivent sous AppData (`backups/`), pas dans le workspace. [adr/0017-recovery-hot-exit.md](adr/0017-recovery-hot-exit.md).
 
 Raccourcis : overrides user sous `keybindings/<commandId>` (QSettings). Les conflits sont refusés. Défauts : `workbench.commandPalette` = `Ctrl+Shift+P`, `workbench.quickOpen` = `Ctrl+P`, `workbench.search` = `Ctrl+Shift+F`, `workbench.splitEditorRight` = `Ctrl+\`, `workbench.splitEditorDown` = `Ctrl+Shift+\`, `file.markdownPreview` = `Ctrl+Shift+V`, `editor.toggleFold` = `Ctrl+Shift+[`, `editor.foldAll` = `Ctrl+Alt+[`, `editor.unfoldAll` = `Ctrl+Alt+]`, `edit.toggleLineComment` = `Ctrl+/`, `edit.moveLineUp/Down` = `Ctrl+Up/Down`, `edit.selectNextOccurrence` = `Ctrl+D`. Détail : [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md), [adr/0018-editor-groups.md](adr/0018-editor-groups.md), [adr/0022-file-viewers.md](adr/0022-file-viewers.md), [adr/0023-code-folding.md](adr/0023-code-folding.md).

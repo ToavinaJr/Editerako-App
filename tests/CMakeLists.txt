@@ -44,6 +44,11 @@ editerako_add_test(test_SessionStore
     LIBS EditerakoCore
 )
 
+editerako_add_test(test_RecentWorkspaces
+    SOURCES RecentWorkspacesTest.cpp
+    LIBS EditerakoCore
+)
+
 editerako_add_test(test_ContextBuilder
     SOURCES ContextBuilderTest.cpp
     LIBS EditerakoAI
