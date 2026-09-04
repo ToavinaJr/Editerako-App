@@ -71,7 +71,7 @@ Ouvrir le `CMakeLists.txt` racine. Kit Qt 6 **avec PdfWidgets et Svg**. Le dossi
 
 - **Lien « Permission denied »** : `Editerako.exe` tourne encore. Le tuer, relancer `build.ps1`.
 - **PdfWidgets introuvable** : installer le composant Qt PDF (aqt : `-m qtpdf`).
-- **Svg introuvable** : installer Qt SVG (aqt : `-m qtsvg`).
+- **Svg introuvable** : vérifier que le kit Qt Desktop inclut bien `Qt6::Svg`/`Qt6::SvgWidgets` (avec Qt 6.9.2, `qtsvg` n’est pas un module aqt à installer séparément).
 - **macOS `framework 'AGL' not found`** : le SDK 26 a retiré AGL. `cmake/Apple.cmake` ignore ce framework ; en CI, Qt ≥ 6.9.2.
 - **Sources** : liste CMake explicite, pas de `file(GLOB)`. Un nouveau `.cpp` métier va dans `src/<module>/CMakeLists.txt`. L’exe (`app/`, `ui/`, `main.cpp`) s’ajoute dans `src/CMakeLists.txt`.
 - **Sanitizers MinGW** : ASan/TSan ne sont pas supportés avec MinGW GCC. Utiliser Linux/macOS (`cmake --preset asan`).

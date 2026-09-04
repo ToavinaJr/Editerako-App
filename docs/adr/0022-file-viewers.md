@@ -15,7 +15,7 @@ Le plan numéroté s’arrête à la phase 21. Le cahier demandait encore des vi
 - **Markdown** : reste **texte éditable**. Aperçu lecture seule via `file.markdownPreview` (`Ctrl+Shift+V`, `QTextBrowser::setMarkdown`), onglet distinct pour ne pas voler l’éditeur.
 - **JSON** : reste **texte** (même raison que Markdown).
 - Les providers plugins s’exécutent **avant** les viewers built-in.
-- Dépendance Qt : `Svg` + `SvgWidgets` (CI : module aqt `qtsvg`).
+- Dépendance Qt : `Svg` + `SvgWidgets` (CI : ne pas demander de module aqt `qtsvg`, indisponible sur cette cible).
 
 ## Conséquences
 
