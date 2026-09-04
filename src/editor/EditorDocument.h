@@ -20,9 +20,10 @@ public:
         int scrollY = 0;
     };
 
-    explicit EditorDocument(CodeEditor *editor);
+    explicit EditorDocument(CodeEditor *editor, QObject *parent = nullptr);
 
     [[nodiscard]] static EditorDocument *fromEditor(CodeEditor *editor);
+    void setEditor(CodeEditor *editor);
     [[nodiscard]] static QString normalizePath(const QString &path);
 
     [[nodiscard]] CodeEditor *editor() const { return m_editor; }

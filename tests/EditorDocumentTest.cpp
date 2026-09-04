@@ -2,6 +2,7 @@
 
 #include "editor/CodeEditor.h"
 
+#include <QObject>
 #include <QTemporaryDir>
 #include <QTextCursor>
 #include <QtTest>
@@ -16,6 +17,7 @@ private slots:
     void versionIncrementsAndResets();
     void caretStateRoundtrip();
     void backupIdPersistsOnceGenerated();
+    void fromEditorFindsSharedDocument();
 };
 
 void EditorDocumentTest::defaultFormatIsPlatform()
@@ -68,6 +70,19 @@ void EditorDocumentTest::caretStateRoundtrip()
     restored.anchor = 1;
     doc.restoreCaretState(restored);
     QCOMPARE(editor.textCursor().position(), 1);
+}
+
+void EditorDocumentTest::fromEditorFindsSharedDocument()
+{
+    QObject owner;
+    CodeEditor primary;
+    CodeEditor secondary;
+    auto *doc = new EditorDocument(&primary, &owner);
+    secondary.setDocument(primary.document());
+    QCOMPARE(EditorDocument::fromEditor(&primary), doc);
+    QCOMPARE(EditorDocument::fromEditor(&secondary), doc);
+    doc->setEditor(&secondary);
+    QCOMPARE(doc->editor(), &secondary);
 }
 
 void EditorDocumentTest::backupIdPersistsOnceGenerated()

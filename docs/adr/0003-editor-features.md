@@ -27,7 +27,7 @@
 | `EditorStyle` | Police, tab, wrap, numéros depuis `AppSettings` |
 | `HighlighterSync` | Attacher / retirer `SyntaxHighlighter` ; `shouldHighlight` testable |
 
-**Non créés :** AutoIndent, BracketMatcher, AutoClosingPairs, Folding, Completion, Diagnostics, EditorGroups. L’écriture reste `writeTextAtomically`. Le couplage Viewers → Editor (PDF/images dans le même `QTabWidget`) n’est pas traité ici ; il relève des groupes d’éditeurs (Phase 18).
+**Non créés (à l’époque) :** AutoIndent, BracketMatcher, AutoClosingPairs, Folding, Completion, Diagnostics. L’écriture reste `writeTextAtomically`. Les groupes d’éditeurs / split : [adr/0018-editor-groups.md](0018-editor-groups.md).
 
 ## Conséquences
 

@@ -32,6 +32,15 @@ ViewerManager::OpenResult ViewerManager::open(const QString &filePath)
         return OpenResult::Opened;
     }
 
+    return openNew(filePath);
+}
+
+ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
+{
+    if (!m_editors || filePath.isEmpty()) {
+        return OpenResult::Failed;
+    }
+
     switch (kindForPath(filePath)) {
     case FileKind::Text:
         return m_editors->openTextFile(filePath) ? OpenResult::Opened : OpenResult::Failed;

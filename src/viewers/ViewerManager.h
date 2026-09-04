@@ -25,6 +25,7 @@ public:
 
     [[nodiscard]] static FileKind kindForPath(const QString &path);
     OpenResult open(const QString &filePath);
+    OpenResult openNew(const QString &filePath);
 
 private:
     OpenResult openPdf(const QString &filePath);

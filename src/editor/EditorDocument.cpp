@@ -10,12 +10,15 @@
 #include <QtGlobal>
 #include <QUuid>
 
-EditorDocument::EditorDocument(CodeEditor *editor)
-    : QObject(editor)
+EditorDocument::EditorDocument(CodeEditor *editor, QObject *parent)
+    : QObject(parent ? parent : editor)
     , m_editor(editor)
     , m_format(defaultTextFileMeta())
 {
     Q_ASSERT(editor);
+    if (parent) {
+        editor->document()->setParent(this);
+    }
     connect(editor->document(), &QTextDocument::modificationChanged,
             this, &EditorDocument::modificationChanged);
     connect(editor->document(), &QTextDocument::contentsChange,
@@ -30,7 +33,20 @@ EditorDocument *EditorDocument::fromEditor(CodeEditor *editor)
     if (!editor) {
         return nullptr;
     }
-    return editor->findChild<EditorDocument *>(QString(), Qt::FindDirectChildrenOnly);
+    if (auto *doc = editor->findChild<EditorDocument *>(QString(), Qt::FindDirectChildrenOnly)) {
+        return doc;
+    }
+    if (editor->document()) {
+        if (auto *doc = qobject_cast<EditorDocument *>(editor->document()->parent())) {
+            return doc;
+        }
+    }
+    return nullptr;
+}
+
+void EditorDocument::setEditor(CodeEditor *editor)
+{
+    m_editor = editor;
 }
 
 QString EditorDocument::normalizePath(const QString &path)

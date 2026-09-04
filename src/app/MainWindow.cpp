@@ -172,6 +172,34 @@ void MainWindow::closeAllTabs()
     }
 }
 
+void MainWindow::splitEditorRight()
+{
+    if (m_editorManager) {
+        m_editorManager->splitRight();
+    }
+}
+
+void MainWindow::splitEditorDown()
+{
+    if (m_editorManager) {
+        m_editorManager->splitDown();
+    }
+}
+
+void MainWindow::moveEditor()
+{
+    if (m_editorManager) {
+        m_editorManager->moveEditor();
+    }
+}
+
+void MainWindow::closeEditorGroup()
+{
+    if (m_editorManager) {
+        m_editorManager->closeActiveGroup();
+    }
+}
+
 void MainWindow::updateWindowTitle()
 {
     QString title = QStringLiteral("Editerako");

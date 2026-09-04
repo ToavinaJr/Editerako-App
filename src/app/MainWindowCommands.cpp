@@ -221,6 +221,19 @@ void MainWindow::connectActions()
         }
     });
 
+    QAction *splitRight = m_commands->create(QStringLiteral("workbench.splitEditorRight"),
+                                             tr("Split Right"));
+    connect(splitRight, &QAction::triggered, this, &MainWindow::splitEditorRight);
+    QAction *splitDown = m_commands->create(QStringLiteral("workbench.splitEditorDown"),
+                                            tr("Split Down"));
+    connect(splitDown, &QAction::triggered, this, &MainWindow::splitEditorDown);
+    QAction *moveEditor = m_commands->create(QStringLiteral("workbench.moveEditor"),
+                                             tr("Move Editor"));
+    connect(moveEditor, &QAction::triggered, this, &MainWindow::moveEditor);
+    QAction *closeGroup = m_commands->create(QStringLiteral("workbench.closeEditorGroup"),
+                                             tr("Close Editor Group"));
+    connect(closeGroup, &QAction::triggered, this, &MainWindow::closeEditorGroup);
+
     m_keybindings = new KeybindingManager(m_commands, this);
     m_keybindings->apply();
 
@@ -274,6 +287,11 @@ void MainWindow::connectActions()
     viewMenu->addAction(zoomOut);
     viewMenu->addAction(zoomReset);
     viewMenu->addSeparator();
+    viewMenu->addAction(splitRight);
+    viewMenu->addAction(splitDown);
+    viewMenu->addAction(moveEditor);
+    viewMenu->addAction(closeGroup);
+    viewMenu->addSeparator();
     viewMenu->addAction(preferences);
 
     QMenu *buildMenu = menuBar()->addMenu(tr("Build"));
@@ -301,7 +319,9 @@ void MainWindow::updateCommandStates()
     }
 
     const bool hasEditor = currentEditor() != nullptr;
-    const int tabCount = m_editorManager ? m_editorManager->tabWidget()->count() : 0;
+    const int tabCount = m_editorManager ? m_editorManager->activeTabCount() : 0;
+    const int totalTabs = m_editorManager ? m_editorManager->totalTabCount() : 0;
+    const int groups = m_editorManager ? m_editorManager->groupCount() : 0;
 
     m_commands->setEnabled(QStringLiteral("file.save"), hasEditor);
     m_commands->setEnabled(QStringLiteral("file.saveAs"), hasEditor);
@@ -354,5 +374,9 @@ void MainWindow::updateCommandStates()
     m_commands->setEnabled(QStringLiteral("file.compareWithDisk"), hasSavedEditor);
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
-    m_commands->setEnabled(QStringLiteral("file.closeAll"), tabCount > 0);
+    m_commands->setEnabled(QStringLiteral("file.closeAll"), totalTabs > 0);
+    m_commands->setEnabled(QStringLiteral("workbench.splitEditorRight"), tabCount > 0);
+    m_commands->setEnabled(QStringLiteral("workbench.splitEditorDown"), tabCount > 0);
+    m_commands->setEnabled(QStringLiteral("workbench.moveEditor"), tabCount > 0);
+    m_commands->setEnabled(QStringLiteral("workbench.closeEditorGroup"), groups > 1);
 }

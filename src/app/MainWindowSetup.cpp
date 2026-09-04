@@ -64,10 +64,14 @@ void MainWindow::setupCodeEditor()
         oldEditor->deleteLater();
     }
 
-    ui->centralStack->insertWidget(CodeViewer, m_editorManager->tabWidget());
+    ui->centralStack->insertWidget(CodeViewer, m_editorManager->containerWidget());
     ui->centralStack->setCurrentIndex(CodeViewer);
 
     m_viewerManager = new ViewerManager(m_editorManager, this);
+    connect(m_editorManager, &EditorManager::viewerDuplicateRequested,
+            this, [this](const QString &path) {
+                m_viewerManager->openNew(path);
+            });
 
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::updateWindowTitle);
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncChatContext);

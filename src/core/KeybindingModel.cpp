@@ -58,6 +58,8 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("editor.zoomIn"), QKeySequence(QStringLiteral("Ctrl++")));
     defaults.insert(QStringLiteral("editor.zoomOut"), QKeySequence(QStringLiteral("Ctrl+-")));
     defaults.insert(QStringLiteral("editor.zoomReset"), QKeySequence(QStringLiteral("Ctrl+0")));
+    defaults.insert(QStringLiteral("workbench.splitEditorRight"), QKeySequence(QStringLiteral("Ctrl+\\")));
+    defaults.insert(QStringLiteral("workbench.splitEditorDown"), QKeySequence(QStringLiteral("Ctrl+Shift+\\")));
     return defaults;
 }
 

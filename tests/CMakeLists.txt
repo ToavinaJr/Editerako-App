@@ -241,6 +241,15 @@ set_tests_properties(test_EditorDocument PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
 
+editerako_add_test(test_EditorArea
+    SOURCES EditorAreaTest.cpp
+    LIBS EditerakoEditor
+)
+
+set_tests_properties(test_EditorArea PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
 editerako_add_test(test_LspMessageFramer
     SOURCES LspMessageFramerTest.cpp
     LIBS EditerakoLsp

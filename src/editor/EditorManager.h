@@ -9,7 +9,9 @@
 #include <QStringList>
 
 class CodeEditor;
+class EditorArea;
 class EditorDocument;
+class EditorGroup;
 class QTabWidget;
 class QWidget;
 
@@ -25,7 +27,11 @@ public:
 
     explicit EditorManager(QWidget *dialogParent);
 
-    [[nodiscard]] QTabWidget *tabWidget() const { return m_tabs; }
+    [[nodiscard]] QWidget *containerWidget() const;
+    [[nodiscard]] QTabWidget *tabWidget() const;
+    [[nodiscard]] int activeTabCount() const;
+    [[nodiscard]] int totalTabCount() const;
+    [[nodiscard]] int groupCount() const;
 
     [[nodiscard]] CodeEditor *currentEditor() const;
     [[nodiscard]] EditorDocument *currentDocument() const;
@@ -42,6 +48,7 @@ public:
 
     [[nodiscard]] QStringList openFilePaths() const;
     [[nodiscard]] CodeEditor *editorForPath(const QString &filePath) const;
+    [[nodiscard]] QList<CodeEditor *> editorsForPath(const QString &filePath) const;
     bool reloadFromDisk(const QString &filePath);
     void closeUntitledIfPristine();
 
@@ -52,9 +59,15 @@ public:
     bool saveAll();
 
     CloseResult closeTab(int index);
+    CloseResult closeWidget(QWidget *widget);
     CloseResult closeCurrent();
     CloseResult closeOthers();
     CloseResult closeAll();
+
+    void splitRight();
+    void splitDown();
+    void moveEditor();
+    void closeActiveGroup();
 
     bool promptSaveAllOnQuit();
     bool promptSaveEditors(const QList<CodeEditor *> &editors, bool secretFiles = false);
@@ -77,16 +90,31 @@ signals:
     void fileSaved(const QString &path);
     void documentOpened(CodeEditor *editor);
     void documentAboutToClose(CodeEditor *editor);
+    void viewerDuplicateRequested(const QString &path);
 
 private:
     CodeEditor *createEditor();
+    CodeEditor *cloneEditorView(CodeEditor *source);
+    EditorGroup *createGroup();
+    void setActiveGroup(EditorGroup *group);
+    void bindDocument(CodeEditor *editor, EditorDocument *doc);
     void updateTabLabel(CodeEditor *editor);
+    void updateTabLabelsFor(EditorDocument *doc);
+    void showTabContextMenu(EditorGroup *group, int index, const QPoint &globalPos);
+    void split(Qt::Orientation orientation);
+    void moveCurrentToGroup(EditorGroup *target);
+    EditorGroup *groupForWidget(QWidget *widget) const;
+    EditorGroup *nextGroup(EditorGroup *group) const;
+    void pruneEmptyGroup(EditorGroup *group);
     [[nodiscard]] QString pathForWidget(QWidget *widget) const;
+    [[nodiscard]] int viewCount(EditorDocument *doc) const;
     bool confirmClose(CodeEditor *editor);
     bool writeToDisk(CodeEditor *editor, const QString &path);
+    CloseResult closeInGroup(EditorGroup *group, int index);
 
     QWidget *m_dialogParent = nullptr;
-    QTabWidget *m_tabs = nullptr;
+    EditorArea *m_area = nullptr;
+    EditorGroup *m_active = nullptr;
     QString m_workingDirectory;
 };
 

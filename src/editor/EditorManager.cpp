@@ -3,40 +3,79 @@
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 #include "editor/CodeEditor.h"
+#include "editor/EditorArea.h"
 #include "editor/EditorDocument.h"
+#include "editor/EditorGroup.h"
 #include "editor/EditorIo.h"
 #include "editor/EditorStyle.h"
 #include "editor/HighlighterSync.h"
 
+#include <QApplication>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QMenu>
 #include <QMessageBox>
 #include <QTabWidget>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <QTextDocument>
 #include <QtGlobal>
 
 EditorManager::EditorManager(QWidget *dialogParent)
     : QObject(dialogParent)
     , m_dialogParent(dialogParent)
-    , m_tabs(new QTabWidget(dialogParent))
+    , m_area(new EditorArea(dialogParent))
 {
-    m_tabs->setTabsClosable(true);
-    m_tabs->setMovable(true);
+    m_active = createGroup();
+    m_area->setInitialGroup(m_active);
+    m_active->setActive(true);
 
-    connect(m_tabs, &QTabWidget::currentChanged, this, [this](int) {
-        emit currentChanged();
-    });
-    connect(m_tabs, &QTabWidget::tabCloseRequested, this, [this](int index) {
-        closeTab(index);
-    });
+    if (qApp) {
+        connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+            if (EditorGroup *group = groupForWidget(now)) {
+                setActiveGroup(group);
+            }
+        });
+    }
 
     openUntitled();
 }
 
+QWidget *EditorManager::containerWidget() const
+{
+    return m_area;
+}
+
+QTabWidget *EditorManager::tabWidget() const
+{
+    return m_active ? m_active->tabWidget() : nullptr;
+}
+
+int EditorManager::activeTabCount() const
+{
+    return tabWidget() ? tabWidget()->count() : 0;
+}
+
+int EditorManager::totalTabCount() const
+{
+    int count = 0;
+    if (!m_area) {
+        return 0;
+    }
+    for (EditorGroup *group : m_area->groups()) {
+        count += group->tabWidget()->count();
+    }
+    return count;
+}
+
+int EditorManager::groupCount() const
+{
+    return m_area ? m_area->groupCount() : 0;
+}
+
 CodeEditor *EditorManager::currentEditor() const
 {
-    return qobject_cast<CodeEditor *>(m_tabs->currentWidget());
+    return tabWidget() ? qobject_cast<CodeEditor *>(tabWidget()->currentWidget()) : nullptr;
 }
 
 EditorDocument *EditorManager::currentDocument() const
@@ -46,12 +85,12 @@ EditorDocument *EditorManager::currentDocument() const
 
 QWidget *EditorManager::currentWidget() const
 {
-    return m_tabs->currentWidget();
+    return tabWidget() ? tabWidget()->currentWidget() : nullptr;
 }
 
 QString EditorManager::currentFilePath() const
 {
-    return pathForWidget(m_tabs->currentWidget());
+    return pathForWidget(currentWidget());
 }
 
 void EditorManager::setWorkingDirectory(const QString &dir)
@@ -59,42 +98,110 @@ void EditorManager::setWorkingDirectory(const QString &dir)
     m_workingDirectory = dir;
 }
 
+EditorGroup *EditorManager::createGroup()
+{
+    auto *group = new EditorGroup(m_area);
+    connect(group, &EditorGroup::currentChanged, this, [this, group]() {
+        if (m_active != group) {
+            setActiveGroup(group);
+        } else {
+            emit currentChanged();
+        }
+    });
+    connect(group, &EditorGroup::tabCloseRequested, this, [this, group](int index) {
+        setActiveGroup(group);
+        closeInGroup(group, index);
+    });
+    connect(group, &EditorGroup::tabContextMenuRequested, this,
+            [this, group](int index, const QPoint &globalPos) {
+                setActiveGroup(group);
+                showTabContextMenu(group, index, globalPos);
+            });
+    return group;
+}
+
+void EditorManager::setActiveGroup(EditorGroup *group)
+{
+    if (!group || m_active == group) {
+        return;
+    }
+    if (m_active) {
+        m_active->setActive(false);
+    }
+    m_active = group;
+    m_active->setActive(true);
+    emit currentChanged();
+}
+
 CodeEditor *EditorManager::createEditor()
 {
-    auto *editor = new CodeEditor(m_tabs);
+    auto *editor = new CodeEditor(tabWidget());
     EditorStyle::apply(editor);
     connect(editor, &CodeEditor::fontZoomRequested, this, &EditorManager::adjustFontSize);
 
-    auto *doc = new EditorDocument(editor);
-    connect(doc, &EditorDocument::modificationChanged, this, [this, editor](bool) {
-        updateTabLabel(editor);
+    auto *doc = new EditorDocument(editor, this);
+    bindDocument(editor, doc);
+    return editor;
+}
+
+void EditorManager::bindDocument(CodeEditor *editor, EditorDocument *doc)
+{
+    Q_UNUSED(editor);
+    connect(doc, &EditorDocument::modificationChanged, this, [this, doc](bool) {
+        updateTabLabelsFor(doc);
         emit modificationChanged();
     });
-    connect(doc, &EditorDocument::filePathChanged, this, [this, editor](const QString &) {
-        updateTabLabel(editor);
-        HighlighterSync::apply(editor);
+    connect(doc, &EditorDocument::filePathChanged, this, [this, doc](const QString &) {
+        updateTabLabelsFor(doc);
+        if (doc->editor()) {
+            HighlighterSync::apply(doc->editor());
+        }
     });
+}
 
+CodeEditor *EditorManager::cloneEditorView(CodeEditor *source)
+{
+    auto *editor = new CodeEditor(tabWidget());
+    EditorStyle::apply(editor);
+    connect(editor, &CodeEditor::fontZoomRequested, this, &EditorManager::adjustFontSize);
+    editor->setDocument(source->document());
+    editor->setReadOnly(source->isReadOnly());
+    editor->setLineNumbersVisible(source->isLineNumbersVisible());
+    HighlighterSync::apply(editor);
     return editor;
 }
 
 void EditorManager::updateTabLabel(CodeEditor *editor)
 {
-    if (!editor) {
+    if (!editor || !m_area) {
         return;
     }
-    const int idx = m_tabs->indexOf(editor);
-    if (idx < 0) {
+    for (EditorGroup *group : m_area->groups()) {
+        const int idx = group->tabWidget()->indexOf(editor);
+        if (idx < 0) {
+            continue;
+        }
+        auto *doc = EditorDocument::fromEditor(editor);
+        QString label = doc ? doc->displayName() : tr("untitled");
+        if (doc && doc->isModified()) {
+            label += QLatin1Char('*');
+        }
+        group->tabWidget()->setTabText(idx, label);
+        group->tabWidget()->setTabToolTip(idx, doc ? doc->filePath() : QString());
         return;
     }
+}
 
-    auto *doc = EditorDocument::fromEditor(editor);
-    QString label = doc ? doc->displayName() : tr("untitled");
-    if (doc && doc->isModified()) {
-        label += QLatin1Char('*');
+void EditorManager::updateTabLabelsFor(EditorDocument *doc)
+{
+    if (!doc) {
+        return;
     }
-    m_tabs->setTabText(idx, label);
-    m_tabs->setTabToolTip(idx, doc ? doc->filePath() : QString());
+    for (CodeEditor *editor : editors()) {
+        if (EditorDocument::fromEditor(editor) == doc) {
+            updateTabLabel(editor);
+        }
+    }
 }
 
 QString EditorManager::pathForWidget(QWidget *widget) const
@@ -113,21 +220,22 @@ QString EditorManager::pathForWidget(QWidget *widget) const
 QList<CodeEditor *> EditorManager::modifiedEditors() const
 {
     QList<CodeEditor *> result;
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i));
-        if (editor && editor->document()->isModified()) {
-            result.append(editor);
+    QList<EditorDocument *> seen;
+    for (CodeEditor *editor : editors()) {
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (!doc || !doc->isModified() || seen.contains(doc)) {
+            continue;
         }
+        seen.append(doc);
+        result.append(editor);
     }
     return result;
 }
 
 void EditorManager::applySettings()
 {
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        if (auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i))) {
-            EditorStyle::apply(editor);
-        }
+    for (CodeEditor *editor : editors()) {
+        EditorStyle::apply(editor);
     }
 }
 
@@ -192,9 +300,14 @@ bool EditorManager::revealLocation(const QString &filePath, int line, int charac
 QList<CodeEditor *> EditorManager::editors() const
 {
     QList<CodeEditor *> result;
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        if (auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i))) {
-            result.append(editor);
+    if (!m_area) {
+        return result;
+    }
+    for (EditorGroup *group : m_area->groups()) {
+        for (int i = 0; i < group->tabWidget()->count(); ++i) {
+            if (auto *editor = qobject_cast<CodeEditor *>(group->tabWidget()->widget(i))) {
+                result.append(editor);
+            }
         }
     }
     return result;
@@ -259,7 +372,8 @@ bool EditorManager::restoreBuffer(const BackupBuffer &buffer)
         if (!buffer.id.isEmpty()) {
             doc->setBackupId(buffer.id);
         }
-        if (!buffer.originalPath.isEmpty() && doc->filePath() != EditorDocument::normalizePath(buffer.originalPath)) {
+        if (!buffer.originalPath.isEmpty()
+            && doc->filePath() != EditorDocument::normalizePath(buffer.originalPath)) {
             doc->setFilePath(buffer.originalPath);
         }
         doc->setFormat(buffer.format);
@@ -283,8 +397,8 @@ bool EditorManager::restoreBuffer(const BackupBuffer &buffer)
 CodeEditor *EditorManager::openUntitled()
 {
     auto *editor = createEditor();
-    const int idx = m_tabs->addTab(editor, tr("untitled"));
-    m_tabs->setCurrentIndex(idx);
+    const int idx = tabWidget()->addTab(editor, tr("untitled"));
+    tabWidget()->setCurrentIndex(idx);
     updateTabLabel(editor);
     qCInfo(lcEditor) << "Opened untitled document";
     emit documentOpened(editor);
@@ -293,14 +407,20 @@ CodeEditor *EditorManager::openUntitled()
 
 bool EditorManager::activateExisting(const QString &filePath)
 {
-    if (filePath.isEmpty()) {
+    if (filePath.isEmpty() || !m_area) {
         return false;
     }
     const QString normalized = EditorDocument::normalizePath(filePath);
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        if (pathForWidget(m_tabs->widget(i)) == normalized) {
-            m_tabs->setCurrentIndex(i);
-            return true;
+    for (EditorGroup *group : m_area->groups()) {
+        for (int i = 0; i < group->tabWidget()->count(); ++i) {
+            if (pathForWidget(group->tabWidget()->widget(i)) == normalized) {
+                setActiveGroup(group);
+                group->tabWidget()->setCurrentIndex(i);
+                if (auto *editor = currentEditor()) {
+                    editor->setFocus();
+                }
+                return true;
+            }
         }
     }
     return false;
@@ -362,9 +482,9 @@ bool EditorManager::openTextFile(const QString &filePath)
     }
     editor->document()->setModified(false);
 
-    const int idx = m_tabs->addTab(editor, doc->displayName());
-    m_tabs->setTabToolTip(idx, doc->filePath());
-    m_tabs->setCurrentWidget(editor);
+    const int idx = tabWidget()->addTab(editor, doc->displayName());
+    tabWidget()->setTabToolTip(idx, doc->filePath());
+    tabWidget()->setCurrentWidget(editor);
     updateTabLabel(editor);
     editor->setFocus();
 
@@ -375,23 +495,28 @@ bool EditorManager::openTextFile(const QString &filePath)
 
 void EditorManager::addViewerTab(QWidget *widget, const QString &filePath)
 {
-    if (!widget) {
+    if (!widget || !tabWidget()) {
         return;
     }
     const QString normalized = EditorDocument::normalizePath(filePath);
     widget->setProperty("filePath", normalized);
-    const int idx = m_tabs->addTab(widget, QFileInfo(filePath).fileName());
-    m_tabs->setTabToolTip(idx, normalized);
-    m_tabs->setCurrentIndex(idx);
+    const int idx = tabWidget()->addTab(widget, QFileInfo(filePath).fileName());
+    tabWidget()->setTabToolTip(idx, normalized);
+    tabWidget()->setCurrentIndex(idx);
 }
 
 QStringList EditorManager::openFilePaths() const
 {
     QStringList paths;
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        const QString path = pathForWidget(m_tabs->widget(i));
-        if (!path.isEmpty()) {
-            paths.append(path);
+    if (!m_area) {
+        return paths;
+    }
+    for (EditorGroup *group : m_area->groups()) {
+        for (int i = 0; i < group->tabWidget()->count(); ++i) {
+            const QString path = pathForWidget(group->tabWidget()->widget(i));
+            if (!path.isEmpty() && !paths.contains(path)) {
+                paths.append(path);
+            }
         }
     }
     return paths;
@@ -399,17 +524,23 @@ QStringList EditorManager::openFilePaths() const
 
 CodeEditor *EditorManager::editorForPath(const QString &filePath) const
 {
+    const QList<CodeEditor *> matches = editorsForPath(filePath);
+    return matches.isEmpty() ? nullptr : matches.front();
+}
+
+QList<CodeEditor *> EditorManager::editorsForPath(const QString &filePath) const
+{
+    QList<CodeEditor *> result;
     if (filePath.isEmpty()) {
-        return nullptr;
+        return result;
     }
     const QString normalized = EditorDocument::normalizePath(filePath);
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i));
-        if (editor && pathForWidget(editor) == normalized) {
-            return editor;
+    for (CodeEditor *editor : editors()) {
+        if (pathForWidget(editor) == normalized) {
+            result.append(editor);
         }
     }
-    return nullptr;
+    return result;
 }
 
 bool EditorManager::reloadFromDisk(const QString &filePath)
@@ -425,15 +556,21 @@ bool EditorManager::reloadFromDisk(const QString &filePath)
     }
 
     editor->setPlainText(loaded.text);
-    if (auto *doc = EditorDocument::fromEditor(editor)) {
+    auto *doc = EditorDocument::fromEditor(editor);
+    if (doc) {
         doc->setFormat(loaded.meta);
         const bool writable = QFileInfo(filePath).isWritable();
         doc->setReadOnly(!writable);
-        editor->setReadOnly(!writable);
+        for (CodeEditor *view : editorsForPath(filePath)) {
+            view->setReadOnly(!writable);
+        }
         doc->resetVersion();
+        editor->document()->setModified(false);
+        updateTabLabelsFor(doc);
+    } else {
+        editor->document()->setModified(false);
+        updateTabLabel(editor);
     }
-    editor->document()->setModified(false);
-    updateTabLabel(editor);
     qCInfo(lcEditor) << "Reloaded" << filePath;
     return true;
 }
@@ -441,18 +578,14 @@ bool EditorManager::reloadFromDisk(const QString &filePath)
 void EditorManager::closeUntitledIfPristine()
 {
     QList<QWidget *> toClose;
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        auto *editor = qobject_cast<CodeEditor *>(m_tabs->widget(i));
+    for (CodeEditor *editor : editors()) {
         auto *doc = EditorDocument::fromEditor(editor);
         if (doc && doc->isUntitled() && !doc->isModified()) {
             toClose.append(editor);
         }
     }
     for (QWidget *widget : toClose) {
-        const int idx = m_tabs->indexOf(widget);
-        if (idx >= 0) {
-            closeTab(idx);
-        }
+        closeWidget(widget);
     }
 }
 
@@ -473,7 +606,7 @@ bool EditorManager::writeToDisk(CodeEditor *editor, const QString &path)
         doc->setFormat(saved.meta);
     }
     editor->document()->setModified(false);
-    updateTabLabel(editor);
+    updateTabLabelsFor(doc);
     emit fileSaved(path);
     qCInfo(lcEditor) << "Saved" << path;
     return true;
@@ -565,52 +698,146 @@ bool EditorManager::confirmClose(CodeEditor *editor)
     return true;
 }
 
+int EditorManager::viewCount(EditorDocument *doc) const
+{
+    if (!doc) {
+        return 0;
+    }
+    int count = 0;
+    for (CodeEditor *editor : editors()) {
+        if (EditorDocument::fromEditor(editor) == doc) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+EditorGroup *EditorManager::groupForWidget(QWidget *widget) const
+{
+    for (QWidget *current = widget; current; current = current->parentWidget()) {
+        if (auto *group = qobject_cast<EditorGroup *>(current)) {
+            return group;
+        }
+    }
+    return nullptr;
+}
+
+EditorGroup *EditorManager::nextGroup(EditorGroup *group) const
+{
+    if (!m_area) {
+        return nullptr;
+    }
+    const QList<EditorGroup *> groups = m_area->groups();
+    if (groups.isEmpty()) {
+        return nullptr;
+    }
+    const int index = groups.indexOf(group);
+    if (index < 0) {
+        return groups.front();
+    }
+    return groups.at((index + 1) % groups.size());
+}
+
+void EditorManager::pruneEmptyGroup(EditorGroup *group)
+{
+    if (!group || !m_area || group->tabWidget()->count() > 0) {
+        return;
+    }
+    if (m_area->groupCount() <= 1) {
+        return;
+    }
+    EditorGroup *fallback = nextGroup(group);
+    if (fallback == group) {
+        fallback = nullptr;
+        for (EditorGroup *candidate : m_area->groups()) {
+            if (candidate != group) {
+                fallback = candidate;
+                break;
+            }
+        }
+    }
+    const bool wasActive = (m_active == group);
+    m_area->removeGroup(group);
+    if (wasActive) {
+        m_active = nullptr;
+        setActiveGroup(fallback);
+    }
+}
+
 EditorManager::CloseResult EditorManager::closeTab(int index)
 {
-    if (index < 0 || index >= m_tabs->count()) {
+    return closeInGroup(m_active, index);
+}
+
+EditorManager::CloseResult EditorManager::closeWidget(QWidget *widget)
+{
+    EditorGroup *group = groupForWidget(widget);
+    if (!group) {
+        return CloseResult::Closed;
+    }
+    return closeInGroup(group, group->tabWidget()->indexOf(widget));
+}
+
+EditorManager::CloseResult EditorManager::closeInGroup(EditorGroup *group, int index)
+{
+    if (!group || index < 0 || index >= group->tabWidget()->count()) {
         return CloseResult::Closed;
     }
 
-    QWidget *widget = m_tabs->widget(index);
-    if (auto *editor = qobject_cast<CodeEditor *>(widget)) {
-        if (!confirmClose(editor)) {
-            return CloseResult::Cancelled;
-        }
+    QWidget *widget = group->tabWidget()->widget(index);
+    auto *editor = qobject_cast<CodeEditor *>(widget);
+    auto *doc = EditorDocument::fromEditor(editor);
+    const bool lastView = editor && viewCount(doc) <= 1;
+
+    if (editor && lastView && !confirmClose(editor)) {
+        return CloseResult::Cancelled;
+    }
+    if (editor && lastView) {
         emit documentAboutToClose(editor);
     }
+    if (editor && !lastView && doc) {
+        for (CodeEditor *view : editors()) {
+            if (view != editor && EditorDocument::fromEditor(view) == doc) {
+                doc->setEditor(view);
+                break;
+            }
+        }
+    }
 
-    m_tabs->removeTab(index);
+    group->tabWidget()->removeTab(index);
+    if (editor && lastView && doc && doc->parent() == this) {
+        editor->setDocument(new QTextDocument(editor));
+        doc->deleteLater();
+    }
     if (widget) {
         widget->deleteLater();
     }
+    pruneEmptyGroup(group);
+    emit currentChanged();
     return CloseResult::Closed;
 }
 
 EditorManager::CloseResult EditorManager::closeCurrent()
 {
-    return closeTab(m_tabs->currentIndex());
+    return tabWidget() ? closeTab(tabWidget()->currentIndex()) : CloseResult::Closed;
 }
 
 EditorManager::CloseResult EditorManager::closeOthers()
 {
-    QWidget *keep = m_tabs->currentWidget();
-    if (!keep) {
+    QWidget *keep = currentWidget();
+    if (!keep || !m_active) {
         return CloseResult::Closed;
     }
 
     QList<QWidget *> toClose;
-    for (int i = 0; i < m_tabs->count(); ++i) {
-        if (m_tabs->widget(i) != keep) {
-            toClose.append(m_tabs->widget(i));
+    for (int i = 0; i < m_active->tabWidget()->count(); ++i) {
+        if (m_active->tabWidget()->widget(i) != keep) {
+            toClose.append(m_active->tabWidget()->widget(i));
         }
     }
 
     for (QWidget *widget : toClose) {
-        const int idx = m_tabs->indexOf(widget);
-        if (idx < 0) {
-            continue;
-        }
-        if (closeTab(idx) == CloseResult::Cancelled) {
+        if (closeWidget(widget) == CloseResult::Cancelled) {
             return CloseResult::Cancelled;
         }
     }
@@ -619,12 +846,178 @@ EditorManager::CloseResult EditorManager::closeOthers()
 
 EditorManager::CloseResult EditorManager::closeAll()
 {
-    while (m_tabs->count() > 0) {
-        if (closeTab(m_tabs->count() - 1) == CloseResult::Cancelled) {
+    QList<QWidget *> toClose;
+    for (CodeEditor *editor : editors()) {
+        toClose.append(editor);
+    }
+    if (m_area) {
+        for (EditorGroup *group : m_area->groups()) {
+            for (int i = 0; i < group->tabWidget()->count(); ++i) {
+                QWidget *widget = group->tabWidget()->widget(i);
+                if (widget && !toClose.contains(widget)) {
+                    toClose.append(widget);
+                }
+            }
+        }
+    }
+    for (QWidget *widget : toClose) {
+        if (closeWidget(widget) == CloseResult::Cancelled) {
             return CloseResult::Cancelled;
         }
     }
     return CloseResult::Closed;
+}
+
+void EditorManager::splitRight()
+{
+    split(Qt::Horizontal);
+}
+
+void EditorManager::splitDown()
+{
+    split(Qt::Vertical);
+}
+
+void EditorManager::split(Qt::Orientation orientation)
+{
+    QWidget *current = currentWidget();
+    if (!current || !m_active) {
+        return;
+    }
+
+    auto *newGroup = createGroup();
+    m_area->split(m_active, newGroup, orientation);
+    setActiveGroup(newGroup);
+
+    if (auto *editor = qobject_cast<CodeEditor *>(current)) {
+        auto *clone = cloneEditorView(editor);
+        auto *doc = EditorDocument::fromEditor(editor);
+        QString label = doc ? doc->displayName() : tr("untitled");
+        if (doc && doc->isModified()) {
+            label += QLatin1Char('*');
+        }
+        const int idx = newGroup->tabWidget()->addTab(clone, label);
+        newGroup->tabWidget()->setTabToolTip(idx, doc ? doc->filePath() : QString());
+        newGroup->tabWidget()->setCurrentIndex(idx);
+        updateTabLabel(clone);
+        clone->setFocus();
+        emit documentOpened(clone);
+        return;
+    }
+
+    const QString path = pathForWidget(current);
+    if (!path.isEmpty()) {
+        emit viewerDuplicateRequested(path);
+    }
+    if (newGroup->tabWidget()->count() == 0) {
+        openUntitled();
+    }
+}
+
+void EditorManager::moveCurrentToGroup(EditorGroup *target)
+{
+    QWidget *widget = currentWidget();
+    if (!widget || !m_active || !target || target == m_active) {
+        return;
+    }
+
+    QTabWidget *sourceTabs = m_active->tabWidget();
+    const int index = sourceTabs->indexOf(widget);
+    if (index < 0) {
+        return;
+    }
+    const QString text = sourceTabs->tabText(index);
+    const QString tip = sourceTabs->tabToolTip(index);
+    sourceTabs->removeTab(index);
+    const int dest = target->tabWidget()->addTab(widget, text);
+    target->tabWidget()->setTabToolTip(dest, tip);
+    target->tabWidget()->setCurrentIndex(dest);
+    pruneEmptyGroup(m_active);
+    setActiveGroup(target);
+    widget->setFocus();
+}
+
+void EditorManager::moveEditor()
+{
+    if (!currentWidget() || !m_active) {
+        return;
+    }
+    if (groupCount() < 2) {
+        auto *source = m_active;
+        QWidget *widget = currentWidget();
+        auto *newGroup = createGroup();
+        QTabWidget *sourceTabs = source->tabWidget();
+        const int index = sourceTabs->indexOf(widget);
+        const QString text = sourceTabs->tabText(index);
+        const QString tip = sourceTabs->tabToolTip(index);
+        sourceTabs->removeTab(index);
+        m_area->split(source, newGroup, Qt::Horizontal);
+        const int dest = newGroup->tabWidget()->addTab(widget, text);
+        newGroup->tabWidget()->setTabToolTip(dest, tip);
+        newGroup->tabWidget()->setCurrentIndex(dest);
+        pruneEmptyGroup(source);
+        setActiveGroup(newGroup);
+        widget->setFocus();
+        return;
+    }
+    moveCurrentToGroup(nextGroup(m_active));
+}
+
+void EditorManager::closeActiveGroup()
+{
+    if (!m_active) {
+        return;
+    }
+    if (groupCount() <= 1) {
+        closeAll();
+        return;
+    }
+
+    EditorGroup *group = m_active;
+    QList<QWidget *> widgets;
+    for (int i = 0; i < group->tabWidget()->count(); ++i) {
+        widgets.append(group->tabWidget()->widget(i));
+    }
+    for (QWidget *widget : widgets) {
+        if (closeWidget(widget) == CloseResult::Cancelled) {
+            return;
+        }
+    }
+}
+
+void EditorManager::showTabContextMenu(EditorGroup *group, int index, const QPoint &globalPos)
+{
+    if (!group) {
+        return;
+    }
+    if (index >= 0) {
+        group->tabWidget()->setCurrentIndex(index);
+    }
+
+    QMenu menu(m_dialogParent);
+    QAction *closeAct = menu.addAction(tr("Close"));
+    QAction *closeOthersAct = menu.addAction(tr("Close Others"));
+    menu.addSeparator();
+    QAction *splitRightAct = menu.addAction(tr("Split Right"));
+    QAction *splitDownAct = menu.addAction(tr("Split Down"));
+    QAction *moveAct = menu.addAction(tr("Move Editor"));
+    QAction *closeGroupAct = menu.addAction(tr("Close Group"));
+    closeGroupAct->setEnabled(groupCount() > 1);
+
+    QAction *chosen = menu.exec(globalPos);
+    if (chosen == closeAct) {
+        closeCurrent();
+    } else if (chosen == closeOthersAct) {
+        closeOthers();
+    } else if (chosen == splitRightAct) {
+        splitRight();
+    } else if (chosen == splitDownAct) {
+        splitDown();
+    } else if (chosen == moveAct) {
+        moveEditor();
+    } else if (chosen == closeGroupAct) {
+        closeActiveGroup();
+    }
 }
 
 bool EditorManager::promptSaveAllOnQuit()

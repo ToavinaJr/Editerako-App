@@ -63,6 +63,10 @@ private slots:
     void closeCurrentTab();
     void closeOtherTabs();
     void closeAllTabs();
+    void splitEditorRight();
+    void splitEditorDown();
+    void moveEditor();
+    void closeEditorGroup();
 
     void onAddFileClicked();
     void onNewFolderClicked();

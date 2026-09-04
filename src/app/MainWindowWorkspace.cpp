@@ -223,10 +223,7 @@ void MainWindow::onFileChangedOnDisk(const QString &path)
         syncFileWatches();
         return;
     case DiskChangeAction::CloseTab: {
-        const int idx = m_editorManager->tabWidget()->indexOf(editor);
-        if (idx >= 0) {
-            m_editorManager->closeTab(idx);
-        }
+        m_editorManager->closeWidget(editor);
         syncFileWatches();
         return;
     }

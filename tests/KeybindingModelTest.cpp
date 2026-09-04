@@ -55,6 +55,10 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+-")));
     QCOMPARE(defaults.value(QStringLiteral("editor.zoomReset")),
              QKeySequence(QStringLiteral("Ctrl+0")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.splitEditorRight")),
+             QKeySequence(QStringLiteral("Ctrl+\\")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.splitEditorDown")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+\\")));
 }
 
 void KeybindingModelTest::overrideAndReset()

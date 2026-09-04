@@ -6,6 +6,10 @@ editerako_add_module(EditerakoEditor
         EditorDocument.h
         EditorIo.cpp
         EditorIo.h
+        EditorGroup.cpp
+        EditorGroup.h
+        EditorArea.cpp
+        EditorArea.h
         EditorManager.cpp
         EditorManager.h
         EditorStatusWidget.cpp

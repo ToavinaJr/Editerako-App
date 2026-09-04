@@ -104,9 +104,12 @@ void LspSession::attachEditor(CodeEditor *editor)
     connect(editor, &CodeEditor::hoverCanceled, this, &LspSession::dismissHover);
     connect(editor, &CodeEditor::definitionRequested, this, &LspSession::goToDefinition);
     if (auto *doc = EditorDocument::fromEditor(editor)) {
-        connect(doc, &EditorDocument::versionChanged, this, [this, editor](int) {
-            onEditorContentsChanged(editor);
-        });
+        if (!doc->property("lspVersionHook").toBool()) {
+            doc->setProperty("lspVersionHook", true);
+            connect(doc, &EditorDocument::versionChanged, this, [this, doc](int) {
+                onEditorContentsChanged(doc->editor());
+            });
+        }
     }
 }
 
@@ -297,7 +300,7 @@ void LspSession::onDiagnostics(const QString &uri, const QVector<LspDiagnostic> 
     if (!m_editors) {
         return;
     }
-    if (CodeEditor *editor = m_editors->editorForPath(path)) {
+    for (CodeEditor *editor : m_editors->editorsForPath(path)) {
         editor->setDiagnostics(mapped);
     }
 }
@@ -324,6 +327,12 @@ void LspSession::flushPendingChange()
     m_changeTimer->stop();
     CodeEditor *editor = m_pendingChangeEditor;
     m_pendingChangeEditor = nullptr;
+    if (!m_editors) {
+        return;
+    }
+    if (!editor || !m_editors->editors().contains(editor)) {
+        editor = m_editors->currentEditor();
+    }
     auto *doc = EditorDocument::fromEditor(editor);
     if (!doc || doc->isUntitled() || !m_manager) {
         return;
