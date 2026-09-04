@@ -176,6 +176,26 @@ void MainWindow::connectActions()
         tr("Preferences..."));
     connect(preferences, &QAction::triggered, this, &MainWindow::openPreferences);
 
+    QAction *zoomIn = m_commands->create(QStringLiteral("editor.zoomIn"), tr("Zoom In"));
+    connect(zoomIn, &QAction::triggered, this, [this]() {
+        if (m_editorManager) {
+            m_editorManager->adjustFontSize(1);
+        }
+    });
+    QAction *zoomOut = m_commands->create(QStringLiteral("editor.zoomOut"), tr("Zoom Out"));
+    connect(zoomOut, &QAction::triggered, this, [this]() {
+        if (m_editorManager) {
+            m_editorManager->adjustFontSize(-1);
+        }
+    });
+    QAction *zoomReset = m_commands->create(QStringLiteral("editor.zoomReset"),
+                                            tr("Reset Zoom"));
+    connect(zoomReset, &QAction::triggered, this, [this]() {
+        if (m_editorManager) {
+            m_editorManager->resetFontSize();
+        }
+    });
+
     m_keybindings = new KeybindingManager(m_commands, this);
     m_keybindings->apply();
 
@@ -222,6 +242,10 @@ void MainWindow::connectActions()
     viewMenu->addAction(toggleSourceControl);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addAction(compareWithDisk);
+    viewMenu->addSeparator();
+    viewMenu->addAction(zoomIn);
+    viewMenu->addAction(zoomOut);
+    viewMenu->addAction(zoomReset);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
 
@@ -279,6 +303,14 @@ void MainWindow::updateCommandStates()
         QStringLiteral("editor.showHover"),
     };
     for (const QString &id : lspIds) {
+        m_commands->setEnabled(id, hasEditor);
+    }
+    const QStringList zoomIds{
+        QStringLiteral("editor.zoomIn"),
+        QStringLiteral("editor.zoomOut"),
+        QStringLiteral("editor.zoomReset"),
+    };
+    for (const QString &id : zoomIds) {
         m_commands->setEnabled(id, hasEditor);
     }
     const bool hasSavedEditor = hasEditor && m_editorManager

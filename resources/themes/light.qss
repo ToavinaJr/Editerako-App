@@ -59,6 +59,9 @@ QTextEdit, QPlainTextEdit {
     background-color: #ffffff;
     color: #1e1e1e;
     border: none;
+}
+
+QTextEdit {
     font-family: "Monaco", "Consolas", monospace;
     font-size: 13px;
     line-height: 1.4;

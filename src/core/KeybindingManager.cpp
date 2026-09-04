@@ -3,7 +3,27 @@
 #include "core/CommandRegistry.h"
 
 #include <QAction>
+#include <QList>
 #include <QSettings>
+
+namespace {
+
+QList<QKeySequence> shortcutsFor(const QString &commandId, const QKeySequence &primary)
+{
+    QList<QKeySequence> sequences;
+    if (!primary.isEmpty()) {
+        sequences.append(primary);
+    }
+    if (commandId == QLatin1String("editor.zoomIn")) {
+        const QKeySequence equals(QStringLiteral("Ctrl+="));
+        if (!sequences.contains(equals)) {
+            sequences.append(equals);
+        }
+    }
+    return sequences;
+}
+
+} // namespace
 
 KeybindingManager::KeybindingManager(CommandRegistry *registry, QObject *parent)
     : QObject(parent)
@@ -27,7 +47,13 @@ void KeybindingManager::applyOne(const QString &commandId)
     if (!action) {
         return;
     }
-    action->setShortcut(m_model.shortcut(commandId));
+    const QKeySequence primary = m_model.shortcut(commandId);
+    const QList<QKeySequence> sequences = shortcutsFor(commandId, primary);
+    if (sequences.size() > 1) {
+        action->setShortcuts(sequences);
+    } else {
+        action->setShortcut(primary);
+    }
 }
 
 void KeybindingManager::apply()

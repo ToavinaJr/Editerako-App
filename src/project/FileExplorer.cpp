@@ -4,9 +4,11 @@
 #include "project/FileExplorerRoles.h"
 #include "project/Workspace.h"
 
+#include <QAbstractItemView>
 #include <QBrush>
 #include <QDir>
 #include <QFileInfo>
+#include <QHeaderView>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QtGlobal>
@@ -18,6 +20,8 @@ using FileExplorerRoles::kDirRole;
 using FileExplorerRoles::kLoadedRole;
 using FileExplorerRoles::kNameRole;
 using FileExplorerRoles::kPathRole;
+
+constexpr int kTreeIndentation = 12;
 
 int pathDepth(const QString &path)
 {
@@ -40,6 +44,12 @@ FileExplorer::FileExplorer(QTreeWidget *tree, Workspace *workspace, QObject *par
     m_tree->setAlternatingRowColors(false);
     m_tree->setUniformRowHeights(true);
     m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_tree->setIndentation(kTreeIndentation);
+    m_tree->setTextElideMode(Qt::ElideNone);
+    m_tree->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_tree->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_tree->header()->setStretchLastSection(false);
+    m_tree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 
     connect(m_tree, &QTreeWidget::itemExpanded, this, &FileExplorer::onItemExpanded);
     connect(m_tree, &QTreeWidget::itemClicked, this, &FileExplorer::onItemClicked);
@@ -106,6 +116,8 @@ void FileExplorer::reload()
             item->setExpanded(true);
         }
     }
+
+    fitContentsColumn();
 }
 
 void FileExplorer::onItemExpanded(QTreeWidgetItem *item)
@@ -123,6 +135,7 @@ void FileExplorer::onItemExpanded(QTreeWidgetItem *item)
     if (item->childCount() == 0) {
         item->setChildIndicatorPolicy(QTreeWidgetItem::DontShowIndicatorWhenChildless);
     }
+    fitContentsColumn();
 }
 
 QString FileExplorer::selectedDirectory() const
@@ -284,6 +297,7 @@ void FileExplorer::setPathBadges(const QHash<QString, QString> &badges)
     for (int i = 0; i < m_tree->topLevelItemCount(); ++i) {
         applyBadgesRecursive(m_tree->topLevelItem(i));
     }
+    fitContentsColumn();
 }
 
 void FileExplorer::applyBadge(QTreeWidgetItem *item) const
@@ -313,6 +327,14 @@ void FileExplorer::applyBadgesRecursive(QTreeWidgetItem *item) const
     for (int i = 0; i < item->childCount(); ++i) {
         applyBadgesRecursive(item->child(i));
     }
+}
+
+void FileExplorer::fitContentsColumn()
+{
+    if (!m_tree) {
+        return;
+    }
+    m_tree->resizeColumnToContents(0);
 }
 
 bool FileExplorer::runOpThenReload(bool ok, const QString &reveal)

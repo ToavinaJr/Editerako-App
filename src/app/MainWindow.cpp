@@ -120,7 +120,7 @@ void MainWindow::onShowLinesToggled(bool checked)
 {
     AppSettings().setEditorLineNumbers(checked);
     if (m_editorManager) {
-        m_editorManager->applySettings();
+        m_editorManager->setLineNumbersVisible(checked);
     }
 }
 

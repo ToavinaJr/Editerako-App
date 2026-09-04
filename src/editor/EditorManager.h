@@ -56,6 +56,9 @@ public:
 
     bool promptSaveAllOnQuit();
     void applySettings();
+    void setLineNumbersVisible(bool visible);
+    void adjustFontSize(int delta);
+    void resetFontSize();
     bool goToLine(int lineNumber, int column = 0);
     bool revealLocation(const QString &filePath, int line, int character);
     void saveDirtyFilesQuietly();

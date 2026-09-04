@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QHeaderView>
+#include <QAbstractItemView>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTreeWidget>
@@ -19,6 +21,7 @@ private slots:
     void createFileAndFolder();
     void refreshIfContains();
     void rejectsPathTraversal();
+    void explorerUsesCompactIndentAndHorizontalScroll();
 };
 
 void WorkspaceControllerTest::setRootPathReloadsAndEmits()
@@ -83,6 +86,22 @@ void WorkspaceControllerTest::rejectsPathTraversal()
 
     QVERIFY(!controller.createEmptyFile(QStringLiteral("../escape.txt"), nullptr));
     QVERIFY(!controller.createDirectory(QStringLiteral("../escape-dir"), nullptr));
+}
+
+void WorkspaceControllerTest::explorerUsesCompactIndentAndHorizontalScroll()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+
+    QTreeWidget tree;
+    WorkspaceController controller(&tree);
+    controller.setRootPath(temp.path());
+
+    QCOMPARE(tree.indentation(), 12);
+    QCOMPARE(tree.horizontalScrollBarPolicy(), Qt::ScrollBarAsNeeded);
+    QCOMPARE(tree.horizontalScrollMode(), QAbstractItemView::ScrollPerPixel);
+    QCOMPARE(tree.textElideMode(), Qt::ElideNone);
+    QVERIFY(!tree.header()->stretchLastSection());
 }
 
 QTEST_MAIN(WorkspaceControllerTest)

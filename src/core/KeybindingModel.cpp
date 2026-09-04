@@ -54,6 +54,9 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("editor.renameSymbol"), QKeySequence(QStringLiteral("F2")));
     defaults.insert(QStringLiteral("editor.documentSymbols"), QKeySequence(QStringLiteral("Ctrl+Shift+O")));
     defaults.insert(QStringLiteral("editor.workspaceSymbols"), QKeySequence(QStringLiteral("Ctrl+T")));
+    defaults.insert(QStringLiteral("editor.zoomIn"), QKeySequence(QStringLiteral("Ctrl++")));
+    defaults.insert(QStringLiteral("editor.zoomOut"), QKeySequence(QStringLiteral("Ctrl+-")));
+    defaults.insert(QStringLiteral("editor.zoomReset"), QKeySequence(QStringLiteral("Ctrl+0")));
     return defaults;
 }
 

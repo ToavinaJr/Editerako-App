@@ -18,6 +18,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
+#include <QWheelEvent>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextEdit>
@@ -160,9 +161,9 @@ void CodeEditor::setLineNumbersVisible(bool visible)
     if (m_lineNumbersVisible != visible) {
         m_lineNumbersVisible = visible;
         m_lineNumberArea->setVisible(visible);
-        updateLineNumberAreaWidth(0);
-        m_lineNumberArea->update();
     }
+    updateLineNumberAreaWidth(0);
+    m_lineNumberArea->update();
 }
 
 bool CodeEditor::isLineNumbersVisible() const
@@ -316,6 +317,19 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
         viewport()->setCursor(Qt::IBeamCursor);
     }
     QPlainTextEdit::keyReleaseEvent(event);
+}
+
+void CodeEditor::wheelEvent(QWheelEvent *event)
+{
+    if (event->modifiers() & Qt::ControlModifier) {
+        const int dy = event->angleDelta().y();
+        if (dy != 0) {
+            emit fontZoomRequested(dy > 0 ? 1 : -1);
+            event->accept();
+            return;
+        }
+    }
+    QPlainTextEdit::wheelEvent(event);
 }
 
 void CodeEditor::indentSelection()

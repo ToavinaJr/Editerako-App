@@ -63,6 +63,7 @@ CodeEditor *EditorManager::createEditor()
 {
     auto *editor = new CodeEditor(m_tabs);
     EditorStyle::apply(editor);
+    connect(editor, &CodeEditor::fontZoomRequested, this, &EditorManager::adjustFontSize);
 
     auto *doc = new EditorDocument(editor);
     connect(doc, &EditorDocument::modificationChanged, this, [this, editor](bool) {
@@ -128,6 +129,29 @@ void EditorManager::applySettings()
             EditorStyle::apply(editor);
         }
     }
+}
+
+void EditorManager::setLineNumbersVisible(bool visible)
+{
+    for (CodeEditor *editor : editors()) {
+        editor->setLineNumbersVisible(visible);
+    }
+}
+
+void EditorManager::adjustFontSize(int delta)
+{
+    if (delta == 0) {
+        return;
+    }
+    AppSettings settings;
+    settings.setEditorFontSize(settings.editorFontSize() + delta);
+    applySettings();
+}
+
+void EditorManager::resetFontSize()
+{
+    AppSettings().setEditorFontSize(13);
+    applySettings();
 }
 
 bool EditorManager::goToLine(int lineNumber, int column)

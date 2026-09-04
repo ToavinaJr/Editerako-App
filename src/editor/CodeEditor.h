@@ -12,6 +12,7 @@
 #include <QPlainTextEdit>
 #include <QPoint>
 #include <QVector>
+#include <QWheelEvent>
 
 class LineNumberArea;
 
@@ -53,6 +54,7 @@ signals:
     void hoverRequested(int line, int character, const QPoint &globalPos);
     void hoverCanceled();
     void definitionRequested();
+    void fontZoomRequested(int delta);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -61,6 +63,7 @@ protected:
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:

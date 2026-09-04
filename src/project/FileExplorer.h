@@ -46,6 +46,7 @@ private:
     bool runOpThenReload(bool ok, const QString &revealPath = {});
     void applyBadge(QTreeWidgetItem *item) const;
     void applyBadgesRecursive(QTreeWidgetItem *item) const;
+    void fitContentsColumn();
 
     QTreeWidget *m_tree = nullptr;
     Workspace *m_workspace = nullptr;

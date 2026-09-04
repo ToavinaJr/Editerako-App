@@ -3,6 +3,7 @@
 #include "core/KeybindingModel.h"
 
 #include <QAction>
+#include <QList>
 #include <QSettings>
 #include <QTemporaryDir>
 #include <QWidget>
@@ -17,6 +18,7 @@ private slots:
     void overrideAndReset();
     void detectsConflicts();
     void appliesToRegistry();
+    void zoomInIncludesEqualsAndPlus();
 };
 
 void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
@@ -45,6 +47,12 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Shift+F12")));
     QCOMPARE(defaults.value(QStringLiteral("editor.triggerSuggest")),
              QKeySequence(QStringLiteral("Ctrl+Space")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.zoomIn")),
+             QKeySequence(QStringLiteral("Ctrl++")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.zoomOut")),
+             QKeySequence(QStringLiteral("Ctrl+-")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.zoomReset")),
+             QKeySequence(QStringLiteral("Ctrl+0")));
 }
 
 void KeybindingModelTest::overrideAndReset()
@@ -91,6 +99,24 @@ void KeybindingModelTest::appliesToRegistry()
 
     QVERIFY(manager.setShortcut(QStringLiteral("file.save"), QKeySequence(QStringLiteral("Ctrl+E"))));
     QCOMPARE(save->shortcut(), QKeySequence(QStringLiteral("Ctrl+E")));
+}
+
+void KeybindingModelTest::zoomInIncludesEqualsAndPlus()
+{
+    QWidget parent;
+    CommandRegistry registry(&parent);
+    QAction *zoomIn = registry.create(QStringLiteral("editor.zoomIn"), QStringLiteral("Zoom In"));
+    QVERIFY(zoomIn != nullptr);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QSettings store(dir.filePath(QStringLiteral("keys.ini")), QSettings::IniFormat);
+    KeybindingManager manager(&registry, store);
+    manager.apply();
+
+    const QList<QKeySequence> sequences = zoomIn->shortcuts();
+    QVERIFY(sequences.contains(QKeySequence(QStringLiteral("Ctrl++"))));
+    QVERIFY(sequences.contains(QKeySequence(QStringLiteral("Ctrl+="))));
 }
 
 QTEST_MAIN(KeybindingModelTest)
