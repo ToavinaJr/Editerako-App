@@ -15,27 +15,27 @@
 FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
     : QDialog(parent), editor(editor)
 {
-    setWindowTitle("Find / Replace");
+    setWindowTitle(tr("Find / Replace"));
     setMinimumWidth(500);
     setMinimumHeight(280);
     setObjectName(QStringLiteral("FindReplaceDialog"));
     searchLineEdit = new QLineEdit;
-    searchLineEdit->setPlaceholderText("Search text...");
+    searchLineEdit->setPlaceholderText(tr("Search text..."));
 
     replaceLineEdit = new QLineEdit;
-    replaceLineEdit->setPlaceholderText("Replace with...");
+    replaceLineEdit->setPlaceholderText(tr("Replace with..."));
 
-    caseSensitiveCheckBox = new QCheckBox("Case sensitive");
-    regexCheckBox = new QCheckBox("Use Regular Expression");
+    caseSensitiveCheckBox = new QCheckBox(tr("Case sensitive"));
+    regexCheckBox = new QCheckBox(tr("Use Regular Expression"));
 
-    findNextButton = new QPushButton("Find Next");
+    findNextButton = new QPushButton(tr("Find Next"));
     findNextButton->setObjectName("findNextButton");
 
-    replaceButton = new QPushButton("Replace");
-    replaceAllButton = new QPushButton("Replace All");
+    replaceButton = new QPushButton(tr("Replace"));
+    replaceAllButton = new QPushButton(tr("Replace All"));
     replaceAllButton->setObjectName("replaceAllButton");
 
-    cancelButton = new QPushButton("Cancel");
+    cancelButton = new QPushButton(tr("Cancel"));
 
     // Connexions
     connect(findNextButton, &QPushButton::clicked, this, &FindReplaceDialog::findNext);
@@ -49,14 +49,14 @@ FindReplaceDialog::FindReplaceDialog(CodeEditor *editor, QWidget *parent)
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
     // Section Find
-    QLabel *findLabel = new QLabel("Find:");
+    QLabel *findLabel = new QLabel(tr("Find:"));
     findLabel->setObjectName(QStringLiteral("sectionLabel"));
     mainLayout->addWidget(findLabel);
     mainLayout->addWidget(searchLineEdit);
 
     // Section Replace
     mainLayout->addSpacing(8);
-    QLabel *replaceLabel = new QLabel("Replace:");
+    QLabel *replaceLabel = new QLabel(tr("Replace:"));
     replaceLabel->setObjectName(QStringLiteral("sectionLabel"));
     mainLayout->addWidget(replaceLabel);
     mainLayout->addWidget(replaceLineEdit);
@@ -144,8 +144,8 @@ void FindReplaceDialog::findNext()
 
     if(!found) {
         QMessageBox msgBox(this);
-        msgBox.setWindowTitle("Find");
-        msgBox.setText("No more matches found.");
+        msgBox.setWindowTitle(tr("Find"));
+        msgBox.setText(tr("No more matches found."));
         msgBox.setIcon(QMessageBox::Information);
         msgBox.exec();
     }
@@ -192,8 +192,8 @@ void FindReplaceDialog::replaceAll()
 
     // Message de confirmation
     QMessageBox msgBox(this);
-    msgBox.setWindowTitle("Replace All");
-    msgBox.setText(QString("Replaced %1 occurrence(s).").arg(count));
+    msgBox.setWindowTitle(tr("Replace All"));
+    msgBox.setText(tr("Replaced %1 occurrence(s).").arg(count));
     msgBox.setIcon(QMessageBox::Information);
     msgBox.exec();
 }

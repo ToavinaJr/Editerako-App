@@ -11,6 +11,9 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
 ```json
 {
   "theme": "light",
+  "ui": {
+    "language": "fr"
+  },
   "editor": {
     "fontFamily": "Consolas",
     "fontSize": 13,
@@ -42,6 +45,8 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
 ```
 
 Les clés API ne vont **pas** dans ce fichier. Le chat par défaut est un **sign-in** (ChatGPT / Claude / compte Google / Copilot). Pour un backend API, utiliser `.env` (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+
+`ui/language` (vide = locale système, `en`, `fr`) : catalogues Linguist. Un changement dans Préférences → Apparence s’applique au prochain lancement. [adr/0024-i18n.md](adr/0024-i18n.md).
 
 `files/hotExit` (défaut true) : quitter sans dialogue Save All ; les unsaved (hors secrets) sont restaurés au prochain lancement. Les backups vivent sous AppData (`backups/`), pas dans le workspace. [adr/0017-recovery-hot-exit.md](adr/0017-recovery-hot-exit.md).
 

@@ -22,6 +22,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Svg
     SvgWidgets
     Test
+    LinguistTools
 )
 
 editerako_strip_agl_from_qt()

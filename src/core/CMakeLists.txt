@@ -6,6 +6,8 @@ editerako_add_module(EditerakoCore
         AppSettings.h
         ThemeManager.cpp
         ThemeManager.h
+        TranslationLoader.cpp
+        TranslationLoader.h
         CommandRegistry.cpp
         CommandRegistry.h
         SessionStore.cpp

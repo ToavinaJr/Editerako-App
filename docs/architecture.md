@@ -39,7 +39,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | Dossier | Cible CMake | Responsabilité |
 |---|---|---|
 | `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs (`SettingsDialog`, Command Palette, Quick Open, Search), D&D, câblage des signaux |
-| `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `KeybindingModel` / `KeybindingManager`, `FuzzyMatcher`, `SessionStore`, `SessionController`, `BackupService` / `RecoveryService`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
+| `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `TranslationLoader`, `KeybindingModel` / `KeybindingManager`, `FuzzyMatcher`, `SessionStore`, `SessionController`, `BackupService` / `RecoveryService`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
 | `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument`, `EditorArea` / `EditorGroup` (split), `EditorManager`, `EditorIo` / `EditorStyle` / `HighlighterSync` / `EditorStatusWidget` ; `features/` (dont folding) |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceFileIndex`, `WorkspacePath` / `WorkspaceOps`, `GitIgnore`, `WorkspaceSearch`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `ITerminalBackend` (`Process` / `Pty`), `AnsiSgr`, `ShellProfiles` |
@@ -79,7 +79,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Éditeur.** `EditorArea` contient un ou plusieurs `EditorGroup` (`QTabWidget`). Sans split, un seul groupe — même UX qu’avant. Split Right / Down : vues partagées du `QTextDocument` (texte) ou second viewer. [adr/0018-editor-groups.md](adr/0018-editor-groups.md). `CodeEditor` délègue à `src/editor/features/` : gutter, ligne courante (+ matching de brackets), multi-curseurs, indent, commentaires, paires auto, commandes de lignes, occurrences, **folding Tree-sitter**. Swap de lignes : **même algorithme** `toPlainText().mid`. Menu Edit + `CommandRegistry`. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md), [adr/0023-code-folding.md](adr/0023-code-folding.md).
 
-**Settings.** Défaut < user QSettings < `{workspace}/.editerako/settings.json`. UI Préférences (`Ctrl+,`). Raccourcis via `KeybindingManager` (plus de `setShortcut` dans `MainWindow`). Détail : [settings.md](settings.md), [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md).
+**Settings.** Défaut < user QSettings < `{workspace}/.editerako/settings.json`. UI Préférences (`Ctrl+,`). Raccourcis via `KeybindingManager` (plus de `setShortcut` dans `MainWindow`). Langue : `ui/language` (`en` / `fr` / vide = système), catalogues Linguist `:/i18n`. Détail : [settings.md](settings.md), [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md), [adr/0024-i18n.md](adr/0024-i18n.md).
 
 **Navigation.** Command Palette (`Ctrl+Shift+P`) filtre `CommandRegistry`. Quick Open (`Ctrl+P`) utilise `WorkspaceFileIndex` (scan hors UI, exclusions respectées) et `fichier:ligne`. Search workspace (`Ctrl+Shift+F`) : texte/regex hors UI, preview, replace. Détail : [adr/0006-command-palette-quick-open.md](adr/0006-command-palette-quick-open.md), [adr/0007-workspace-search-explorer-ops.md](adr/0007-workspace-search-explorer-ops.md).
 

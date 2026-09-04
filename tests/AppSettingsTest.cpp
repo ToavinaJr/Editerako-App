@@ -17,6 +17,7 @@ private slots:
     void userSettingsRoundtrip();
     void workspaceOverlayWins();
     void hotExitDefaultsOn();
+    void uiLanguageRoundtrip();
     void isolatedSettingsIgnoreUserProfile();
 };
 
@@ -71,6 +72,19 @@ void AppSettingsTest::hotExitDefaultsOn()
     QSettings store(dir.filePath(QStringLiteral("user.ini")), QSettings::IniFormat);
     AppSettings settings(store);
     QVERIFY(settings.hotExit());
+}
+
+void AppSettingsTest::uiLanguageRoundtrip()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QSettings store(dir.filePath(QStringLiteral("user.ini")), QSettings::IniFormat);
+    AppSettings settings(store);
+    QVERIFY(settings.uiLanguage().isEmpty());
+    settings.setUiLanguage(QStringLiteral("fr"));
+
+    AppSettings loaded(store);
+    QCOMPARE(loaded.uiLanguage(), QStringLiteral("fr"));
 }
 
 void AppSettingsTest::isolatedSettingsIgnoreUserProfile()

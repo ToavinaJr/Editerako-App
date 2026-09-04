@@ -1,5 +1,7 @@
 include("${PROJECT_SOURCE_DIR}/cmake/Testing.cmake")
 
+set_directory_properties(PROPERTIES QT_EXCLUDE_FROM_TRANSLATION ON)
+
 editerako_add_test(test_LanguageRegistry
     SOURCES LanguageRegistryTest.cpp
     LIBS EditerakoSyntax
@@ -99,6 +101,15 @@ editerako_add_test(test_TextFileFormat
 editerako_add_test(test_AppSettings
     SOURCES AppSettingsTest.cpp
     LIBS EditerakoCore
+)
+
+editerako_add_test(test_TranslationLoader
+    SOURCES TranslationLoaderTest.cpp
+    LIBS EditerakoCore
+)
+
+target_compile_definitions(test_TranslationLoader PRIVATE
+    EDITERAKO_TRANSLATIONS_DIR="${PROJECT_SOURCE_DIR}/translations"
 )
 
 editerako_add_test(test_KeybindingModel

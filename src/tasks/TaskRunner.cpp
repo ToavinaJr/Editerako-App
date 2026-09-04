@@ -25,18 +25,18 @@ bool TaskRunner::isRunning() const
 void TaskRunner::start(const ProcessSpec &spec)
 {
     if (m_running) {
-        emit failed(QStringLiteral("A task is already running"));
+        emit failed(tr("A task is already running"));
         return;
     }
     if (spec.program.isEmpty()) {
-        emit failed(QStringLiteral("No program to run"));
+        emit failed(tr("No program to run"));
         return;
     }
 
     if (spec.detach) {
         const bool ok = QProcess::startDetached(spec.program, spec.arguments, spec.workingDirectory);
         if (!ok) {
-            emit failed(QStringLiteral("Failed to start %1").arg(spec.program));
+            emit failed(tr("Failed to start %1").arg(spec.program));
             return;
         }
         emit started(spec.title);

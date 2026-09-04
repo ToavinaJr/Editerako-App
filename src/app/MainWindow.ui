@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Code Editor</string>
+   <string>Editerako</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -174,7 +174,7 @@ padding: 0 0 0 0 ;</string>
       <item>
        <widget class="QCheckBox" name="checkBox">
         <property name="text">
-         <string>Show lignes</string>
+         <string>Show line numbers</string>
         </property>
        </widget>
       </item>
@@ -396,7 +396,7 @@ padding: 0 0 0 0 ;</string>
   </action>
   <action name="actionFindReplace">
    <property name="text">
-    <string>FindReplace</string>
+    <string>Find / Replace</string>
    </property>
   </action>
   <action name="actionGoToLine">

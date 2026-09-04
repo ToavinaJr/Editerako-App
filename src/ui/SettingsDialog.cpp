@@ -150,7 +150,15 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         auto *form = new QFormLayout;
         m_theme = new QComboBox(this);
         m_theme->addItems(ThemeManager::availableThemeIds());
+        m_uiLanguage = new QComboBox(this);
+        m_uiLanguage->addItem(tr("System"), QString());
+        m_uiLanguage->addItem(tr("English"), QStringLiteral("en"));
+        m_uiLanguage->addItem(tr("French"), QStringLiteral("fr"));
+        auto *languageHint = new QLabel(tr("Language takes effect on the next launch."), this);
+        languageHint->setWordWrap(true);
         form->addRow(tr("Theme"), m_theme);
+        form->addRow(tr("Language"), m_uiLanguage);
+        form->addRow(languageHint);
         addPage(tr("Appearance"), wrapForm(form));
     }
 
@@ -243,6 +251,8 @@ void SettingsDialog::load()
 {
     const AppSettings settings;
     m_theme->setCurrentText(settings.themeId());
+    const int languageIndex = m_uiLanguage->findData(settings.uiLanguage());
+    m_uiLanguage->setCurrentIndex(languageIndex >= 0 ? languageIndex : 0);
     m_autoSave->setChecked(settings.autoSave());
     m_autoSaveDelay->setValue(settings.autoSaveDelayMs());
     m_fontFamily->setCurrentFont(QFont(settings.editorFontFamily()));
@@ -313,6 +323,7 @@ void SettingsDialog::save()
 {
     AppSettings settings;
     settings.setThemeId(m_theme->currentText());
+    settings.setUiLanguage(m_uiLanguage->currentData().toString());
     settings.setAutoSave(m_autoSave->isChecked());
     settings.setAutoSaveDelayMs(m_autoSaveDelay->value());
     settings.setEditorFontFamily(m_fontFamily->currentFont().family());

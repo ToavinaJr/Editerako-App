@@ -121,6 +121,30 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${editerako_a
 
 editerako_deploy_webview2(Editerako)
 
+qt_add_translations(Editerako
+    IMMEDIATE_CALL
+    SOURCE_TARGETS
+        Editerako
+        EditerakoCore
+        EditerakoSyntax
+        EditerakoEditor
+        EditerakoProject
+        EditerakoTerminal
+        EditerakoViewers
+        EditerakoAI
+        EditerakoLsp
+        EditerakoScm
+        EditerakoTasks
+        EditerakoDap
+        EditerakoPlugins
+    TS_FILES
+        "${PROJECT_SOURCE_DIR}/translations/editerako_en.ts"
+        "${PROJECT_SOURCE_DIR}/translations/editerako_fr.ts"
+    RESOURCE_PREFIX "/i18n"
+    LUPDATE_OPTIONS -no-obsolete -locations relative
+    NO_GENERATE_PLURALS_TS_FILE
+)
+
 install(TARGETS Editerako
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

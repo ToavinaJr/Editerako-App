@@ -89,11 +89,11 @@ void TaskManager::run(const QString &taskId)
 {
     const TaskDefinition task = taskById(taskId);
     if (task.id.isEmpty()) {
-        emit failed(QStringLiteral("Unknown task"));
+        emit failed(tr("Unknown task"));
         return;
     }
     if (m_cmake.detected && task.kind != TaskKind::Custom && m_cmake.cmakeExecutable.isEmpty()) {
-        emit failed(QStringLiteral("cmake is not on PATH"));
+        emit failed(tr("cmake is not on PATH"));
         return;
     }
     const ProcessSpec spec = specFor(task);
@@ -118,7 +118,7 @@ void TaskManager::runBuild()
         run(m_tasks.first().id);
         return;
     }
-    emit failed(QStringLiteral("No build task"));
+    emit failed(tr("No build task"));
 }
 
 void TaskManager::cancel()

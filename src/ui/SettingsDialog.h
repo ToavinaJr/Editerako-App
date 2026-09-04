@@ -34,6 +34,7 @@ private:
     void rebuildPluginList();
 
     QComboBox *m_theme = nullptr;
+    QComboBox *m_uiLanguage = nullptr;
     QCheckBox *m_autoSave = nullptr;
     QSpinBox *m_autoSaveDelay = nullptr;
     QFontComboBox *m_fontFamily = nullptr;

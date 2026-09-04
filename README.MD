@@ -9,7 +9,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 - Éditeur `QPlainTextEdit` personnalisé, numéros de ligne, multi-onglets, multi-curseurs, déplacement de lignes, indent, commentaires, paires auto, folding
 - Coloration syntaxique Tree-sitter (C, C++, CMake, Python, JS, TS, TSX, JSON, HTML, CSS, Markdown, Shell, SQL, YAML)
 - Ouverture / sauvegarde de fichiers, marqueur modifié, drag & drop
-- Recherche, remplacement, regex, Go To Line
+- Recherche, remplacement, regex, Go To Line ; UI en anglais, traduction française via Linguist
 - Command Palette (`Ctrl+Shift+P`), Quick Open (`Ctrl+P`, `fichier:ligne`), Search workspace (`Ctrl+Shift+F`)
 - Explorateur de fichiers, menu contextuel (rename, delete, copy/cut/paste, …), création de fichiers et de dossiers
 - Prévisualisation PDF, images, SVG, CSV ; aperçu Markdown (`Ctrl+Shift+V`)
@@ -23,7 +23,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 ## Requirements
 
 - **CMake** ≥ 3.21, **Ninja**, compilateur C++20
-- **Qt 6** : Widgets, Network, Sql, Concurrent, **PdfWidgets** (module Qt PDF), **Svg / SvgWidgets**, Test
+- **Qt 6** : Widgets, Network, Sql, Concurrent, **PdfWidgets** (module Qt PDF), **Svg / SvgWidgets**, Test, **LinguistTools**
 
 Qt est localisé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake`, ou (Windows) `C:\Qt\<version>\mingw_64`. Détail : [docs/build.md](docs/build.md).
 

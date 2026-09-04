@@ -26,6 +26,9 @@ public:
     [[nodiscard]] QString themeId() const;
     void setThemeId(const QString &themeId);
 
+    [[nodiscard]] QString uiLanguage() const;
+    void setUiLanguage(const QString &language);
+
     [[nodiscard]] QString editorFontFamily() const;
     void setEditorFontFamily(const QString &family);
     [[nodiscard]] int editorFontSize() const;

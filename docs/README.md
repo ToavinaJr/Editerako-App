@@ -34,4 +34,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0021-ci-sanitizers-packaging.md](adr/0021-ci-sanitizers-packaging.md) | CI, sanitizers, packaging |
 | [adr/0022-file-viewers.md](adr/0022-file-viewers.md) | Viewers Markdown, SVG, CSV |
 | [adr/0023-code-folding.md](adr/0023-code-folding.md) | Code folding Tree-sitter |
+| [adr/0024-i18n.md](adr/0024-i18n.md) | Internationalisation Linguist |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

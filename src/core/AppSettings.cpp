@@ -14,6 +14,7 @@
 namespace {
 
 constexpr auto kTheme = "theme";
+constexpr auto kUiLanguage = "ui/language";
 constexpr auto kEditorFontFamily = "editor/fontFamily";
 constexpr auto kEditorFontSize = "editor/fontSize";
 constexpr auto kEditorTabSize = "editor/tabSize";
@@ -194,6 +195,16 @@ QString AppSettings::themeId() const
 void AppSettings::setThemeId(const QString &themeId)
 {
     setValue(kTheme, themeId);
+}
+
+QString AppSettings::uiLanguage() const
+{
+    return value(kUiLanguage, QString()).toString().trimmed();
+}
+
+void AppSettings::setUiLanguage(const QString &language)
+{
+    setValue(kUiLanguage, language.trimmed());
 }
 
 QString AppSettings::editorFontFamily() const

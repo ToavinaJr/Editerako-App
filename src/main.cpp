@@ -2,6 +2,7 @@
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 #include "core/ThemeManager.h"
+#include "core/TranslationLoader.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(QStringLiteral("0.1"));
 
     AppSettings settings;
+    TranslationLoader::install(&app, settings.uiLanguage());
     if (!ThemeManager::apply(app, settings.themeId())) {
         qCWarning(lcCore) << "Falling back without application stylesheet";
     }

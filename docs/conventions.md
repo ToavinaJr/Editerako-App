@@ -19,7 +19,7 @@
 
 ## Qt
 
-- `Q_OBJECT` + `tr()` pour tout texte UI.
+- `Q_OBJECT` + `tr()` pour tout texte UI. Catalogues : `translations/editerako_*.ts` ; ne pas lancer `lupdate` à chaque build (cible `update_translations`). [adr/0024-i18n.md](adr/0024-i18n.md).
 - Terminal : commandes one-shot via `ITerminalBackend` (`ProcessTerminalBackend` par défaut, `PtyTerminalBackend` si `terminal/usePty`). Pas d’émulateur VT interactif.
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `edit.toggleLineComment`, `edit.moveLineUp`, `view.terminal`, `workbench.commandPalette`, `workbench.quickOpen`, `workbench.search`, `workbench.problems`, `workbench.sourceControl`, `workbench.tasks`, `workbench.output`, `workbench.build`, `cmake.configure`, `file.compareWithDisk`, `preferences.open`, `editor.gotoDefinition`, `editor.triggerSuggest`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`. Tab / Shift+Tab d’indent restent dans `CodeEditor::keyPressEvent`. Completion Tab/Enter : `CompletionPopup` (filtre d’événements).
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()` ; préférences → `SettingsDialog`.
