@@ -43,6 +43,7 @@ struct LspCompletionItem {
     QString documentation;
     QString insertText;
     QString sortText;
+    QString filterText;
     int kind = 0;
     bool hasTextEdit = false;
     LspRange textEditRange;

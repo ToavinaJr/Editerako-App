@@ -15,6 +15,7 @@ CompletionPopup::CompletionPopup(QWidget *parent)
     , m_view(new QListView(this))
 {
     setObjectName(QStringLiteral("completionPopup"));
+    setAttribute(Qt::WA_ShowWithoutActivating);
     setFocusPolicy(Qt::NoFocus);
 
     auto *layout = new QVBoxLayout(this);
@@ -42,6 +43,9 @@ void CompletionPopup::showItems(CodeEditor *editor, const QVector<CompletionItem
     m_editor = editor;
     m_model->setItems(items);
     m_model->setFilter(prefix);
+    if (m_model->visibleCount() == 0 && !items.isEmpty()) {
+        m_model->setFilter({});
+    }
     if (!m_editor || m_model->visibleCount() == 0) {
         hidePopup();
         return;

@@ -6,6 +6,7 @@
 #include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
 #include "editor/HoverPopup.h"
+#include "lsp/LspClient.h"
 #include "lsp/LspCompletionProvider.h"
 #include "lsp/LspHoverProvider.h"
 #include "lsp/LspServerManager.h"
@@ -23,6 +24,7 @@ CompletionItem toCompletionItem(const LspCompletionItem &item)
     out.documentation = item.documentation;
     out.insertText = item.insertText;
     out.sortText = item.sortText;
+    out.filterText = item.filterText;
     out.kind = item.kind;
     out.hasTextEdit = item.hasTextEdit;
     out.startLine = item.textEditRange.start.line;
@@ -36,26 +38,36 @@ CompletionItem toCompletionItem(const LspCompletionItem &item)
 
 void LspSession::onHoverRequested(int line, int character, const QPoint &globalPos)
 {
+    if (m_completion->isVisible()) {
+        return;
+    }
+    CodeEditor *editor = m_editors ? m_editors->currentEditor() : nullptr;
+    auto *doc = EditorDocument::fromEditor(editor);
+    if (!doc || !ensureClangd(doc)) {
+        dismissHover();
+        return;
+    }
+    flushPendingChange();
+    openOnServer(editor);
     QString uri;
     int curLine = 0;
     int curChar = 0;
     if (!currentPosition(&uri, &curLine, &curChar)) {
-        return;
-    }
-    if (m_completion->isVisible()) {
-        return;
-    }
-    auto *doc = m_editors ? m_editors->currentDocument() : nullptr;
-    if (!doc || !ensureClangd(doc)) {
+        dismissHover();
         return;
     }
     auto *hover = m_manager->hoverForLanguage(languageKey(doc));
-    if (!hover) {
+    auto *client = m_manager->clientForLanguage(languageKey(doc));
+    if (!hover || !client || !client->isInitialized()) {
         return;
     }
     const int gen = ++m_hoverGeneration;
     hover->hover(uri, line, character, [this, gen, globalPos](const LspHover &result) {
-        if (gen != m_hoverGeneration || result.contents.isEmpty()) {
+        if (gen != m_hoverGeneration) {
+            return;
+        }
+        if (result.contents.isEmpty()) {
+            m_hover->hidePopup();
             return;
         }
         m_hover->showMarkdown(result.contents, globalPos);
@@ -64,12 +76,14 @@ void LspSession::onHoverRequested(int line, int character, const QPoint &globalP
 
 void LspSession::triggerCompletion()
 {
-    m_hover->hidePopup();
+    dismissHover();
     CodeEditor *editor = m_editors ? m_editors->currentEditor() : nullptr;
     auto *doc = EditorDocument::fromEditor(editor);
     if (!doc || !ensureClangd(doc)) {
         return;
     }
+    flushPendingChange();
+    openOnServer(editor);
     QString uri;
     int line = 0;
     int character = 0;
@@ -78,9 +92,12 @@ void LspSession::triggerCompletion()
     }
     const QString lang = languageKey(doc);
     auto *provider = m_manager->completionForLanguage(lang);
-    if (!provider) {
+    auto *client = m_manager->clientForLanguage(lang);
+    if (!provider || !client || !client->isInitialized()) {
+        m_completeWhenReady = true;
         return;
     }
+    m_completeWhenReady = false;
     const int gen = ++m_completionGeneration;
     const QString prefix = completionPrefixAtCursor(editor->textCursor());
     provider->complete(uri, line, character, [this, editor, gen, prefix](const QVector<LspCompletionItem> &items) {
@@ -113,6 +130,10 @@ void LspSession::triggerSignatureHelp()
     auto *doc = m_editors ? m_editors->currentDocument() : nullptr;
     if (!doc || !ensureClangd(doc)) {
         return;
+    }
+    flushPendingChange();
+    if (m_editors) {
+        openOnServer(m_editors->currentEditor());
     }
     QString uri;
     int line = 0;

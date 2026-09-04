@@ -97,6 +97,7 @@ void LspSession::attachEditor(CodeEditor *editor)
     connect(editor, &CodeEditor::completionRequested, this, &LspSession::triggerCompletion);
     connect(editor, &CodeEditor::signatureHelpRequested, this, &LspSession::triggerSignatureHelp);
     connect(editor, &CodeEditor::hoverRequested, this, &LspSession::onHoverRequested);
+    connect(editor, &CodeEditor::hoverCanceled, this, &LspSession::dismissHover);
     if (auto *doc = EditorDocument::fromEditor(editor)) {
         connect(doc, &EditorDocument::versionChanged, this, [this, editor](int) {
             onEditorContentsChanged(editor);
@@ -254,6 +255,10 @@ void LspSession::onInitialized(bool initialized)
     for (CodeEditor *editor : m_editors->editors()) {
         openOnServer(editor);
     }
+    if (m_completeWhenReady) {
+        m_completeWhenReady = false;
+        triggerCompletion();
+    }
 }
 
 void LspSession::onDiagnostics(const QString &uri, const QVector<LspDiagnostic> &diagnostics)
@@ -296,8 +301,17 @@ void LspSession::onEditorContentsChanged(CodeEditor *editor)
     }
 }
 
+void LspSession::dismissHover()
+{
+    ++m_hoverGeneration;
+    if (m_hover) {
+        m_hover->hidePopup();
+    }
+}
+
 void LspSession::flushPendingChange()
 {
+    m_changeTimer->stop();
     CodeEditor *editor = m_pendingChangeEditor;
     m_pendingChangeEditor = nullptr;
     auto *doc = EditorDocument::fromEditor(editor);

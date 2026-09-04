@@ -72,14 +72,23 @@ QVariant CompletionModel::data(const QModelIndex &index, int role) const
     return {};
 }
 
+namespace {
+
+bool completionItemMatches(const CompletionItem &item, const QString &needle)
+{
+    return item.label.contains(needle, Qt::CaseInsensitive)
+        || item.insertText.contains(needle, Qt::CaseInsensitive)
+        || item.filterText.contains(needle, Qt::CaseInsensitive);
+}
+
+} // namespace
+
 void CompletionModel::rebuild()
 {
     m_visible.clear();
     const QString needle = m_filter.trimmed();
     for (const CompletionItem &item : m_all) {
-        if (needle.isEmpty()
-            || item.label.contains(needle, Qt::CaseInsensitive)
-            || item.insertText.contains(needle, Qt::CaseInsensitive)) {
+        if (needle.isEmpty() || completionItemMatches(item, needle)) {
             m_visible.append(item);
         }
     }

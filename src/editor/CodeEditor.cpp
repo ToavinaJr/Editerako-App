@@ -17,6 +17,7 @@
 #include <QList>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextEdit>
@@ -41,6 +42,10 @@ CodeEditor::CodeEditor(QWidget *parent)
     m_hoverTimer->setSingleShot(true);
     m_hoverTimer->setInterval(400);
     connect(m_hoverTimer, &QTimer::timeout, this, &CodeEditor::emitHover);
+    connect(this, &CodeEditor::cursorPositionChanged, this, &CodeEditor::hoverCanceled);
+    if (auto *bar = verticalScrollBar()) {
+        connect(bar, &QScrollBar::valueChanged, this, &CodeEditor::hoverCanceled);
+    }
     viewport()->setMouseTracking(true);
     setMouseTracking(true);
 
@@ -167,6 +172,8 @@ bool CodeEditor::isLineNumbersVisible() const
 
 void CodeEditor::mousePressEvent(QMouseEvent *event)
 {
+    emit hoverCanceled();
+    m_hoverTimer->stop();
     if (m_multiCursor.handleMousePress(event)) {
         return;
     }
@@ -176,6 +183,11 @@ void CodeEditor::mousePressEvent(QMouseEvent *event)
 void CodeEditor::mouseMoveEvent(QMouseEvent *event)
 {
     QPlainTextEdit::mouseMoveEvent(event);
+    const QTextCursor now = cursorForPosition(event->pos());
+    const QTextCursor previous = cursorForPosition(m_hoverLocalPos);
+    if (now.blockNumber() != previous.blockNumber()) {
+        emit hoverCanceled();
+    }
     m_hoverLocalPos = event->pos();
     m_hoverTimer->start();
 }
@@ -183,6 +195,7 @@ void CodeEditor::mouseMoveEvent(QMouseEvent *event)
 void CodeEditor::leaveEvent(QEvent *event)
 {
     m_hoverTimer->stop();
+    emit hoverCanceled();
     QPlainTextEdit::leaveEvent(event);
 }
 
@@ -209,6 +222,13 @@ void CodeEditor::paintEvent(QPaintEvent *event)
 
 void CodeEditor::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier) {
+        emit hoverCanceled();
+        emit completionRequested();
+        event->accept();
+        return;
+    }
+
     if (event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier
         && !textCursor().hasSelection() && !m_multiCursor.isEmpty()
         && AppSettings().editorInsertSpaces()) {
@@ -254,9 +274,11 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
     }
 
     const QString typed = event->text();
-    if (typed == QLatin1String(".") || typed == QLatin1String(":")) {
-        emit completionRequested();
-    } else if (typed == QLatin1String(">")) {
+    if (typed == QLatin1String("(") || typed == QLatin1String(",")) {
+        emit signatureHelpRequested();
+        return;
+    }
+    if (typed == QLatin1String(">")) {
         const QTextCursor cursor = textCursor();
         if (cursor.position() >= 2) {
             const QString around = toPlainText().mid(cursor.position() - 2, 2);
@@ -264,8 +286,14 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
                 emit completionRequested();
             }
         }
-    } else if (typed == QLatin1String("(") || typed == QLatin1String(",")) {
-        emit signatureHelpRequested();
+        return;
+    }
+    if (!typed.isEmpty()) {
+        const QChar ch = typed.at(0);
+        if (ch == QLatin1Char('.') || ch == QLatin1Char(':') || ch.isLetterOrNumber()
+            || ch == QLatin1Char('_')) {
+            emit completionRequested();
+        }
     }
 }
 

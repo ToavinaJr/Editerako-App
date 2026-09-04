@@ -13,6 +13,7 @@ private slots:
     void diagnosticFromJson();
     void hoverMarkupAndString();
     void completionItemsListAndObject();
+    void completionFilterText();
     void locationsArrayAndLink();
     void fileUriRoundTrip();
     void completionTextEditRange();
@@ -62,6 +63,14 @@ void LspTypesTest::completionItemsListAndObject()
 
     const QJsonObject wrapped{{QStringLiteral("isIncomplete"), false}, {QStringLiteral("items"), arr}};
     QCOMPARE(lspCompletionItemsFromJson(wrapped).size(), 1);
+}
+
+void LspTypesTest::completionFilterText()
+{
+    const QJsonObject json{{QStringLiteral("label"), QStringLiteral("sender")},
+                           {QStringLiteral("filterText"), QStringLiteral("m_sender")}};
+    const LspCompletionItem item = lspCompletionItemFromJson(json);
+    QCOMPARE(item.filterText, QStringLiteral("m_sender"));
 }
 
 void LspTypesTest::locationsArrayAndLink()

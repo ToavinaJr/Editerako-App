@@ -56,6 +56,7 @@ private:
     void onEditorContentsChanged(CodeEditor *editor);
     void onHoverRequested(int line, int character, const QPoint &globalPos);
     void flushPendingChange();
+    void dismissHover();
     void attachEditor(CodeEditor *editor);
     bool ensureClangd(EditorDocument *doc);
     void openOnServer(CodeEditor *editor);
@@ -80,6 +81,7 @@ private:
     int m_hoverGeneration = 0;
     bool m_clangdRegistered = false;
     bool m_missingWarned = false;
+    bool m_completeWhenReady = false;
 };
 
 #endif

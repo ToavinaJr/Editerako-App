@@ -10,6 +10,7 @@ class CompletionModelTest : public QObject
 
 private slots:
     void filtersAndSortsBySortText();
+    void matchesFilterText();
     void applyInsertsLabelWhenNoInsertText();
     void applyUsesTextEditRange();
 };
@@ -33,6 +34,18 @@ void CompletionModelTest::filtersAndSortsBySortText()
     model.setFilter(QStringLiteral("be"));
     QCOMPARE(model.visibleCount(), 1);
     QCOMPARE(model.itemAt(0).label, QStringLiteral("beta"));
+}
+
+void CompletionModelTest::matchesFilterText()
+{
+    CompletionModel model;
+    CompletionItem item;
+    item.label = QStringLiteral("insert");
+    item.filterText = QStringLiteral("sender");
+    model.setItems({item});
+    model.setFilter(QStringLiteral("sen"));
+    QCOMPARE(model.visibleCount(), 1);
+    QCOMPARE(model.itemAt(0).label, QStringLiteral("insert"));
 }
 
 void CompletionModelTest::applyInsertsLabelWhenNoInsertText()

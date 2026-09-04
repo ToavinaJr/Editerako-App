@@ -51,6 +51,7 @@ signals:
     void completionRequested();
     void signatureHelpRequested();
     void hoverRequested(int line, int character, const QPoint &globalPos);
+    void hoverCanceled();
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;

@@ -16,8 +16,15 @@ public:
     void showMarkdown(const QString &markdown, const QPoint &globalPos);
     void hidePopup();
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
+    void installAppFilter();
+    void removeAppFilter();
+
     QTextBrowser *m_browser = nullptr;
+    bool m_appFilterInstalled = false;
 };
 
 #endif

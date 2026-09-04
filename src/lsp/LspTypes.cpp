@@ -108,6 +108,7 @@ LspCompletionItem lspCompletionItemFromJson(const QJsonObject &obj)
             obj.value(QStringLiteral("textEdit")).toObject().value(QStringLiteral("newText")).toString();
     }
     item.sortText = obj.value(QStringLiteral("sortText")).toString();
+    item.filterText = obj.value(QStringLiteral("filterText")).toString();
     item.kind = obj.value(QStringLiteral("kind")).toInt();
     if (obj.contains(QStringLiteral("textEdit"))) {
         const QJsonObject edit = obj.value(QStringLiteral("textEdit")).toObject();
