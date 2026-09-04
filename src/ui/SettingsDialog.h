@@ -39,6 +39,7 @@ private:
     QCheckBox *m_lineNumbers = nullptr;
     QSpinBox *m_warnMb = nullptr;
     QSpinBox *m_syntaxMb = nullptr;
+    QCheckBox *m_hotExit = nullptr;
     QPlainTextEdit *m_excluded = nullptr;
     QComboBox *m_shell = nullptr;
     QCheckBox *m_usePty = nullptr;

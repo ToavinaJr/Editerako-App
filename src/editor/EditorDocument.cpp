@@ -8,6 +8,7 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QtGlobal>
+#include <QUuid>
 
 EditorDocument::EditorDocument(CodeEditor *editor)
     : QObject(editor)
@@ -111,6 +112,19 @@ EditorDocument::CaretState EditorDocument::caretState() const
         state.scrollY = bar->value();
     }
     return state;
+}
+
+void EditorDocument::setBackupId(const QString &id)
+{
+    m_backupId = id;
+}
+
+QString EditorDocument::ensureBackupId()
+{
+    if (m_backupId.isEmpty()) {
+        m_backupId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    }
+    return m_backupId;
 }
 
 void EditorDocument::restoreCaretState(const CaretState &state)

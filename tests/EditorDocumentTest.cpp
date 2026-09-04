@@ -15,6 +15,7 @@ private slots:
     void languageFollowsPath();
     void versionIncrementsAndResets();
     void caretStateRoundtrip();
+    void backupIdPersistsOnceGenerated();
 };
 
 void EditorDocumentTest::defaultFormatIsPlatform()
@@ -67,6 +68,18 @@ void EditorDocumentTest::caretStateRoundtrip()
     restored.anchor = 1;
     doc.restoreCaretState(restored);
     QCOMPARE(editor.textCursor().position(), 1);
+}
+
+void EditorDocumentTest::backupIdPersistsOnceGenerated()
+{
+    CodeEditor editor;
+    EditorDocument doc(&editor);
+    QVERIFY(doc.backupId().isEmpty());
+    const QString first = doc.ensureBackupId();
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(doc.ensureBackupId(), first);
+    doc.setBackupId(QStringLiteral("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+    QCOMPARE(doc.backupId(), QStringLiteral("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
 }
 
 QTEST_MAIN(EditorDocumentTest)

@@ -18,6 +18,10 @@ editerako_add_module(EditerakoCore
         DropPaths.h
         AtomicFile.cpp
         AtomicFile.h
+        BackupService.cpp
+        BackupService.h
+        RecoveryService.cpp
+        RecoveryService.h
         TextFileFormat.cpp
         TextFileFormat.h
         KeybindingModel.cpp

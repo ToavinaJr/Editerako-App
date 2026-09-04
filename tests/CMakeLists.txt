@@ -78,6 +78,11 @@ editerako_add_test(test_AtomicFile
     LIBS EditerakoCore
 )
 
+editerako_add_test(test_BackupService
+    SOURCES BackupServiceTest.cpp
+    LIBS EditerakoCore
+)
+
 editerako_add_test(test_TextFileFormat
     SOURCES TextFileFormatTest.cpp
     LIBS EditerakoCore

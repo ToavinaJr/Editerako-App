@@ -75,6 +75,7 @@ void MainWindow::setupCodeEditor()
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::saveSession);
     connect(m_editorManager, &EditorManager::currentChanged, this, &MainWindow::syncFileWatches);
     connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::updateWindowTitle);
+    connect(m_editorManager, &EditorManager::modificationChanged, this, &MainWindow::scheduleRecoveryBackup);
     connect(m_editorManager, &EditorManager::aboutToSave, this, [this](const QString &path) {
         if (m_workspaceController) {
             m_workspaceController->ignoreNextChange(path);
@@ -90,6 +91,7 @@ void MainWindow::setupCodeEditor()
         if (statusBar()) {
             statusBar()->showMessage(tr("File saved successfully"), 2000);
         }
+        scheduleRecoveryBackup();
     });
 
     m_editorStatus = new EditorStatusWidget(this);

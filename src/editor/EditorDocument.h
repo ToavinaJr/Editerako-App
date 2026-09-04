@@ -47,6 +47,10 @@ public:
     [[nodiscard]] CaretState caretState() const;
     void restoreCaretState(const CaretState &state);
 
+    [[nodiscard]] QString backupId() const { return m_backupId; }
+    void setBackupId(const QString &id);
+    [[nodiscard]] QString ensureBackupId();
+
 signals:
     void filePathChanged(const QString &path);
     void modificationChanged(bool modified);
@@ -56,6 +60,7 @@ signals:
 private:
     CodeEditor *m_editor = nullptr;
     QString m_filePath;
+    QString m_backupId;
     TextFileMeta m_format;
     bool m_readOnly = false;
     int m_version = 0;

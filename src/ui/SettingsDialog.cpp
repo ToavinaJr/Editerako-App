@@ -105,8 +105,10 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
         m_syntaxMb = new QSpinBox(this);
         m_syntaxMb->setRange(1, 2048);
         m_syntaxMb->setSuffix(tr(" MB"));
+        m_hotExit = new QCheckBox(tr("Hot Exit (restore unsaved files after quit or crash)"), this);
         form->addRow(tr("Warn when opening larger than"), m_warnMb);
         form->addRow(tr("Disable syntax highlighting above"), m_syntaxMb);
+        form->addRow(m_hotExit);
         addPage(tr("Files"), wrapForm(form));
     }
 
@@ -205,6 +207,7 @@ void SettingsDialog::load()
     m_lineNumbers->setChecked(settings.editorLineNumbers());
     m_warnMb->setValue(bytesToMb(settings.largeFileWarnBytes()));
     m_syntaxMb->setValue(bytesToMb(settings.largeFileDisableSyntaxBytes()));
+    m_hotExit->setChecked(settings.hotExit());
     m_excluded->setPlainText(settings.excludedFolders().join(QLatin1Char('\n')));
     const QString shell = settings.terminalShell();
     const int shellIndex = m_shell->findData(shell);
@@ -235,6 +238,7 @@ void SettingsDialog::save()
     settings.setEditorLineNumbers(m_lineNumbers->isChecked());
     settings.setLargeFileWarnBytes(mbToBytes(m_warnMb->value()));
     settings.setLargeFileDisableSyntaxBytes(mbToBytes(m_syntaxMb->value()));
+    settings.setHotExit(m_hotExit->isChecked());
 
     QStringList folders;
     const QStringList lines = m_excluded->toPlainText().split(QLatin1Char('\n'));

@@ -3,6 +3,7 @@
 
 #include "core/SessionController.h"
 
+#include <QList>
 #include <QMainWindow>
 
 class ChatWidget;
@@ -102,6 +103,7 @@ private:
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
     QTimer *m_autoSaveTimer = nullptr;
+    QTimer *m_backupTimer = nullptr;
     bool isFileTreeVisible = true;
 
     CodeEditor *currentEditor();
@@ -125,6 +127,10 @@ private:
     void syncChatContext();
     void saveSession();
     bool restoreSession();
+    void scheduleRecoveryBackup();
+    void writeRecoveryBackup();
+    bool restoreRecoveryBackups();
+    [[nodiscard]] QList<CodeEditor *> modifiedSecretEditors() const;
     void syncFileWatches();
     void onFileChangedOnDisk(const QString &path);
 };

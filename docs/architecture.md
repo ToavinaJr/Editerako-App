@@ -37,7 +37,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | Dossier | Cible CMake | Responsabilité |
 |---|---|---|
 | `app/` + `ui/` | `Editerako` (exe) | Composition root : menus, dialogs (`SettingsDialog`, Command Palette, Quick Open, Search), D&D, câblage des signaux |
-| `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `KeybindingModel` / `KeybindingManager`, `FuzzyMatcher`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
+| `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `KeybindingModel` / `KeybindingManager`, `FuzzyMatcher`, `SessionStore`, `SessionController`, `BackupService` / `RecoveryService`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
 | `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument` (path, encoding, EOL, language, version, caret), `EditorManager`, `EditorIo` / `EditorStyle` / `HighlighterSync` / `EditorStatusWidget` ; `features/` |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceFileIndex`, `WorkspacePath` / `WorkspaceOps`, `GitIgnore`, `WorkspaceSearch`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `ITerminalBackend` (`Process` / `Pty`), `AnsiSgr`, `ShellProfiles` |
@@ -59,7 +59,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **PDF.** Ne pas appeler `QPdfView::setDocument` avant `QPdfDocument::Status::Ready` (crash sinon). L’onglet est ajouté d’abord, le document ensuite.
 
-**Session.** `SessionController` s’appuie sur `SessionStore` (`QSettings` org/app `Editerako`). Pendant un restore, `save` est un no-op (`RestoreGuard`). Restaure workspace, onglets existants, fichier actif, géométrie. Les *untitled* ne sont pas restaurés. Le dialogue d’accueil n’apparaît que s’il n’y a pas de session valide.
+**Session.** `SessionController` s’appuie sur `SessionStore` (`QSettings` org/app `Editerako`). Pendant un restore, `save` est un no-op (`RestoreGuard`). Restaure workspace, onglets existants, fichier actif, géométrie. Les *untitled* dirty et les buffers non sauvés sont restaurés par `RecoveryService` (Hot Exit / crash), pas par la session. Le dialogue d’accueil n’apparaît que s’il n’y a ni session workspace ni snapshot de recovery. [adr/0017-recovery-hot-exit.md](adr/0017-recovery-hot-exit.md).
 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 

@@ -1,6 +1,8 @@
 #ifndef EDITERAKO_EDITORMANAGER_H
 #define EDITERAKO_EDITORMANAGER_H
 
+#include "core/BackupService.h"
+
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -55,6 +57,7 @@ public:
     CloseResult closeAll();
 
     bool promptSaveAllOnQuit();
+    bool promptSaveEditors(const QList<CodeEditor *> &editors, bool secretFiles = false);
     void applySettings();
     void setLineNumbersVisible(bool visible);
     void adjustFontSize(int delta);
@@ -63,6 +66,9 @@ public:
     bool revealLocation(const QString &filePath, int line, int character);
     void saveDirtyFilesQuietly();
     [[nodiscard]] QList<CodeEditor *> editors() const;
+    [[nodiscard]] QList<CodeEditor *> modifiedEditors() const;
+    [[nodiscard]] QList<BackupBuffer> dirtyBuffers() const;
+    bool restoreBuffer(const BackupBuffer &buffer);
 
 signals:
     void currentChanged();
@@ -76,7 +82,6 @@ private:
     CodeEditor *createEditor();
     void updateTabLabel(CodeEditor *editor);
     [[nodiscard]] QString pathForWidget(QWidget *widget) const;
-    [[nodiscard]] QList<CodeEditor *> modifiedEditors() const;
     bool confirmClose(CodeEditor *editor);
     bool writeToDisk(CodeEditor *editor, const QString &path);
 

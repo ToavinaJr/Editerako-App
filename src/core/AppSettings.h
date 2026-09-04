@@ -43,6 +43,8 @@ public:
     void setAutoSave(bool enabled);
     [[nodiscard]] int autoSaveDelayMs() const;
     void setAutoSaveDelayMs(int delayMs);
+    [[nodiscard]] bool hotExit() const;
+    void setHotExit(bool enabled);
 
     [[nodiscard]] QStringList excludedFolders() const;
     void setExcludedFolders(const QStringList &folders);

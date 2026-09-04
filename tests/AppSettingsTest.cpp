@@ -16,6 +16,7 @@ private slots:
     void cleanup();
     void userSettingsRoundtrip();
     void workspaceOverlayWins();
+    void hotExitDefaultsOn();
     void isolatedSettingsIgnoreUserProfile();
 };
 
@@ -35,6 +36,7 @@ void AppSettingsTest::userSettingsRoundtrip()
     settings.setAutoSave(true);
     settings.setAiModel(QStringLiteral("custom-model"));
     settings.setTerminalUsePty(true);
+    settings.setHotExit(false);
 
     AppSettings loaded(store);
     QCOMPARE(loaded.editorTabSize(), 8);
@@ -42,6 +44,7 @@ void AppSettingsTest::userSettingsRoundtrip()
     QVERIFY(loaded.autoSave());
     QCOMPARE(loaded.aiModel(), QStringLiteral("custom-model"));
     QVERIFY(loaded.terminalUsePty());
+    QVERIFY(!loaded.hotExit());
 }
 
 void AppSettingsTest::workspaceOverlayWins()
@@ -59,6 +62,15 @@ void AppSettingsTest::workspaceOverlayWins()
     QCOMPARE(layered.editorTabSize(), 2);
     QCOMPARE(layered.editorFontSize(), 13);
     QVERIFY(layered.terminalUsePty());
+}
+
+void AppSettingsTest::hotExitDefaultsOn()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QSettings store(dir.filePath(QStringLiteral("user.ini")), QSettings::IniFormat);
+    AppSettings settings(store);
+    QVERIFY(settings.hotExit());
 }
 
 void AppSettingsTest::isolatedSettingsIgnoreUserProfile()

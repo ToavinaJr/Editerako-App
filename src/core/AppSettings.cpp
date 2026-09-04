@@ -22,6 +22,7 @@ constexpr auto kEditorWordWrap = "editor/wordWrap";
 constexpr auto kEditorLineNumbers = "editor/lineNumbers";
 constexpr auto kAutoSave = "files/autoSave";
 constexpr auto kAutoSaveDelayMs = "files/autoSaveDelayMs";
+constexpr auto kHotExit = "files/hotExit";
 constexpr auto kExcludedFolders = "workspace/excludedFolders";
 constexpr auto kTerminalShell = "terminal/shell";
 constexpr auto kTerminalUsePty = "terminal/usePty";
@@ -272,6 +273,16 @@ int AppSettings::autoSaveDelayMs() const
 void AppSettings::setAutoSaveDelayMs(int delayMs)
 {
     setValue(kAutoSaveDelayMs, qBound(500, delayMs, 60000));
+}
+
+bool AppSettings::hotExit() const
+{
+    return value(kHotExit, true).toBool();
+}
+
+void AppSettings::setHotExit(bool enabled)
+{
+    setValue(kHotExit, enabled);
 }
 
 QStringList AppSettings::excludedFolders() const

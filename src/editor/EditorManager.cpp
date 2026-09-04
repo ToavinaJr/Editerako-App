@@ -211,6 +211,75 @@ void EditorManager::saveDirtyFilesQuietly()
     }
 }
 
+QList<BackupBuffer> EditorManager::dirtyBuffers() const
+{
+    QList<BackupBuffer> result;
+    for (CodeEditor *editor : modifiedEditors()) {
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (!doc || doc->isReadOnly()) {
+            continue;
+        }
+
+        BackupBuffer buffer;
+        buffer.id = doc->ensureBackupId();
+        buffer.originalPath = doc->filePath();
+        buffer.displayName = doc->displayName();
+        buffer.lfText = editor->toPlainText();
+        buffer.format = doc->format();
+        const EditorDocument::CaretState caret = doc->caretState();
+        buffer.caretPosition = caret.position;
+        buffer.caretAnchor = caret.anchor;
+        result.append(buffer);
+    }
+    return result;
+}
+
+bool EditorManager::restoreBuffer(const BackupBuffer &buffer)
+{
+    CodeEditor *editor = nullptr;
+    if (!buffer.originalPath.isEmpty()) {
+        editor = editorForPath(buffer.originalPath);
+        if (!editor && QFileInfo::exists(buffer.originalPath)) {
+            if (!openTextFile(buffer.originalPath)) {
+                return false;
+            }
+            editor = editorForPath(buffer.originalPath);
+        }
+    }
+
+    if (!editor) {
+        editor = openUntitled();
+    }
+    if (!editor) {
+        return false;
+    }
+
+    auto *doc = EditorDocument::fromEditor(editor);
+    if (doc) {
+        if (!buffer.id.isEmpty()) {
+            doc->setBackupId(buffer.id);
+        }
+        if (!buffer.originalPath.isEmpty() && doc->filePath() != EditorDocument::normalizePath(buffer.originalPath)) {
+            doc->setFilePath(buffer.originalPath);
+        }
+        doc->setFormat(buffer.format);
+    }
+
+    if (editor->toPlainText() != buffer.lfText) {
+        editor->setPlainText(buffer.lfText);
+        editor->document()->setModified(true);
+    }
+
+    if (doc) {
+        EditorDocument::CaretState caret;
+        caret.position = buffer.caretPosition;
+        caret.anchor = buffer.caretAnchor;
+        doc->restoreCaretState(caret);
+    }
+    updateTabLabel(editor);
+    return true;
+}
+
 CodeEditor *EditorManager::openUntitled()
 {
     auto *editor = createEditor();
@@ -560,23 +629,33 @@ EditorManager::CloseResult EditorManager::closeAll()
 
 bool EditorManager::promptSaveAllOnQuit()
 {
-    const QList<CodeEditor *> modified = modifiedEditors();
-    if (modified.isEmpty()) {
+    return promptSaveEditors(modifiedEditors());
+}
+
+bool EditorManager::promptSaveEditors(const QList<CodeEditor *> &editors, bool secretFiles)
+{
+    if (editors.isEmpty()) {
         return true;
     }
 
     QMessageBox msg(m_dialogParent);
     msg.setWindowTitle(tr("Unsaved Changes"));
-    msg.setText(tr("You have %1 file(s) with unsaved changes.\n"
-                   "Do you want to save all changes before closing?")
-                    .arg(modified.size()));
+    if (secretFiles) {
+        msg.setText(tr("You have %1 unsaved secret file(s) that cannot be backed up.\n"
+                       "Do you want to save them before closing?")
+                        .arg(editors.size()));
+    } else {
+        msg.setText(tr("You have %1 file(s) with unsaved changes.\n"
+                       "Do you want to save all changes before closing?")
+                        .arg(editors.size()));
+    }
     msg.setStandardButtons(QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel);
     msg.setDefaultButton(QMessageBox::SaveAll);
     msg.setIcon(QMessageBox::Warning);
 
     const int res = msg.exec();
     if (res == QMessageBox::SaveAll) {
-        for (CodeEditor *editor : modified) {
+        for (CodeEditor *editor : editors) {
             if (!save(editor)) {
                 return false;
             }

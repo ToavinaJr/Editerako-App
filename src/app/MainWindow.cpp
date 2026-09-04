@@ -4,6 +4,8 @@
 #include "ai/ChatWidget.h"
 #include "app/LspSession.h"
 #include "core/AppSettings.h"
+#include "core/BackupService.h"
+#include "core/RecoveryService.h"
 #include "core/ThemeManager.h"
 #include "editor/CodeEditor.h"
 #include "editor/EditorDocument.h"
@@ -255,9 +257,21 @@ void MainWindow::runBuildTask()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (m_editorManager && !m_editorManager->promptSaveAllOnQuit()) {
-        event->ignore();
-        return;
+    if (m_editorManager) {
+        if (AppSettings().hotExit()) {
+            writeRecoveryBackup();
+            const QList<CodeEditor *> secrets = modifiedSecretEditors();
+            if (!m_editorManager->promptSaveEditors(secrets, true)) {
+                event->ignore();
+                return;
+            }
+            writeRecoveryBackup();
+        } else if (!m_editorManager->promptSaveAllOnQuit()) {
+            event->ignore();
+            return;
+        } else {
+            RecoveryService().discard();
+        }
     }
 
     if (m_lsp) {
@@ -329,31 +343,102 @@ bool MainWindow::restoreSession()
         restoreState(state.windowState);
     }
 
-    if (!SessionController::workspaceIsRestorable(state)) {
-        return false;
-    }
-
     SessionController::RestoreGuard guard(m_session);
-    setProjectDirectory(state.workspace);
-    if (m_editorManager) {
-        m_editorManager->applySettings();
+    bool restoredWorkspace = false;
+    if (SessionController::workspaceIsRestorable(state)) {
+        setProjectDirectory(state.workspace);
+        if (m_editorManager) {
+            m_editorManager->applySettings();
+        }
+
+        const QStringList toOpen = SessionController::existingFiles(state.openFiles);
+        for (const QString &path : toOpen) {
+            openFileInEditor(path);
+        }
+        if (!toOpen.isEmpty() && m_editorManager) {
+            m_editorManager->closeUntitledIfPristine();
+        }
+        if (m_editorManager && !state.activeFile.isEmpty()) {
+            m_editorManager->activateExisting(state.activeFile);
+            ui->centralStack->setCurrentIndex(CodeViewer);
+        }
+        restoredWorkspace = true;
     }
 
-    const QStringList toOpen = SessionController::existingFiles(state.openFiles);
-    for (const QString &path : toOpen) {
-        openFileInEditor(path);
-    }
-    if (!toOpen.isEmpty() && m_editorManager) {
+    const bool recovered = restoreRecoveryBackups();
+    if (m_editorManager) {
         m_editorManager->closeUntitledIfPristine();
-    }
-    if (m_editorManager && !state.activeFile.isEmpty()) {
-        m_editorManager->activateExisting(state.activeFile);
-        ui->centralStack->setCurrentIndex(CodeViewer);
     }
 
     syncFileWatches();
     updateCommandStates();
-    return true;
+    return restoredWorkspace || recovered;
+}
+
+void MainWindow::scheduleRecoveryBackup()
+{
+    if (m_session.isRestoring()) {
+        return;
+    }
+    if (!m_backupTimer) {
+        m_backupTimer = new QTimer(this);
+        m_backupTimer->setSingleShot(true);
+        connect(m_backupTimer, &QTimer::timeout, this, &MainWindow::writeRecoveryBackup);
+    }
+    m_backupTimer->start(1000);
+}
+
+void MainWindow::writeRecoveryBackup()
+{
+    if (!m_editorManager || m_session.isRestoring()) {
+        return;
+    }
+
+    BackupSnapshot snapshot;
+    snapshot.workspace = workspaceRoot();
+    for (const BackupBuffer &buffer : m_editorManager->dirtyBuffers()) {
+        if (BackupService::isSecretPath(buffer.originalPath)
+            || BackupService::exceedsSizeLimit(buffer.lfText)) {
+            continue;
+        }
+        snapshot.entries.append(buffer);
+    }
+    RecoveryService().save(snapshot);
+}
+
+bool MainWindow::restoreRecoveryBackups()
+{
+    RecoveryService recovery;
+    if (!recovery.canRecover() || !m_editorManager) {
+        return false;
+    }
+
+    const BackupSnapshot snapshot = recovery.load();
+    int restored = 0;
+    for (const BackupBuffer &buffer : snapshot.entries) {
+        if (m_editorManager->restoreBuffer(buffer)) {
+            ++restored;
+        }
+    }
+    if (restored > 0 && statusBar()) {
+        statusBar()->showMessage(tr("Recovered %1 unsaved document(s)").arg(restored), 8000);
+    }
+    return restored > 0;
+}
+
+QList<CodeEditor *> MainWindow::modifiedSecretEditors() const
+{
+    QList<CodeEditor *> secrets;
+    if (!m_editorManager) {
+        return secrets;
+    }
+    for (CodeEditor *editor : m_editorManager->modifiedEditors()) {
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (doc && BackupService::isSecretPath(doc->filePath())) {
+            secrets.append(editor);
+        }
+    }
+    return secrets;
 }
 
 void MainWindow::syncFileWatches()
