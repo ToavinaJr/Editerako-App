@@ -211,6 +211,9 @@ jobs:
       - name: Configure
         run: cmake --preset debug
 
+      - name: Build
+        run: cmake --build --preset debug
+
       - name: clang-tidy
         run: |
           chmod +x scripts/tidy.sh

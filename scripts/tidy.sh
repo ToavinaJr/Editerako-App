@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run clang-tidy on src/ and tests/ using compile_commands.json from a preset.
+# Run clang-tidy on application sources under src/ (not tree-sitter, not tests).
 # Usage: ./scripts/tidy.sh [debug]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,5 +29,14 @@ else
     exit 1
 fi
 
+regex_escape() {
+    printf '%s' "$1" | sed -e 's/[][(){}.^$+?\\|]/\\&/g'
+}
+
+# Absolute <root>/src/ so tree-sitter/**/src and build/**/src autogen are skipped.
+src_dir="${project_root}/src"
+src_regex="$(regex_escape "${src_dir}")/"
+
 cd "$project_root"
-"${tidy[@]}" -p "$build" -header-filter='.*/src/.*' 'src/.*' 'tests/.*'
+echo "clang-tidy on ${src_dir} (preset $(preset_name "$config")) ..."
+"${tidy[@]}" -p "$build" -header-filter="${src_regex}" "${src_regex}"

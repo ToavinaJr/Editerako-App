@@ -59,6 +59,8 @@ clang-format -i src/foo/Bar.cpp
 ./scripts/tidy.sh debug
 ```
 
+`tidy.sh` ne parcourt que `<racine>/src/` (modules applicatifs). Pas Tree-sitter, pas `tests/` (fichiers `.moc` / AUTOMOC). Le job CI compile le preset debug avant tidy pour que UIC/MOC existent. `clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling` (Annex K `*_s`) est désactivé : bruit sur le C POSIX et le vendor.
+
 ## Packaging
 
 | Plateforme | Commande | Sortie |

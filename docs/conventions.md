@@ -13,6 +13,7 @@
 - Cible app : `WIN32_EXECUTABLE ON` (pas de console). Cibles test : `OFF` (ctest doit voir la sortie).
 - Modules : `editerako_add_module()` dans `cmake/Libraries.cmake` (`target_sources`, includes PUBLIC `src/`, `cxx_std_20`).
 - Warnings via `editerako_enable_warnings()` ; Tree-sitter compile avec `-w` / `/W0`. En CI : `EDITERAKO_WARNINGS_AS_ERRORS`.
+- `scripts/tidy.sh` : clang-tidy sur `<racine>/src/` seulement. [ci.md](ci.md).
 - Sanitizers : `cmake/Sanitizers.cmake`, presets `asan` / `tsan`. Pas ASan+TSan. [ci.md](ci.md).
 - Vendor : `cmake/TreeSitter.cmake` n’exporte en PUBLIC que `tree_sitter/api.h`. Une OBJECT lib par grammaire. Metadata langages : `LanguageDefinition` ([adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md)).
 - Lier `PRIVATE`/`PUBLIC` explicitement. Ne pas ajouter `include_directories()` global.

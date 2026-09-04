@@ -4,6 +4,7 @@ Checks: >
   clang-analyzer-*,
   -clang-analyzer-webkit.*,
   -clang-analyzer-optin.osx.*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   bugprone-use-after-move,
   bugprone-dangling-handle,
   bugprone-infinite-loop,
@@ -11,8 +12,6 @@ Checks: >
   bugprone-virtual-near-miss,
   bugprone-assert-side-effect
 WarningsAsErrors: ''
-HeaderFilterRegex: '.*/src/.*'
+HeaderFilterRegex: '.*/src/(app|ai|core|debug|editor|lsp|plugins|project|scm|syntax|tasks|terminal|ui|viewers)/.*'
 FormatStyle: file
-AnalyzeTemporaryDtors: false
 UseColor: true
-...
