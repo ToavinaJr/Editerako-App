@@ -9,6 +9,7 @@
 #include "editor/EditorManager.h"
 #include "editor/HoverPopup.h"
 #include "lsp/LspClient.h"
+#include "lsp/LspCompileCommands.h"
 #include "lsp/LspDiagnosticsProvider.h"
 #include "lsp/LspDocumentSync.h"
 #include "lsp/LspServerManager.h"
@@ -120,6 +121,11 @@ bool LspSession::ensureClangd(EditorDocument *doc)
         spec.id = QStringLiteral("clangd");
         spec.command = QStringLiteral("clangd");
         spec.args = QStringList{QStringLiteral("--offset-encoding=utf-16")};
+        const QString commandsDir = lspCompileCommandsDir(
+            !m_workspaceRoot.isEmpty() ? m_workspaceRoot : QFileInfo(doc->filePath()).absolutePath());
+        if (!commandsDir.isEmpty()) {
+            spec.args.append(QStringLiteral("--compile-commands-dir=%1").arg(commandsDir));
+        }
         spec.languageIds = QStringList{QStringLiteral("c"), QStringLiteral("cpp")};
         m_manager->registerSpec(spec);
         m_clangdRegistered = true;

@@ -13,7 +13,7 @@ La phase 10 a livré le client LSP sans serveur ni UI. Le cahier des charges dem
 - `LspSession` (`src/app/`) est le pont composition-root : démarre clangd à la demande, synchronise les documents, alimente l’UI. `EditerakoLsp` reste sans Widgets.
 - Completion : `CompletionModel` / `CompletionPopup` / `CompletionItem` génériques. Mapping LSP → modèle dans `LspSession`.
 - Diagnostics éditeur : `EditorDiagnostic` + `DiagnosticMarkup` (WaveUnderline + pastille gutter). Problems Panel : [adr/0012-problems-panel.md](adr/0012-problems-panel.md).
-- clangd : spec `clangd` + `--offset-encoding=utf-16`. `initialize` seulement après `QProcess::started`. Binaire absent : message status bar, pas de crash.
+- clangd : spec `clangd` + `--offset-encoding=utf-16`. Si `compile_commands.json` est trouvé (`build/<preset>/`, etc.), il est passé via `--compile-commands-dir` — sinon clangd ne voit pas les `-I` CMake et rétablit les types inconnus en `int`. `initialize` seulement après `QProcess::started`. Binaire absent : message status bar, pas de crash.
 - Raccourcis : `F12`, `Shift+F12`, `F2`, `Ctrl+Space`, `Ctrl+Shift+O`, `Ctrl+T`.
 
 ## Conséquences

@@ -26,6 +26,8 @@ editerako_add_module(EditerakoLsp
         LspSymbolProvider.h
         LspPickerItems.cpp
         LspPickerItems.h
+        LspCompileCommands.cpp
+        LspCompileCommands.h
     LIBS
         EditerakoCore
         Qt6::Core

@@ -221,6 +221,11 @@ editerako_add_test(test_LspPickerItems
     LIBS EditerakoLsp
 )
 
+editerako_add_test(test_LspCompileCommands
+    SOURCES LspCompileCommandsTest.cpp
+    LIBS EditerakoLsp
+)
+
 editerako_add_test(test_LspClient
     SOURCES LspClientTest.cpp
     LIBS EditerakoLsp
