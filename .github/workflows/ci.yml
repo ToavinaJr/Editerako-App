@@ -65,9 +65,7 @@ jobs:
 
       - name: Package tarball
         if: matrix.preset == 'release' && github.event_name != 'pull_request'
-        run: |
-          chmod +x scripts/package.sh
-          ./scripts/package.sh Release
+        run: bash scripts/package.sh Release
 
       - name: Upload Linux package
         if: matrix.preset == 'release' && github.event_name != 'pull_request'
@@ -215,9 +213,7 @@ jobs:
         run: cmake --build --preset debug
 
       - name: clang-tidy
-        run: |
-          chmod +x scripts/tidy.sh
-          ./scripts/tidy.sh debug
+        run: bash scripts/tidy.sh debug
 
       - name: cppcheck
         run: |

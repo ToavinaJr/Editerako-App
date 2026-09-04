@@ -22,7 +22,7 @@ fi
 cache="$(build_dir "$config")/CMakeCache.txt"
 if [[ ! -f "$cache" ]]; then
     echo "Build directory absent, configure..."
-    "${SCRIPT_DIR}/configure.sh" "$config"
+    bash "${SCRIPT_DIR}/configure.sh" "$config"
 fi
 
 echo "Building preset $preset ..."

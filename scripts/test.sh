@@ -19,7 +19,7 @@ if [[ -n "${prefix}" ]]; then
     export CMAKE_PREFIX_PATH="$prefix"
 fi
 
-"${SCRIPT_DIR}/build.sh" "$config"
+bash "${SCRIPT_DIR}/build.sh" "$config"
 
 echo "Running tests (preset $preset) ..."
 ctest --preset "$preset" --output-on-failure

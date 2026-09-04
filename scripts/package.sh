@@ -23,7 +23,7 @@ if [[ -n "${prefix}" ]]; then
     export LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH:-}"
 fi
 
-"${SCRIPT_DIR}/build.sh" "$config"
+bash "${SCRIPT_DIR}/build.sh" "$config"
 
 build_dir="$(build_dir "$config")"
 version="0.1.0"

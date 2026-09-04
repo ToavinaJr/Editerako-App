@@ -32,7 +32,7 @@ fi
 
 if [[ "$do_build" -eq 1 ]]; then
     require_tools
-    "${SCRIPT_DIR}/build.sh" "$config"
+    bash "${SCRIPT_DIR}/build.sh" "$config"
 fi
 
 exe="$(executable_path "$config")"
