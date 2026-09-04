@@ -314,7 +314,9 @@ void PtyTerminalBackend::start(const QString &program,
             close(slave);
         }
         close(m_impl->master);
-        [[maybe_unused]] const int cwdChanged = cwdUtf8.empty() ? 0 : ::chdir(cwdUtf8.c_str());
+        if (!cwdUtf8.empty() && ::chdir(cwdUtf8.c_str()) != 0) {
+            _exit(127);
+        }
         execvp(argv[0], argv.data());
         _exit(127);
     }
@@ -356,6 +358,9 @@ void PtyTerminalBackend::write(const QByteArray &data)
                 if (errno == EINTR) {
                     continue;
                 }
+                break;
+            }
+            if (n == 0) {
                 break;
             }
             bytes += n;
