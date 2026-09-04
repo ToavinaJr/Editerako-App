@@ -34,11 +34,9 @@ bool isSafeRelativePath(const QString &name)
     if (QFileInfo(n).isAbsolute()) {
         return false;
     }
-#ifdef Q_OS_WIN
-    if (n.size() >= 2 && n.at(1) == QLatin1Char(':')) {
+    if (n.size() >= 2 && n.at(0).isLetter() && n.at(1) == QLatin1Char(':')) {
         return false;
     }
-#endif
     const QStringList parts = n.split(QLatin1Char('/'), Qt::SkipEmptyParts);
     if (parts.isEmpty()) {
         return false;

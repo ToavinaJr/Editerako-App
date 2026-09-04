@@ -22,9 +22,7 @@ void WorkspacePathTest::rejectsTraversalAndAbsolute()
     QVERIFY(!isSafeRelativePath(QStringLiteral("../secret.txt")));
     QVERIFY(!isSafeRelativePath(QStringLiteral("foo/../../etc/passwd")));
     QVERIFY(!isSafeRelativePath(QStringLiteral("/tmp/x")));
-#ifdef Q_OS_WIN
     QVERIFY(!isSafeRelativePath(QStringLiteral("C:/Windows/notepad.exe")));
-#endif
 }
 
 void WorkspacePathTest::allowsNestedRelative()

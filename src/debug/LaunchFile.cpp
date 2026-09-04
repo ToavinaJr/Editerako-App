@@ -45,9 +45,8 @@ QString expandLaunchVariables(const QString &text, const LaunchContext &context)
     QString out = text;
     const QString folder = QDir::fromNativeSeparators(context.workspaceFolder);
     const QString file = QDir::fromNativeSeparators(context.file);
-    const QString fileDir = file.isEmpty()
-        ? QString()
-        : QDir::fromNativeSeparators(QFileInfo(file).absolutePath());
+    const QString fileDir =
+        file.isEmpty() ? QString() : QDir::fromNativeSeparators(QFileInfo(file).path());
     out.replace(QStringLiteral("${workspaceFolder}"), folder);
     out.replace(QStringLiteral("${workspaceRoot}"), folder);
     out.replace(QStringLiteral("${file}"), file);
@@ -159,9 +158,9 @@ QVector<LaunchConfiguration> parseLaunchJson(const QByteArray &json, QString *er
         QJsonObject arguments;
         for (auto it = obj.begin(); it != obj.end(); ++it) {
             const QString key = it.key();
-            if (key == QLatin1String("name") || key == QLatin1String("type")
-                || key == QLatin1String("request") || key == QLatin1String("adapterCommand")
-                || key == QLatin1String("adapterArgs")) {
+            if (key == QLatin1String("name") || key == QLatin1String("type") ||
+                key == QLatin1String("request") || key == QLatin1String("adapterCommand") ||
+                key == QLatin1String("adapterArgs")) {
                 continue;
             }
             arguments.insert(key, it.value());

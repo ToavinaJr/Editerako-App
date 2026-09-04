@@ -37,6 +37,21 @@ QStringList normalizeExtensions(const QStringList &raw)
     return out;
 }
 
+bool isForbiddenPluginLibrary(const QString &library)
+{
+    const QString path = QDir::fromNativeSeparators(library.trimmed());
+    if (path.isEmpty() || path.contains(QLatin1String(".."))) {
+        return true;
+    }
+    if (QDir::isAbsolutePath(path) || QFileInfo(path).isAbsolute()) {
+        return true;
+    }
+    if (path.size() >= 2 && path.at(0).isLetter() && path.at(1) == QLatin1Char(':')) {
+        return true;
+    }
+    return path.startsWith(QLatin1String("//"));
+}
+
 } // namespace
 
 bool isValidPluginId(const QString &id)
@@ -53,8 +68,8 @@ PluginManifest parsePluginManifest(const QByteArray &json, QString *error)
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
         if (error) {
             *error = parseError.error == QJsonParseError::NoError
-                ? QStringLiteral("plugin.json must be an object")
-                : parseError.errorString();
+                         ? QStringLiteral("plugin.json must be an object")
+                         : parseError.errorString();
         }
         return {};
     }
@@ -106,7 +121,8 @@ PluginManifest parsePluginManifest(const QByteArray &json, QString *error)
         PluginLanguageContribution language;
         language.id = item.value(QStringLiteral("id")).toString().trimmed();
         language.displayName = item.value(QStringLiteral("displayName")).toString().trimmed();
-        language.extensions = normalizeExtensions(jsonStringList(item.value(QStringLiteral("extensions"))));
+        language.extensions =
+            normalizeExtensions(jsonStringList(item.value(QStringLiteral("extensions"))));
         if (language.displayName.isEmpty()) {
             language.displayName = language.id;
         }
@@ -122,7 +138,8 @@ PluginManifest parsePluginManifest(const QByteArray &json, QString *error)
         PluginViewerContribution viewer;
         viewer.id = item.value(QStringLiteral("id")).toString().trimmed();
         viewer.title = item.value(QStringLiteral("title")).toString().trimmed();
-        viewer.extensions = normalizeExtensions(jsonStringList(item.value(QStringLiteral("extensions"))));
+        viewer.extensions =
+            normalizeExtensions(jsonStringList(item.value(QStringLiteral("extensions"))));
         if (viewer.id.isEmpty() || viewer.extensions.isEmpty()) {
             continue;
         }
@@ -165,12 +182,10 @@ PluginManifest parsePluginManifest(const QByteArray &json, QString *error)
     return manifest;
 }
 
-QString resolvePluginLibraryPath(const QString &pluginDirectory, const QString &library, QString *error)
+QString
+resolvePluginLibraryPath(const QString &pluginDirectory, const QString &library, QString *error)
 {
-    if (library.trimmed().isEmpty()) {
-        return {};
-    }
-    if (QFileInfo(library).isAbsolute() || library.contains(QStringLiteral(".."))) {
+    if (isForbiddenPluginLibrary(library)) {
         if (error) {
             *error = QStringLiteral("Plugin library path is not allowed");
         }

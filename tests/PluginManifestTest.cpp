@@ -52,13 +52,21 @@ void PluginManifestTest::rejectsBadIdAndApi()
 void PluginManifestTest::rejectsEscapingLibrary()
 {
     QString error;
-    QVERIFY(resolvePluginLibraryPath(QStringLiteral("C:/plugins/hello"), QStringLiteral("../x"), &error)
+    QVERIFY(
+        resolvePluginLibraryPath(QStringLiteral("C:/plugins/hello"), QStringLiteral("../x"), &error)
+            .isEmpty());
+    QVERIFY(!error.isEmpty());
+    error.clear();
+    QVERIFY(resolvePluginLibraryPath(QStringLiteral("C:/plugins/hello"),
+                                     QStringLiteral("C:/Windows/system32/ntdll.dll"),
+                                     &error)
                 .isEmpty());
     QVERIFY(!error.isEmpty());
     error.clear();
-    QVERIFY(resolvePluginLibraryPath(QStringLiteral("C:/plugins/hello"), QStringLiteral("C:/Windows/system32/ntdll.dll"),
-                                     &error)
+    QVERIFY(resolvePluginLibraryPath(
+                QStringLiteral("C:/plugins/hello"), QStringLiteral("/tmp/evil.so"), &error)
                 .isEmpty());
+    QVERIFY(!error.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(PluginManifestTest)
