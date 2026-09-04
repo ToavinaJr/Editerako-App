@@ -269,13 +269,16 @@ bool EditorManager::goToLine(int lineNumber, int column)
         return false;
     }
 
-    QTextBlock block = editor->document()->findBlockByLineNumber(lineNumber - 1);
+    QTextBlock block = editor->document()->findBlockByNumber(lineNumber - 1);
     if (!block.isValid()) {
         block = editor->document()->lastBlock();
     }
     if (!block.isValid()) {
         return false;
     }
+
+    editor->unfoldLine(block.blockNumber());
+    block = editor->document()->findBlockByNumber(block.blockNumber());
 
     const int lineLen = qMax(0, block.length() - 1);
     const int offset = qBound(0, column, lineLen);

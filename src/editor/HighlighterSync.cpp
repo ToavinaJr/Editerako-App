@@ -43,6 +43,7 @@ void HighlighterSync::apply(CodeEditor *editor)
         for (SyntaxHighlighter *highlighter : existing) {
             delete highlighter;
         }
+        editor->refreshFolds();
         if (size > threshold) {
             qCInfo(lcEditor) << "Skipping syntax highlighter for large file" << path << size;
         }
@@ -50,6 +51,7 @@ void HighlighterSync::apply(CodeEditor *editor)
     }
 
     if (existing.size() == 1 && existing.front()->language() == lang) {
+        editor->refreshFolds();
         return;
     }
 
@@ -59,4 +61,5 @@ void HighlighterSync::apply(CodeEditor *editor)
 
     qCInfo(lcEditor) << "Highlighter" << LanguageRegistry::displayName(lang) << "for" << path;
     new SyntaxHighlighter(editor->document(), lang);
+    editor->refreshFolds();
 }

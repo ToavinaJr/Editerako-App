@@ -21,6 +21,7 @@ public:
     ~SyntaxHighlighter() override;
 
     [[nodiscard]] LanguageId language() const { return m_language; }
+    [[nodiscard]] TreeSitterDocument *treeDocument() const { return m_treeDocument; }
 
 protected:
     void highlightBlock(const QString &text) override;

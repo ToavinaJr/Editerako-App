@@ -4,6 +4,8 @@ editerako_add_module(EditerakoSyntax
         LanguageRegistry.h
         TreeSitterDocument.cpp
         TreeSitterDocument.h
+        FoldRanges.cpp
+        FoldRanges.h
         HighlightQuery.cpp
         HighlightQuery.h
         SyntaxHighlighter.cpp

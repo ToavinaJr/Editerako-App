@@ -33,4 +33,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0020-plugin-system.md](adr/0020-plugin-system.md) | Plugins locaux |
 | [adr/0021-ci-sanitizers-packaging.md](adr/0021-ci-sanitizers-packaging.md) | CI, sanitizers, packaging |
 | [adr/0022-file-viewers.md](adr/0022-file-viewers.md) | Viewers Markdown, SVG, CSV |
+| [adr/0023-code-folding.md](adr/0023-code-folding.md) | Code folding Tree-sitter |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

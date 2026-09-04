@@ -175,6 +175,20 @@ editerako_add_test(test_TreeSitterDocument
 
 editerako_test_offscreen(test_TreeSitterDocument)
 
+editerako_add_test(test_FoldRanges
+    SOURCES FoldRangesTest.cpp
+    LIBS EditerakoSyntax
+)
+
+editerako_test_offscreen(test_FoldRanges)
+
+editerako_add_test(test_FoldingController
+    SOURCES FoldingControllerTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_test_offscreen(test_FoldingController)
+
 editerako_add_test(test_HighlightQuery
     SOURCES HighlightQueryTest.cpp
     LIBS EditerakoSyntax

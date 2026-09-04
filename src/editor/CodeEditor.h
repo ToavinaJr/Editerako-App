@@ -2,6 +2,7 @@
 #define EDITERAKO_CODEEDITOR_H
 
 #include "editor/features/CommentController.h"
+#include "editor/features/FoldingController.h"
 #include "editor/features/IndentController.h"
 #include "editor/features/LineEditCommands.h"
 #include "editor/features/LineMovementController.h"
@@ -47,6 +48,14 @@ public:
     void selectNextOccurrence();
     void selectAllOccurrences();
 
+    void toggleFold();
+    void fold();
+    void unfold();
+    void foldAll();
+    void unfoldAll();
+    void unfoldLine(int line);
+    void refreshFolds();
+
     void setDiagnostics(const QVector<EditorDiagnostic> &diagnostics);
     [[nodiscard]] const QVector<EditorDiagnostic> &diagnostics() const { return m_diagnostics; }
 
@@ -78,6 +87,7 @@ private slots:
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &rect, int dy);
     void emitHover();
+    void scheduleFoldRefresh();
 
 private:
     LineNumberArea *m_lineNumberArea = nullptr;
@@ -88,10 +98,12 @@ private:
     CommentController m_comments;
     LineEditCommands m_lineEdits;
     OccurrenceController m_occurrences;
+    FoldingController m_folding;
     QVector<EditorDiagnostic> m_diagnostics;
     QSet<int> m_breakpointLines;
     int m_debugLine = -1;
     class QTimer *m_hoverTimer = nullptr;
+    class QTimer *m_foldTimer = nullptr;
     QPoint m_hoverLocalPos;
 };
 

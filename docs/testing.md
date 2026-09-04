@@ -52,6 +52,8 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_ProcessTerminalBackend` | `EditerakoTerminal` | echo via `QProcess` |
 | `test_PtyTerminalBackend` | `EditerakoTerminal` | `isAvailable`, echo Unix PTY (ConPTY live skip sous console Windows) |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
+| `test_FoldRanges` | `EditerakoSyntax` | plages fold C++ / JSON depuis l’arbre (`offscreen`) |
+| `test_FoldingController` | `EditerakoEditor` | fold all / unfold / toggle (`offscreen`) |
 | `test_HighlightQuery` | `EditerakoSyntax` | captures, predicates, queries SCM de tous les langages (`EDITERAKO_QUERY_DIR`) |
 | `test_EditorIo` | `EditerakoEditor` | lecture texte, Unicode, conservation CRLF, `diskMatches` |
 | `test_HighlighterSync` | `EditerakoEditor` | `shouldHighlight` : Python / C++ / HTML, seuil gros fichier |

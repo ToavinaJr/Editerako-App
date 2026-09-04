@@ -93,6 +93,16 @@ void MainWindow::connectActions()
                                        tr("Select All Occurrences"),
                                        &CodeEditor::selectAllOccurrences);
 
+    QAction *toggleFold = bindEditor(QStringLiteral("editor.toggleFold"), tr("Toggle Fold"),
+                                     &CodeEditor::toggleFold);
+    QAction *fold = bindEditor(QStringLiteral("editor.fold"), tr("Fold"), &CodeEditor::fold);
+    QAction *unfold = bindEditor(QStringLiteral("editor.unfold"), tr("Unfold"),
+                                 &CodeEditor::unfold);
+    QAction *foldAll = bindEditor(QStringLiteral("editor.foldAll"), tr("Fold All"),
+                                  &CodeEditor::foldAll);
+    QAction *unfoldAll = bindEditor(QStringLiteral("editor.unfoldAll"), tr("Unfold All"),
+                                    &CodeEditor::unfoldAll);
+
     QAction *triggerSuggest = m_commands->create(QStringLiteral("editor.triggerSuggest"),
                                                  tr("Trigger Suggest"));
     connect(triggerSuggest, &QAction::triggered, this, [this]() {
@@ -327,6 +337,12 @@ void MainWindow::connectActions()
     editMenu->addAction(selectNext);
     editMenu->addAction(selectAllOcc);
     editMenu->addSeparator();
+    editMenu->addAction(toggleFold);
+    editMenu->addAction(fold);
+    editMenu->addAction(unfold);
+    editMenu->addAction(foldAll);
+    editMenu->addAction(unfoldAll);
+    editMenu->addSeparator();
     editMenu->addAction(trimWs);
     editMenu->addAction(toSpaces);
     editMenu->addAction(toTabs);
@@ -430,6 +446,11 @@ void MainWindow::updateCommandStates()
         QStringLiteral("edit.convertIndentationToTabs"),
         QStringLiteral("edit.selectNextOccurrence"),
         QStringLiteral("edit.selectAllOccurrences"),
+        QStringLiteral("editor.toggleFold"),
+        QStringLiteral("editor.fold"),
+        QStringLiteral("editor.unfold"),
+        QStringLiteral("editor.foldAll"),
+        QStringLiteral("editor.unfoldAll"),
     };
     for (const QString &id : editIds) {
         m_commands->setEnabled(id, hasEditor);

@@ -47,6 +47,12 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+/")));
     QCOMPARE(defaults.value(QStringLiteral("edit.moveLineUp")),
              QKeySequence(QStringLiteral("Ctrl+Up")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.toggleFold")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+[")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.foldAll")),
+             QKeySequence(QStringLiteral("Ctrl+Alt+[")));
+    QCOMPARE(defaults.value(QStringLiteral("editor.unfoldAll")),
+             QKeySequence(QStringLiteral("Ctrl+Alt+]")));
     QCOMPARE(defaults.value(QStringLiteral("editor.gotoDefinition")),
              QKeySequence(QStringLiteral("F12")));
     QCOMPARE(defaults.value(QStringLiteral("editor.findReferences")),

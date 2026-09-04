@@ -59,6 +59,8 @@ editerako_add_module(EditerakoEditor
         features/AutoClosingPairs.h
         features/OccurrenceController.cpp
         features/OccurrenceController.h
+        features/FoldingController.cpp
+        features/FoldingController.h
     LIBS
         EditerakoCore
         EditerakoSyntax

@@ -42,7 +42,14 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("edit.selectLine"), QKeySequence(QStringLiteral("Ctrl+L")));
     defaults.insert(QStringLiteral("edit.joinLines"), QKeySequence(QStringLiteral("Ctrl+Shift+J")));
     defaults.insert(QStringLiteral("edit.selectNextOccurrence"), QKeySequence(QStringLiteral("Ctrl+D")));
-    defaults.insert(QStringLiteral("edit.selectAllOccurrences"), QKeySequence(QStringLiteral("Ctrl+Shift+L")));
+    defaults.insert(QStringLiteral("edit.selectAllOccurrences"),
+                    QKeySequence(QStringLiteral("Ctrl+Shift+L")));
+    defaults.insert(QStringLiteral("editor.toggleFold"),
+                    QKeySequence(QStringLiteral("Ctrl+Shift+[")));
+    defaults.insert(QStringLiteral("editor.foldAll"),
+                    QKeySequence(QStringLiteral("Ctrl+Alt+[")));
+    defaults.insert(QStringLiteral("editor.unfoldAll"),
+                    QKeySequence(QStringLiteral("Ctrl+Alt+]")));
     defaults.insert(QStringLiteral("view.terminal"), QKeySequence(QStringLiteral("Ctrl+J")));
     defaults.insert(QStringLiteral("workbench.problems"), QKeySequence(QStringLiteral("Ctrl+Shift+M")));
     defaults.insert(QStringLiteral("workbench.sourceControl"), QKeySequence(QStringLiteral("Ctrl+Shift+G")));

@@ -17,10 +17,12 @@
 #include <QList>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPolygonF>
 #include <QScrollBar>
 #include <QWheelEvent>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <QTextDocument>
 #include <QTextEdit>
 #include <QTextFormat>
 #include <QTimer>
@@ -35,7 +37,9 @@ CodeEditor::CodeEditor(QWidget *parent)
     , m_comments(this)
     , m_lineEdits(this)
     , m_occurrences(this, &m_multiCursor)
+    , m_folding(this)
     , m_hoverTimer(new QTimer(this))
+    , m_foldTimer(new QTimer(this))
 {
     connect(this, &CodeEditor::blockCountChanged, this, &CodeEditor::updateLineNumberAreaWidth);
     connect(this, &CodeEditor::updateRequest, this, &CodeEditor::updateLineNumberArea);
@@ -48,6 +52,17 @@ CodeEditor::CodeEditor(QWidget *parent)
     if (auto *bar = verticalScrollBar()) {
         connect(bar, &QScrollBar::valueChanged, this, &CodeEditor::hoverCanceled);
     }
+
+    m_foldTimer->setSingleShot(true);
+    m_foldTimer->setInterval(0);
+    connect(m_foldTimer, &QTimer::timeout, this, [this]() {
+        m_folding.refresh();
+        if (m_lineNumberArea) {
+            m_lineNumberArea->update();
+        }
+    });
+    connect(document(), &QTextDocument::contentsChange, this, &CodeEditor::scheduleFoldRefresh);
+
     viewport()->setMouseTracking(true);
     setMouseTracking(true);
 
@@ -68,7 +83,8 @@ int CodeEditor::lineNumberAreaWidth() const
         ++digits;
     }
 
-    int space = 14 + 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+    int space = kBreakpointGutterWidth + kFoldGutterWidth + 3
+        + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
     space += diagnosticGutterExtraWidth(m_diagnostics);
     return space;
 }
@@ -157,13 +173,28 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
                 const int y = top + qMax(0, (fontMetrics().height() - size) / 2);
                 painter.drawEllipse(3, y, size, size);
             }
+            if (m_folding.isFoldable(blockNumber)) {
+                const int cy = top + fontMetrics().height() / 2;
+                const int cx = kBreakpointGutterWidth + kFoldGutterWidth / 2;
+                QPolygonF tri;
+                if (m_folding.isFolded(blockNumber)) {
+                    tri << QPointF(cx - 3, cy - 4) << QPointF(cx - 3, cy + 4)
+                        << QPointF(cx + 4, cy);
+                } else {
+                    tri << QPointF(cx - 4, cy - 3) << QPointF(cx + 4, cy - 3)
+                        << QPointF(cx, cy + 4);
+                }
+                painter.setBrush(QColor(160, 160, 160));
+                painter.setPen(Qt::NoPen);
+                painter.drawPolygon(tri);
+            }
             const auto it = worst.constFind(block.blockNumber());
             if (it != worst.cend()) {
                 painter.setBrush(diagnosticColor(it.value()));
                 painter.setPen(Qt::NoPen);
                 const int size = 6;
                 const int y = top + qMax(0, (fontMetrics().height() - size) / 2);
-                painter.drawEllipse(14, y, size, size);
+                painter.drawEllipse(kBreakpointGutterWidth + kFoldGutterWidth, y, size, size);
             }
             const QString number = QString::number(blockNumber + 1);
             painter.setPen(QColor(128, 128, 128));
@@ -227,6 +258,15 @@ void CodeEditor::gutterMousePress(QMouseEvent *event)
     while (block.isValid()) {
         const int bottom = top + qRound(blockBoundingRect(block).height());
         if (event->pos().y() >= top && event->pos().y() < bottom) {
+            const int x = event->pos().x();
+            if (x >= kBreakpointGutterWidth && x < kBreakpointGutterWidth + kFoldGutterWidth) {
+                if (m_folding.isFoldable(block.blockNumber())) {
+                    m_folding.toggleAt(block.blockNumber());
+                    m_lineNumberArea->update();
+                    event->accept();
+                }
+                return;
+            }
             emit breakpointToggled(block.blockNumber());
             event->accept();
             return;
@@ -293,6 +333,22 @@ void CodeEditor::paintEvent(QPaintEvent *event)
 {
     QPlainTextEdit::paintEvent(event);
     m_multiCursor.paint(event);
+
+    QPainter painter(viewport());
+    painter.setPen(QColor(128, 128, 128));
+    QTextBlock block = firstVisibleBlock();
+    int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
+    while (block.isValid()) {
+        const int bottom = top + qRound(blockBoundingRect(block).height());
+        if (block.isVisible() && m_folding.isFolded(block.blockNumber())) {
+            const QRectF lineRect = blockBoundingGeometry(block).translated(contentOffset());
+            painter.drawText(lineRect.adjusted(4, 0, -4, 0),
+                             Qt::AlignRight | Qt::AlignVCenter,
+                             QStringLiteral("…"));
+        }
+        block = block.next();
+        top = bottom;
+    }
 }
 
 void CodeEditor::keyPressEvent(QKeyEvent *event)
@@ -481,4 +537,67 @@ void CodeEditor::selectNextOccurrence()
 void CodeEditor::selectAllOccurrences()
 {
     m_occurrences.selectAll();
+}
+
+void CodeEditor::scheduleFoldRefresh()
+{
+    if (m_foldTimer) {
+        m_foldTimer->start();
+    }
+}
+
+void CodeEditor::refreshFolds()
+{
+    m_folding.refresh();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::toggleFold()
+{
+    m_folding.toggleAtCursor();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::fold()
+{
+    m_folding.fold();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::unfold()
+{
+    m_folding.unfold();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::foldAll()
+{
+    m_folding.foldAll();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::unfoldAll()
+{
+    m_folding.unfoldAll();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::unfoldLine(int line)
+{
+    m_folding.unfoldLine(line);
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
 }
