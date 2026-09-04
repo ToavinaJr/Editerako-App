@@ -41,6 +41,10 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_WorkspaceOps` | `EditerakoProject` | rename, duplicate, copy, delete, refus racine |
 | `test_CommandHistory` | `EditerakoTerminal` | historique, navigation |
 | `test_CommandCompleter` | `EditerakoTerminal` | suggestions commande / args / chemin |
+| `test_AnsiSgr` | `EditerakoTerminal` | SGR couleurs, strip, état entre chunks |
+| `test_ShellProfiles` | `EditerakoTerminal` | shell par défaut, arguments cmd / PowerShell / Unix |
+| `test_ProcessTerminalBackend` | `EditerakoTerminal` | echo via `QProcess` |
+| `test_PtyTerminalBackend` | `EditerakoTerminal` | `isAvailable`, echo Unix PTY (ConPTY live skip sous console Windows) |
 | `test_TreeSitterDocument` | `EditerakoSyntax` | parse incrémental (`QT_QPA_PLATFORM=offscreen`) |
 | `test_HighlightQuery` | `EditerakoSyntax` | captures, predicates, queries SCM de tous les langages (`EDITERAKO_QUERY_DIR`) |
 | `test_EditorIo` | `EditerakoEditor` | lecture texte, Unicode, conservation CRLF, `diskMatches` |

@@ -1,6 +1,7 @@
 #ifndef EDITERAKO_TERMINAL_H
 #define EDITERAKO_TERMINAL_H
 
+#include "terminal/AnsiSgr.h"
 #include "terminal/CommandCompleter.h"
 #include "terminal/CommandHistory.h"
 
@@ -9,6 +10,7 @@
 #include <QWidget>
 
 class CommandDiscovery;
+class QResizeEvent;
 class TerminalProcess;
 
 namespace Ui {
@@ -35,6 +37,9 @@ public slots:
 signals:
     void terminalClosed();
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private slots:
     void onCommandEntered(const QString &command);
     void onProcessOutput(const QString &text, bool isError);
@@ -52,9 +57,11 @@ private:
     CommandHistory m_history;
     CommandDiscovery *m_discovery = nullptr;
     CommandCompleter m_completer;
+    AnsiSgrDecoder m_ansi;
     QString workingDirectory;
 
     void setupTerminal();
+    void updatePtySize();
     void displayPrompt();
     void appendOutput(const QString &text, const QColor &color);
     void appendError(const QString &text);

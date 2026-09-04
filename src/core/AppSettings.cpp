@@ -24,6 +24,7 @@ constexpr auto kAutoSave = "files/autoSave";
 constexpr auto kAutoSaveDelayMs = "files/autoSaveDelayMs";
 constexpr auto kExcludedFolders = "workspace/excludedFolders";
 constexpr auto kTerminalShell = "terminal/shell";
+constexpr auto kTerminalUsePty = "terminal/usePty";
 constexpr auto kAiProvider = "ai/provider";
 constexpr auto kAiModel = "ai/model";
 constexpr auto kAiEndpoint = "ai/endpoint";
@@ -291,6 +292,16 @@ QString AppSettings::terminalShell() const
 void AppSettings::setTerminalShell(const QString &shell)
 {
     setValue(kTerminalShell, shell);
+}
+
+bool AppSettings::terminalUsePty() const
+{
+    return value(kTerminalUsePty, false).toBool();
+}
+
+void AppSettings::setTerminalUsePty(bool enabled)
+{
+    setValue(kTerminalUsePty, enabled);
 }
 
 QString AppSettings::aiProvider() const

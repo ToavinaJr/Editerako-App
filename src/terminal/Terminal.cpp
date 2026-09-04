@@ -1,11 +1,14 @@
 #include "terminal/Terminal.h"
 #include "ui_Terminal.h"
 
+#include "terminal/AnsiSgr.h"
 #include "terminal/CommandDiscovery.h"
 #include "terminal/TerminalInput.h"
 #include "terminal/TerminalProcess.h"
 
 #include <QDir>
+#include <QFontMetrics>
+#include <QResizeEvent>
 #include <QScrollBar>
 #include <QTextCursor>
 
@@ -54,6 +57,7 @@ void Terminal::setupTerminal()
     connect(m_process, &TerminalProcess::outputReady, this, &Terminal::onProcessOutput);
     connect(m_process, &TerminalProcess::finished, this, &Terminal::onProcessFinished);
     connect(m_process, &TerminalProcess::failed, this, &Terminal::onProcessFailed);
+    updatePtySize();
 }
 
 void Terminal::displayPrompt()
@@ -129,7 +133,7 @@ void Terminal::onCommandEntered(const QString &command)
             workingDirectory = newDir.absolutePath();
             displayPrompt();
         } else {
-            appendOutput("Directory not found: " + path + "\n", QColor(224, 108, 117));
+            appendOutput(tr("Directory not found: %1\n").arg(path), QColor(224, 108, 117));
             displayPrompt();
         }
         return;
@@ -157,27 +161,35 @@ void Terminal::executeCommand(const QString &command)
         return;
     }
     if (m_process->isRunning()) {
-        appendOutput("A command is already running. Please wait...\n",
+        appendOutput(tr("A command is already running. Please wait...\n"),
                      QColor(229, 192, 123));
         displayPrompt();
         return;
     }
 
     m_process->setWorkingDirectory(workingDirectory);
+    updatePtySize();
     m_process->startCommand(command);
 }
 
 void Terminal::onProcessOutput(const QString &text, bool isError)
 {
-    appendOutput(text, isError ? QColor(224, 108, 117) : QColor(204, 204, 204));
+    if (isError) {
+        appendOutput(text, QColor(224, 108, 117));
+        return;
+    }
+    const QVector<AnsiFragment> fragments = m_ansi.feed(text);
+    for (const AnsiFragment &fragment : fragments) {
+        appendOutput(fragment.text, fragment.color);
+    }
 }
 
 void Terminal::onProcessFinished(int exitCode, bool crashed)
 {
     if (crashed) {
-        appendOutput("\nProcess crashed\n", QColor(224, 108, 117));
+        appendOutput(tr("\nProcess crashed\n"), QColor(224, 108, 117));
     } else if (exitCode != 0) {
-        appendOutput(QString("\nProcess exited with code %1\n").arg(exitCode),
+        appendOutput(tr("\nProcess exited with code %1\n").arg(exitCode),
                      QColor(229, 192, 123));
     }
 
@@ -232,6 +244,7 @@ QString Terminal::getWorkingDirectory() const
 
 void Terminal::clearTerminal()
 {
+    m_ansi.reset();
     ui->terminalOutput->clear();
     displayPrompt();
 }
@@ -271,6 +284,26 @@ void Terminal::updateAutoComplete()
 void Terminal::onTextChangedForAutoComplete()
 {
     updateAutoComplete();
+}
+
+void Terminal::updatePtySize()
+{
+    if (!m_process || !ui || !ui->terminalOutput) {
+        return;
+    }
+    const QFontMetrics metrics(ui->terminalOutput->font());
+    const int cellWidth = qMax(1, metrics.horizontalAdvance(QLatin1Char('M')));
+    const int cellHeight = qMax(1, metrics.lineSpacing());
+    const QSize viewport = ui->terminalOutput->viewport()->size();
+    const int columns = qMax(20, viewport.width() / cellWidth);
+    const int rows = qMax(5, viewport.height() / cellHeight);
+    m_process->setSize(columns, rows);
+}
+
+void Terminal::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    updatePtySize();
 }
 
 void Terminal::appendError(const QString &text)

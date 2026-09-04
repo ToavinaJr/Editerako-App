@@ -40,7 +40,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `core/` | `EditerakoCore` | `AppSettings` (user + overlay workspace), `KeybindingModel` / `KeybindingManager`, `FuzzyMatcher`, `SessionStore`, `SessionController`, `DiskChangePolicy`, `CommandRegistry`, `ThemeManager`, `DropPaths`, `AtomicFile`, `TextFileFormat`, logs |
 | `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument` (path, encoding, EOL, language, version, caret), `EditorManager`, `EditorIo` / `EditorStyle` / `HighlighterSync` / `EditorStatusWidget` ; `features/` |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceFileIndex`, `WorkspacePath` / `WorkspaceOps`, `GitIgnore`, `WorkspaceSearch`, `WorkspaceController` |
-| `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `TerminalPanel` |
+| `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `ITerminalBackend` (`Process` / `Pty`), `AnsiSgr`, `ShellProfiles` |
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
@@ -63,7 +63,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
-**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. `Ctrl+Shift+B` lance le build. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md), [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md).
+**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). Commandes = one-shot via `ProcessTerminalBackend` par défaut ; PTY optionnel (`terminal/usePty`). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. `Ctrl+Shift+B` lance le build. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md), [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md), [adr/0015-terminal-backend-pty.md](adr/0015-terminal-backend-pty.md).
 
 **Git.** `GitCliProvider` détecte le dépôt du workspace, rafraîchit le statut hors UI, et alimente le panneau Source Control (Staged / Changes / Untracked) plus les badges de l’explorateur. Double-clic → diff unified. `file.compareWithDisk` compare le buffer éditeur au fichier disque.
 

@@ -9,6 +9,15 @@ editerako_add_module(EditerakoTerminal
         TerminalProcess.h
         TerminalPanel.cpp
         TerminalPanel.h
+        ITerminalBackend.h
+        ProcessTerminalBackend.cpp
+        ProcessTerminalBackend.h
+        PtyTerminalBackend.cpp
+        PtyTerminalBackend.h
+        AnsiSgr.cpp
+        AnsiSgr.h
+        ShellProfiles.cpp
+        ShellProfiles.h
         CommandHistory.cpp
         CommandHistory.h
         CommandDiscovery.cpp

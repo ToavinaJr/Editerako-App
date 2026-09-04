@@ -3,8 +3,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
-class QProcess;
+class ITerminalBackend;
 
 class TerminalProcess : public QObject
 {
@@ -16,7 +17,9 @@ public:
 
     void setWorkingDirectory(const QString &path);
     [[nodiscard]] QString workingDirectory() const { return m_workingDirectory; }
+    void setSize(int columns, int rows);
     [[nodiscard]] bool isRunning() const;
+    [[nodiscard]] bool isPty() const;
 
     void startCommand(const QString &command);
     void stop();
@@ -27,13 +30,13 @@ signals:
     void failed(const QString &message);
 
 private:
-    void onReadyRead();
-    [[nodiscard]] static QString defaultShell();
+    void bindBackend(ITerminalBackend *backend);
+    void startWithProcess(const QString &program, const QStringList &args);
 
-    QProcess *m_process = nullptr;
+    ITerminalBackend *m_backend = nullptr;
     QString m_workingDirectory;
-    QString m_shell;
-    bool m_stopping = false;
+    int m_columns = 80;
+    int m_rows = 24;
 };
 
 #endif

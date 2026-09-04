@@ -19,6 +19,7 @@
 ## Qt
 
 - `Q_OBJECT` + `tr()` pour tout texte UI.
+- Terminal : commandes one-shot via `ITerminalBackend` (`ProcessTerminalBackend` par défaut, `PtyTerminalBackend` si `terminal/usePty`). Pas d’émulateur VT interactif.
 - Raccourcis et menus via `CommandRegistry` (`file.save`, `edit.find`, `edit.toggleLineComment`, `edit.moveLineUp`, `view.terminal`, `workbench.commandPalette`, `workbench.quickOpen`, `workbench.search`, `workbench.problems`, `workbench.sourceControl`, `workbench.tasks`, `workbench.output`, `workbench.build`, `cmake.configure`, `file.compareWithDisk`, `preferences.open`, `editor.gotoDefinition`, `editor.triggerSuggest`, …). Les séquences viennent de `KeybindingManager`, pas de `setShortcut` dans `MainWindow`. Tab / Shift+Tab d’indent restent dans `CodeEditor::keyPressEvent`. Completion Tab/Enter : `CompletionPopup` (filtre d’événements).
 - `MainWindow` : composition root uniquement. Workspace → `WorkspaceController` ; session → `SessionController` ; reload disque → `diskChangeAction()` ; préférences → `SettingsDialog`.
 - Éditeur : `CodeEditor` délègue à `editor/features/` ; I/O → `readTextFile` / `writeTextFile` (pas `QIODevice::Text`) ; style → `EditorStyle` ; highlighter → `HighlighterSync`. Ne pas « corriger » le swap de lignes (`toPlainText().mid`). Commandes d’édition : [adr/0008-editing-commands.md](adr/0008-editing-commands.md).

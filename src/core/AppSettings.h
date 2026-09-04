@@ -49,6 +49,8 @@ public:
 
     [[nodiscard]] QString terminalShell() const;
     void setTerminalShell(const QString &shell);
+    [[nodiscard]] bool terminalUsePty() const;
+    void setTerminalUsePty(bool enabled);
 
     [[nodiscard]] QString aiProvider() const;
     void setAiProvider(const QString &provider);

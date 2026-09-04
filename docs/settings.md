@@ -29,7 +29,8 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
     "excludedFolders": [".git", "node_modules", "build"]
   },
   "terminal": {
-    "shell": ""
+    "shell": "",
+    "usePty": false
   },
   "ai": {
     "provider": "gemini",

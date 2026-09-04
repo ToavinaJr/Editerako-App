@@ -127,6 +127,26 @@ editerako_add_test(test_CommandCompleter
     LIBS EditerakoTerminal
 )
 
+editerako_add_test(test_AnsiSgr
+    SOURCES AnsiSgrTest.cpp
+    LIBS EditerakoTerminal
+)
+
+editerako_add_test(test_ShellProfiles
+    SOURCES ShellProfilesTest.cpp
+    LIBS EditerakoTerminal
+)
+
+editerako_add_test(test_ProcessTerminalBackend
+    SOURCES ProcessTerminalBackendTest.cpp
+    LIBS EditerakoTerminal
+)
+
+editerako_add_test(test_PtyTerminalBackend
+    SOURCES PtyTerminalBackendTest.cpp
+    LIBS EditerakoTerminal
+)
+
 editerako_add_test(test_TreeSitterDocument
     SOURCES TreeSitterDocumentTest.cpp
     LIBS EditerakoSyntax

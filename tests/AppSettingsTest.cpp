@@ -34,12 +34,14 @@ void AppSettingsTest::userSettingsRoundtrip()
     settings.setEditorInsertSpaces(true);
     settings.setAutoSave(true);
     settings.setAiModel(QStringLiteral("custom-model"));
+    settings.setTerminalUsePty(true);
 
     AppSettings loaded(store);
     QCOMPARE(loaded.editorTabSize(), 8);
     QVERIFY(loaded.editorInsertSpaces());
     QVERIFY(loaded.autoSave());
     QCOMPARE(loaded.aiModel(), QStringLiteral("custom-model"));
+    QVERIFY(loaded.terminalUsePty());
 }
 
 void AppSettingsTest::workspaceOverlayWins()
@@ -51,10 +53,12 @@ void AppSettingsTest::workspaceOverlayWins()
     user.setEditorTabSize(8);
 
     QJsonObject editor{{QStringLiteral("tabSize"), 2}};
-    QJsonObject overlay{{QStringLiteral("editor"), editor}};
+    QJsonObject terminal{{QStringLiteral("usePty"), true}};
+    QJsonObject overlay{{QStringLiteral("editor"), editor}, {QStringLiteral("terminal"), terminal}};
     AppSettings layered(store, overlay);
     QCOMPARE(layered.editorTabSize(), 2);
     QCOMPARE(layered.editorFontSize(), 13);
+    QVERIFY(layered.terminalUsePty());
 }
 
 void AppSettingsTest::isolatedSettingsIgnoreUserProfile()

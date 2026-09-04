@@ -2,73 +2,25 @@
 
 #include "core/AppSettings.h"
 #include "core/Logging.h"
+#include "terminal/ITerminalBackend.h"
+#include "terminal/ProcessTerminalBackend.h"
+#include "terminal/PtyTerminalBackend.h"
+#include "terminal/ShellProfiles.h"
 
 #include <QDir>
-#include <QFileInfo>
-#include <QProcess>
+#include <QStringList>
 
 TerminalProcess::TerminalProcess(QObject *parent)
     : QObject(parent)
-    , m_process(new QProcess(this))
     , m_workingDirectory(QDir::currentPath())
-    , m_shell(defaultShell())
+    , m_columns(80)
+    , m_rows(24)
 {
-    connect(m_process, &QProcess::readyReadStandardOutput, this, &TerminalProcess::onReadyRead);
-    connect(m_process, &QProcess::readyReadStandardError, this, &TerminalProcess::onReadyRead);
-    connect(m_process, &QProcess::finished, this,
-            [this](int exitCode, QProcess::ExitStatus status) {
-                if (m_stopping) {
-                    return;
-                }
-                emit finished(exitCode, status == QProcess::CrashExit);
-            });
-    connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
-        if (m_stopping) {
-            return;
-        }
-        if (error == QProcess::FailedToStart) {
-            emit failed(tr("Failed to start command"));
-            return;
-        }
-        if (error == QProcess::Crashed) {
-            return;
-        }
-
-        QString message;
-        switch (error) {
-        case QProcess::FailedToStart:
-        case QProcess::Crashed:
-            return;
-        case QProcess::Timedout:
-            message = tr("Process timed out");
-            break;
-        case QProcess::WriteError:
-            message = tr("Write error");
-            break;
-        case QProcess::ReadError:
-            message = tr("Read error");
-            break;
-        default:
-            message = tr("Unknown process error");
-            break;
-        }
-        emit failed(message);
-    });
 }
 
 TerminalProcess::~TerminalProcess()
 {
     stop();
-}
-
-QString TerminalProcess::defaultShell()
-{
-#ifdef Q_OS_WIN
-    return QStringLiteral("cmd.exe");
-#else
-    const QString shell = qEnvironmentVariable("SHELL");
-    return shell.isEmpty() ? QStringLiteral("/bin/bash") : shell;
-#endif
 }
 
 void TerminalProcess::setWorkingDirectory(const QString &path)
@@ -79,77 +31,87 @@ void TerminalProcess::setWorkingDirectory(const QString &path)
     }
 }
 
+void TerminalProcess::setSize(int columns, int rows)
+{
+    if (columns > 0) {
+        m_columns = columns;
+    }
+    if (rows > 0) {
+        m_rows = rows;
+    }
+    if (m_backend) {
+        m_backend->resize(m_columns, m_rows);
+    }
+}
+
 bool TerminalProcess::isRunning() const
 {
-    return m_process && m_process->state() != QProcess::NotRunning;
+    return m_backend && m_backend->isRunning();
+}
+
+bool TerminalProcess::isPty() const
+{
+    return m_backend && m_backend->isPty();
+}
+
+void TerminalProcess::bindBackend(ITerminalBackend *backend)
+{
+    m_backend = backend;
+    connect(backend, &ITerminalBackend::dataReceived, this,
+            [this](const QByteArray &data, bool isError) {
+                emit outputReady(QString::fromLocal8Bit(data), isError);
+            });
+    connect(backend, &ITerminalBackend::finished, this, &TerminalProcess::finished);
+    connect(backend, &ITerminalBackend::failed, this, &TerminalProcess::failed);
+}
+
+void TerminalProcess::startWithProcess(const QString &program, const QStringList &args)
+{
+    if (m_backend) {
+        m_backend->deleteLater();
+        m_backend = nullptr;
+    }
+    auto *backend = new ProcessTerminalBackend(this);
+    bindBackend(backend);
+    backend->start(program, args, m_workingDirectory, m_columns, m_rows);
 }
 
 void TerminalProcess::startCommand(const QString &command)
 {
-    if (m_stopping || isRunning() || command.trimmed().isEmpty()) {
+    if (isRunning() || command.trimmed().isEmpty()) {
         return;
     }
 
-    m_process->setWorkingDirectory(m_workingDirectory);
-
     QString shell = AppSettings().terminalShell();
     if (shell.isEmpty()) {
-        shell = defaultShell();
+        shell = defaultShellPath();
+    }
+    const QStringList args = shellCommandArguments(shell, command);
+
+    const bool wantPty = AppSettings().terminalUsePty() && PtyTerminalBackend::isAvailable();
+    if (wantPty) {
+        if (m_backend) {
+            m_backend->deleteLater();
+            m_backend = nullptr;
+        }
+        auto *pty = new PtyTerminalBackend(this);
+        qCInfo(lcTerminal) << "Starting" << command << "via PTY" << shell << "in"
+                           << m_workingDirectory;
+        pty->start(shell, args, m_workingDirectory, m_columns, m_rows);
+        if (pty->isRunning()) {
+            bindBackend(pty);
+            return;
+        }
+        pty->deleteLater();
     }
 
-#ifdef Q_OS_WIN
-    QStringList args;
-    const QString name = QFileInfo(shell).fileName().toLower();
-    if (name == QLatin1String("powershell.exe") || name == QLatin1String("pwsh.exe")) {
-        args = {QStringLiteral("-NoProfile"), QStringLiteral("-Command"), command};
-    } else {
-        args = {QStringLiteral("/c"), command};
-    }
     qCInfo(lcTerminal) << "Starting" << command << "via" << shell << "in" << m_workingDirectory;
-    m_process->start(shell, args);
-#else
-    qCInfo(lcTerminal) << "Starting" << command << "via" << shell << "in" << m_workingDirectory;
-    m_process->start(shell, {QStringLiteral("-c"), command});
-#endif
+    startWithProcess(shell, args);
 }
 
 void TerminalProcess::stop()
 {
-    if (m_stopping) {
-        return;
-    }
-    m_stopping = true;
-
-    if (!m_process) {
-        return;
-    }
-
-    blockSignals(true);
-    m_process->disconnect(this);
-
-    if (m_process->state() == QProcess::NotRunning) {
-        return;
-    }
-
-    qCInfo(lcTerminal) << "Stopping process pid" << m_process->processId();
-    m_process->kill();
-    if (!m_process->waitForFinished(1000)) {
-        m_process->close();
-        m_process->waitForFinished(200);
-    }
-}
-
-void TerminalProcess::onReadyRead()
-{
-    if (m_stopping || !m_process) {
-        return;
-    }
-    const QByteArray output = m_process->readAllStandardOutput();
-    const QByteArray error = m_process->readAllStandardError();
-    if (!output.isEmpty()) {
-        emit outputReady(QString::fromLocal8Bit(output), false);
-    }
-    if (!error.isEmpty()) {
-        emit outputReady(QString::fromLocal8Bit(error), true);
+    if (m_backend) {
+        m_backend->stop();
     }
 }

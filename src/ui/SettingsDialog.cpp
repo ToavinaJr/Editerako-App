@@ -2,11 +2,14 @@
 
 #include "core/AppSettings.h"
 #include "core/ThemeManager.h"
+#include "terminal/PtyTerminalBackend.h"
+#include "terminal/ShellProfiles.h"
 #include "ui/KeybindingEditor.h"
 
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDir>
 #include <QFont>
 #include <QFontComboBox>
 #include <QFormLayout>
@@ -117,9 +120,20 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
 
     {
         auto *form = new QFormLayout;
-        m_shell = new QLineEdit(this);
-        m_shell->setPlaceholderText(tr("Leave empty for the platform default"));
+        m_shell = new QComboBox(this);
+        m_shell->setEditable(true);
+        m_shell->setInsertPolicy(QComboBox::NoInsert);
+        m_shell->lineEdit()->setPlaceholderText(tr("Leave empty for the platform default"));
+        for (const TerminalProfile &profile : detectShellProfiles()) {
+            m_shell->addItem(
+                QStringLiteral("%1 — %2").arg(profile.name,
+                                              QDir::toNativeSeparators(profile.shell)),
+                profile.shell);
+        }
+        m_usePty = new QCheckBox(tr("Use PTY (experimental, for ANSI colors)"), this);
+        m_usePty->setEnabled(PtyTerminalBackend::isAvailable());
         form->addRow(tr("Shell"), m_shell);
+        form->addRow(m_usePty);
         addPage(tr("Terminal"), wrapForm(form));
     }
 
@@ -185,7 +199,15 @@ void SettingsDialog::load()
     m_warnMb->setValue(bytesToMb(settings.largeFileWarnBytes()));
     m_syntaxMb->setValue(bytesToMb(settings.largeFileDisableSyntaxBytes()));
     m_excluded->setPlainText(settings.excludedFolders().join(QLatin1Char('\n')));
-    m_shell->setText(settings.terminalShell());
+    const QString shell = settings.terminalShell();
+    const int shellIndex = m_shell->findData(shell);
+    if (shellIndex >= 0) {
+        m_shell->setCurrentIndex(shellIndex);
+    } else {
+        m_shell->setCurrentIndex(-1);
+        m_shell->setEditText(shell);
+    }
+    m_usePty->setChecked(settings.terminalUsePty());
     m_aiProvider->setCurrentText(settings.aiProvider());
     m_aiModel->setText(settings.aiModel());
     m_aiEndpoint->setText(settings.aiEndpoint());
@@ -215,7 +237,15 @@ void SettingsDialog::save()
         }
     }
     settings.setExcludedFolders(folders);
-    settings.setTerminalShell(m_shell->text().trimmed());
+    const int shellIndex = m_shell->currentIndex();
+    QString shell;
+    if (shellIndex >= 0 && m_shell->currentText() == m_shell->itemText(shellIndex)) {
+        shell = m_shell->itemData(shellIndex).toString();
+    } else {
+        shell = m_shell->currentText().trimmed();
+    }
+    settings.setTerminalShell(shell);
+    settings.setTerminalUsePty(m_usePty->isChecked());
     settings.setAiProvider(m_aiProvider->currentText());
     settings.setAiModel(m_aiModel->text().trimmed());
     settings.setAiEndpoint(m_aiEndpoint->text().trimmed());

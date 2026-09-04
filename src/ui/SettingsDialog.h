@@ -40,7 +40,8 @@ private:
     QSpinBox *m_warnMb = nullptr;
     QSpinBox *m_syntaxMb = nullptr;
     QPlainTextEdit *m_excluded = nullptr;
-    QLineEdit *m_shell = nullptr;
+    QComboBox *m_shell = nullptr;
+    QCheckBox *m_usePty = nullptr;
     QComboBox *m_aiProvider = nullptr;
     QLineEdit *m_aiModel = nullptr;
     QLineEdit *m_aiEndpoint = nullptr;
