@@ -44,7 +44,7 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
-          modules: qtpdf qtsvg qttools
+          modules: qtpdf qtsvg
           cache: true
 
       - name: Configure
@@ -93,7 +93,7 @@ jobs:
           host: windows
           target: desktop
           arch: win64_mingw
-          modules: qtpdf qtsvg qttools
+          modules: qtpdf qtsvg
           tools: tools_mingw1310
           cache: true
 
@@ -139,7 +139,7 @@ jobs:
           pip install --upgrade pip
           pip install aqtinstall
           aqt install-qt mac desktop ${QT_VERSION} clang_64
-          aqt install-qt mac desktop ${QT_VERSION} clang_64 -m qtpdf qtsvg qttools
+          aqt install-qt mac desktop ${QT_VERSION} clang_64 -m qtpdf qtsvg
           echo "QT_DIR=$(pwd)/${QT_VERSION}/macos" >> "$GITHUB_ENV"
 
       - name: Install dependencies
@@ -205,7 +205,7 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
-          modules: qtpdf qtsvg qttools
+          modules: qtpdf qtsvg
           cache: true
 
       - name: Configure
