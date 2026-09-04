@@ -48,7 +48,7 @@ PR / push master
 
 Hors pull request : ZIP Windows, TGZ/AppImage Linux, DMG macOS en artefacts.
 
-Qt CI : **6.9.2** + modules extra `qtpdf` et `qtsvg`. Linguist (`lupdate` / `lrelease`) est dans l’archive de base `qttools`, pas un `-m`. Linux : arch `linux_gcc_64` (plus `gcc_64` depuis Qt 6.7). Tests : `QT_QPA_PLATFORM=offscreen`.
+Qt CI : **6.9.2** + module extra `qtpdf`. SVG et Linguist (`qtsvg`, `qttools`) sont des archives de base aqt : ne pas les passer en `-m` (sinon aqt exit 1). Linux : arch `linux_gcc_64` (plus `gcc_64` depuis Qt 6.7). Tests : `QT_QPA_PLATFORM=offscreen`.
 
 ## clang-format / clang-tidy
 
