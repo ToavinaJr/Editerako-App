@@ -5,7 +5,9 @@
 #include "project/WorkspacePath.h"
 
 #include <QApplication>
+#include <QBrush>
 #include <QClipboard>
+#include <QColor>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
@@ -25,6 +27,21 @@ namespace {
 constexpr int kPathRole = Qt::UserRole;
 constexpr int kDirRole = Qt::UserRole + 1;
 constexpr int kLoadedRole = Qt::UserRole + 2;
+constexpr int kNameRole = Qt::UserRole + 3;
+
+QColor badgeColor(const QString &badge)
+{
+    if (badge == QLatin1String("M") || badge == QLatin1String("R") || badge == QLatin1String("C")) {
+        return QColor(QStringLiteral("#d29922"));
+    }
+    if (badge == QLatin1String("A") || badge == QLatin1String("U")) {
+        return QColor(QStringLiteral("#3fb950"));
+    }
+    if (badge == QLatin1String("D") || badge == QLatin1String("!")) {
+        return QColor(QStringLiteral("#f85149"));
+    }
+    return QColor(QStringLiteral("#8b949e"));
+}
 
 QString iconForFile(const QString &fileName)
 {
@@ -106,14 +123,14 @@ void FileExplorer::populateChildren(QTreeWidgetItem *parent)
         auto *item = new QTreeWidgetItem(parent);
         item->setData(0, kPathRole, entry.absolutePath);
         item->setData(0, kDirRole, entry.isDirectory);
+        item->setData(0, kNameRole, entry.name);
         if (entry.isDirectory) {
-            item->setText(0, QStringLiteral("📁 %1").arg(entry.name));
             item->setData(0, kLoadedRole, false);
             item->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
         } else {
-            item->setText(0, QStringLiteral("%1 %2").arg(iconForFile(entry.name), entry.name));
             item->setData(0, kLoadedRole, true);
         }
+        applyBadge(item);
     }
 }
 
@@ -131,9 +148,10 @@ void FileExplorer::reload()
 
     const QString root = m_workspace->rootPath();
     auto *rootItem = new QTreeWidgetItem(m_tree);
-    rootItem->setText(0, QStringLiteral("📁 %1").arg(QDir(root).dirName()));
     rootItem->setData(0, kPathRole, root);
     rootItem->setData(0, kDirRole, true);
+    rootItem->setData(0, kNameRole, QDir(root).dirName());
+    applyBadge(rootItem);
 
     populateChildren(rootItem);
     rootItem->setData(0, kLoadedRole, true);
@@ -316,6 +334,50 @@ QTreeWidgetItem *FileExplorer::findItemByPath(const QString &path) const
 QString FileExplorer::itemPath(const QTreeWidgetItem *item) const
 {
     return item ? item->data(0, kPathRole).toString() : QString();
+}
+
+void FileExplorer::setPathBadges(const QHash<QString, QString> &badges)
+{
+    m_badges.clear();
+    for (auto it = badges.cbegin(); it != badges.cend(); ++it) {
+        m_badges.insert(QDir::cleanPath(it.key()), it.value());
+    }
+    if (!m_tree) {
+        return;
+    }
+    for (int i = 0; i < m_tree->topLevelItemCount(); ++i) {
+        applyBadgesRecursive(m_tree->topLevelItem(i));
+    }
+}
+
+void FileExplorer::applyBadge(QTreeWidgetItem *item) const
+{
+    if (!item) {
+        return;
+    }
+    const QString name = item->data(0, kNameRole).toString();
+    const bool isDir = item->data(0, kDirRole).toBool();
+    const QString path = QDir::cleanPath(item->data(0, kPathRole).toString());
+    const QString badge = m_badges.value(path);
+    const QString icon = isDir ? QStringLiteral("📁") : iconForFile(name);
+    if (badge.isEmpty()) {
+        item->setText(0, QStringLiteral("%1 %2").arg(icon, name));
+        item->setForeground(0, QBrush());
+        return;
+    }
+    item->setText(0, QStringLiteral("%1 %2  %3").arg(icon, name, badge));
+    item->setForeground(0, QBrush(badgeColor(badge)));
+}
+
+void FileExplorer::applyBadgesRecursive(QTreeWidgetItem *item) const
+{
+    applyBadge(item);
+    if (!item) {
+        return;
+    }
+    for (int i = 0; i < item->childCount(); ++i) {
+        applyBadgesRecursive(item->child(i));
+    }
 }
 
 bool FileExplorer::runOpThenReload(bool ok, const QString &reveal)

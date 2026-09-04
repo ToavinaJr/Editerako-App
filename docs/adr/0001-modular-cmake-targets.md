@@ -22,6 +22,7 @@ Introduire des bibliothèques **statiques** internes, une par module, créées v
 | `EditerakoViewers` | `src/viewers/` | `EditerakoCore`, `EditerakoEditor`, `Qt6::Widgets`, `Qt6::PdfWidgets` |
 | `EditerakoAI` | `src/ai/` | `EditerakoCore`, `Qt6::Widgets`, `Qt6::Network`, `Qt6::Sql` |
 | `EditerakoLsp` | `src/lsp/` | `EditerakoCore`, `Qt6::Core` |
+| `EditerakoScm` | `src/scm/` | `EditerakoCore`, `Qt6::Core`, `Qt6::Concurrent` |
 | `Editerako` | `src/app/`, `src/ui/`, `main.cpp` | toutes les libs ci-dessus (PRIVATE) |
 
 `tree_sitter` reste une lib vendor isolée (`cmake/TreeSitter.cmake`).

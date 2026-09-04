@@ -58,6 +58,9 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_CompletionModel` | `EditerakoEditor` | filtre, sortText, insert / textEdit (`offscreen`) |
 | `test_DiagnosticMarkup` | `EditerakoEditor` | underline range, clamp position, gutter (`offscreen`) |
 | `test_ProblemModel` | `EditerakoEditor` | store par fichier, filtres Errors/Warnings, counts |
+| `test_GitParsers` | `EditerakoScm` | porcelain `-z`, rename, MM, chemins absolus |
+| `test_TextDiff` | `EditerakoScm` | LCS, unified, EOL |
+| `test_GitCliProvider` | `EditerakoScm` | non-repo, stage (skip si `git` absent) |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

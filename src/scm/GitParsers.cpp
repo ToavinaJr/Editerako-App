@@ -1,5 +1,8 @@
 #include "scm/GitParsers.h"
 
+#include <QDir>
+#include <QFileInfo>
+
 namespace {
 
 ScmFileState stateFor(char code)
@@ -67,6 +70,46 @@ ScmStatus GitParsers::parseStatus(const QByteArray &output)
 
 QString GitParsers::parseRepositoryRoot(const QByteArray &output)
 {
-    return QString::fromUtf8(output).trimmed();
+    return QDir::fromNativeSeparators(QString::fromUtf8(output).trimmed());
+}
+
+void GitParsers::makePathsAbsolute(ScmStatus &status, const QString &repositoryRoot)
+{
+    status.repositoryRoot = QDir::cleanPath(repositoryRoot);
+    if (status.repositoryRoot.isEmpty()) {
+        return;
+    }
+    const QDir root(status.repositoryRoot);
+    for (ScmChange &change : status.changes) {
+        if (!change.path.isEmpty() && !QFileInfo(change.path).isAbsolute()) {
+            change.path = QDir::cleanPath(root.filePath(change.path));
+        }
+        if (!change.oldPath.isEmpty() && !QFileInfo(change.oldPath).isAbsolute()) {
+            change.oldPath = QDir::cleanPath(root.filePath(change.oldPath));
+        }
+    }
+}
+
+QString GitParsers::badgeFor(ScmFileState state)
+{
+    switch (state) {
+    case ScmFileState::Modified:
+        return QStringLiteral("M");
+    case ScmFileState::Added:
+        return QStringLiteral("A");
+    case ScmFileState::Deleted:
+        return QStringLiteral("D");
+    case ScmFileState::Renamed:
+        return QStringLiteral("R");
+    case ScmFileState::Copied:
+        return QStringLiteral("C");
+    case ScmFileState::Untracked:
+        return QStringLiteral("U");
+    case ScmFileState::Conflicted:
+        return QStringLiteral("!");
+    case ScmFileState::Unknown:
+        return QStringLiteral("?");
+    }
+    return QStringLiteral("?");
 }
 

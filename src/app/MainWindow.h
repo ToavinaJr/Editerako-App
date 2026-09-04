@@ -74,6 +74,7 @@ private slots:
     void toggleTerminal();
     void toggleProblems();
     void toggleSourceControl();
+    void compareWithDisk();
     void openPreferences();
     void openCommandPalette();
     void openQuickOpen();

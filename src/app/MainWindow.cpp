@@ -15,8 +15,11 @@
 #include "editor/GoToLineDialog.h"
 #include "lsp/LspServerManager.h"
 #include "app/LspSession.h"
+#include "editor/EditorIo.h"
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
+#include "scm/GitParsers.h"
+#include "scm/TextDiff.h"
 #include "terminal/TerminalPanel.h"
 #include "ui/BottomPanel.h"
 #include "ui/CommandPaletteDialog.h"
@@ -36,8 +39,10 @@
 #include <QCloseEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QHash>
 #include <QKeySequence>
 #include <QMenu>
 #include <QMenuBar>
@@ -242,6 +247,10 @@ void MainWindow::connectActions()
         QStringLiteral("workbench.sourceControl"), tr("Toggle Source Control"));
     connect(toggleSourceControl, &QAction::triggered, this, &MainWindow::toggleSourceControl);
 
+    QAction *compareWithDisk = m_commands->create(
+        QStringLiteral("file.compareWithDisk"), tr("Compare with Disk"));
+    connect(compareWithDisk, &QAction::triggered, this, &MainWindow::compareWithDisk);
+
     QAction *commandPalette = m_commands->create(
         QStringLiteral("workbench.commandPalette"),
         tr("Command Palette"));
@@ -307,6 +316,7 @@ void MainWindow::connectActions()
     viewMenu->addAction(toggleProblems);
     viewMenu->addAction(toggleSourceControl);
     viewMenu->addAction(toggleTerminal);
+    viewMenu->addAction(compareWithDisk);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
 
@@ -392,6 +402,9 @@ void MainWindow::updateCommandStates()
     for (const QString &id : lspIds) {
         m_commands->setEnabled(id, hasEditor);
     }
+    const bool hasSavedEditor = hasEditor && m_editorManager
+        && !m_editorManager->currentFilePath().isEmpty();
+    m_commands->setEnabled(QStringLiteral("file.compareWithDisk"), hasSavedEditor);
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
     m_commands->setEnabled(QStringLiteral("file.closeAll"), tabCount > 0);
@@ -426,6 +439,9 @@ void MainWindow::setupCodeEditor()
     connect(m_editorManager, &EditorManager::fileSaved, this, [this](const QString &path) {
         if (m_workspaceController) {
             m_workspaceController->refreshIfContains(path);
+        }
+        if (m_scm) {
+            m_scm->refresh();
         }
         if (statusBar()) {
             statusBar()->showMessage(tr("File saved successfully"), 2000);
@@ -509,6 +525,26 @@ void MainWindow::setupBottomPanel()
     if (m_editorStatus) {
         connect(m_editorStatus, &EditorStatusWidget::problemsActivated, this,
                 &MainWindow::toggleProblems);
+    }
+    if (m_scm) {
+        connect(m_scm, &GitCliProvider::statusChanged, this, [this](const ScmStatus &status) {
+            QHash<QString, QString> badges;
+            for (const ScmChange &change : status.changes) {
+                badges.insert(QDir::cleanPath(change.path), GitParsers::badgeFor(change.state));
+            }
+            if (m_workspaceController) {
+                m_workspaceController->explorer()->setPathBadges(badges);
+            }
+            if (m_editorStatus) {
+                if (!status.isRepository) {
+                    m_editorStatus->setGitBranch({});
+                } else if (status.branch.isEmpty()) {
+                    m_editorStatus->setGitBranch(tr("Git: detached"));
+                } else {
+                    m_editorStatus->setGitBranch(tr("Git: %1").arg(status.branch));
+                }
+            }
+        });
     }
 }
 
@@ -1025,8 +1061,33 @@ void MainWindow::syncFileWatches()
     m_workspaceController->syncWatchedFiles(openFiles);
 }
 
+void MainWindow::compareWithDisk()
+{
+    CodeEditor *editor = currentEditor();
+    if (!editor || !m_editorManager || !m_bottomPanel) {
+        return;
+    }
+    const QString path = m_editorManager->currentFilePath();
+    if (path.isEmpty()) {
+        QMessageBox::information(this, tr("Compare with Disk"),
+                                 tr("Save the file before comparing it with disk."));
+        return;
+    }
+    const TextLoadResult loaded = readTextFile(path);
+    if (!loaded.ok) {
+        QMessageBox::warning(this, tr("Compare with Disk"), loaded.error);
+        return;
+    }
+    m_bottomPanel->showDiff(tr("%1 (disk ↔ editor)").arg(QFileInfo(path).fileName()),
+                            TextDiff::unified(loaded.text, editor->toPlainText(),
+                                              QStringLiteral("disk"), QStringLiteral("editor")));
+}
+
 void MainWindow::onFileChangedOnDisk(const QString &path)
 {
+    if (m_scm) {
+        m_scm->refresh();
+    }
     if (!m_editorManager) {
         return;
     }

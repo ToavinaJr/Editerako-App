@@ -4,14 +4,15 @@
 #include "scm/ISourceControlProvider.h"
 
 #include <QQueue>
-
-class QProcess;
+#include <QStringList>
 
 class GitCliProvider final : public ISourceControlProvider
 {
     Q_OBJECT
 public:
     explicit GitCliProvider(QObject *parent = nullptr);
+    ~GitCliProvider() override;
+
     void setWorkspace(const QString &path) override;
     [[nodiscard]] QString workspace() const override { return m_workspace; }
     void refresh() override;
@@ -21,17 +22,33 @@ public:
     void commit(const QString &message) override;
     void requestDiff(const QString &path, bool staged) override;
 
+    [[nodiscard]] ScmStatus lastStatus() const { return m_status; }
+
 private:
-    struct Command { QStringList arguments; QString diffPath; bool refreshAfter = false; };
+    enum class Kind {
+        Refresh,
+        Mutate,
+        Diff,
+    };
+
+    struct Command {
+        Kind kind = Kind::Refresh;
+        QStringList arguments;
+        QString diffPath;
+        bool refreshAfter = false;
+        bool untrackedDiff = false;
+    };
+
     void enqueue(Command command);
     void startNext();
-    void handleFinished(int exitCode);
+    [[nodiscard]] bool isUntracked(const QString &path) const;
 
     QString m_workspace;
-    QProcess *m_process = nullptr;
+    ScmStatus m_status;
     QQueue<Command> m_queue;
     Command m_current;
+    quint64 m_generation = 0;
+    bool m_running = false;
 };
 
 #endif
-

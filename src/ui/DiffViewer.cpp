@@ -1,5 +1,7 @@
 #include "ui/DiffViewer.h"
 
+#include "scm/TextDiff.h"
+
 #include <QFontDatabase>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -41,5 +43,11 @@ void DiffViewer::setDiff(const QString &path, const QString &text)
         cursor.mergeCharFormat(format);
     }
     m_text->moveCursor(QTextCursor::Start);
+}
+
+void DiffViewer::setTexts(const QString &title, const QString &left, const QString &right,
+                          const QString &leftName, const QString &rightName)
+{
+    setDiff(title, TextDiff::unified(left, right, leftName, rightName));
 }
 

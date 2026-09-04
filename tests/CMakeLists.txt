@@ -248,3 +248,13 @@ editerako_add_test(test_GitParsers
     SOURCES GitParsersTest.cpp
     LIBS EditerakoScm
 )
+
+editerako_add_test(test_TextDiff
+    SOURCES TextDiffTest.cpp
+    LIBS EditerakoScm
+)
+
+editerako_add_test(test_GitCliProvider
+    SOURCES GitCliProviderTest.cpp
+    LIBS EditerakoScm
+)

@@ -1,102 +1,256 @@
 #include "scm/GitCliProvider.h"
 
+#include "core/Logging.h"
 #include "scm/GitParsers.h"
+#include "scm/GitProcess.h"
+#include "scm/TextDiff.h"
 
 #include <QDir>
-#include <QProcess>
+#include <QFile>
+#include <QFileInfo>
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrent>
+
+namespace {
+
+QStringList statusArgs()
+{
+    return {QStringLiteral("status"), QStringLiteral("--porcelain=v1"), QStringLiteral("--branch"),
+            QStringLiteral("-z")};
+}
+
+struct GitJobResult {
+    GitRunResult primary;
+    QString repositoryRoot;
+    QString synthesizedDiff;
+};
+
+GitJobResult runJob(const QString &cwd, const QStringList &args, bool refresh, bool untrackedDiff,
+                    const QString &diffPath)
+{
+    GitJobResult job;
+    if (refresh) {
+        job.primary = GitProcess::run(cwd, args);
+        if (job.primary.ok()) {
+            const GitRunResult root =
+                GitProcess::run(cwd, {QStringLiteral("rev-parse"), QStringLiteral("--show-toplevel")});
+            if (root.ok()) {
+                job.repositoryRoot = GitParsers::parseRepositoryRoot(root.standardOutput);
+            }
+        }
+        return job;
+    }
+    if (untrackedDiff) {
+        QFile file(diffPath);
+        if (file.open(QIODevice::ReadOnly)) {
+            const QString text = QString::fromUtf8(file.readAll());
+            job.synthesizedDiff =
+                TextDiff::unified({}, text, QStringLiteral("/dev/null"), QFileInfo(diffPath).fileName());
+            job.primary.exitCode = 0;
+        } else {
+            job.primary = GitProcess::run(cwd, args);
+        }
+        return job;
+    }
+    job.primary = GitProcess::run(cwd, args);
+    return job;
+}
+
+} // namespace
 
 GitCliProvider::GitCliProvider(QObject *parent)
-    : ISourceControlProvider(parent), m_process(new QProcess(this))
+    : ISourceControlProvider(parent)
 {
-    connect(m_process, &QProcess::finished, this,
-            [this](int code, QProcess::ExitStatus) { handleFinished(code); });
-    connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
-        if (error != QProcess::FailedToStart) return;
-        emit operationFailed({tr("Git could not be started. Verify that it is installed and on PATH."), -1});
-        m_queue.clear();
-        emit busyChanged(false);
-    });
+    qRegisterMetaType<ScmStatus>();
+    qRegisterMetaType<ScmError>();
+}
+
+GitCliProvider::~GitCliProvider()
+{
+    ++m_generation;
+    m_queue.clear();
 }
 
 void GitCliProvider::setWorkspace(const QString &path)
 {
-    m_workspace = QDir::cleanPath(path);
+    ++m_generation;
     m_queue.clear();
-    if (!m_workspace.isEmpty()) refresh();
+    m_workspace = QDir::cleanPath(path);
+    m_status = {};
+    if (m_workspace.isEmpty()) {
+        emit statusChanged(m_status);
+        emit busyChanged(false);
+        return;
+    }
+    refresh();
 }
 
 void GitCliProvider::refresh()
 {
-    enqueue({{QStringLiteral("status"), QStringLiteral("--porcelain=v1"),
-              QStringLiteral("--branch"), QStringLiteral("-z")}, {}, false});
+    enqueue({Kind::Refresh, statusArgs(), {}, false, false});
 }
 
 void GitCliProvider::stage(const QStringList &paths)
 {
-    if (paths.isEmpty()) return;
-    enqueue({QStringList{QStringLiteral("add"), QStringLiteral("--")} + paths, {}, true});
+    if (paths.isEmpty()) {
+        return;
+    }
+    enqueue({Kind::Mutate, QStringList{QStringLiteral("add"), QStringLiteral("--")} + paths, {}, true, false});
 }
 
 void GitCliProvider::unstage(const QStringList &paths)
 {
-    if (paths.isEmpty()) return;
-    enqueue({QStringList{QStringLiteral("restore"), QStringLiteral("--staged"), QStringLiteral("--")} + paths, {}, true});
+    if (paths.isEmpty()) {
+        return;
+    }
+    enqueue({Kind::Mutate,
+             QStringList{QStringLiteral("restore"), QStringLiteral("--staged"), QStringLiteral("--")} + paths,
+             {},
+             true,
+             false});
 }
 
 void GitCliProvider::discard(const QStringList &paths)
 {
-    if (paths.isEmpty()) return;
-    enqueue({QStringList{QStringLiteral("restore"), QStringLiteral("--worktree"), QStringLiteral("--")} + paths, {}, true});
+    QStringList restorePaths;
+    QStringList cleanPaths;
+    for (const QString &path : paths) {
+        if (path.isEmpty()) {
+            continue;
+        }
+        if (isUntracked(path)) {
+            cleanPaths.append(path);
+        } else {
+            restorePaths.append(path);
+        }
+    }
+    if (!restorePaths.isEmpty()) {
+        enqueue({Kind::Mutate,
+                 QStringList{QStringLiteral("restore"), QStringLiteral("--worktree"), QStringLiteral("--")}
+                     + restorePaths,
+                 {},
+                 true,
+                 false});
+    }
+    if (!cleanPaths.isEmpty()) {
+        enqueue({Kind::Mutate,
+                 QStringList{QStringLiteral("clean"), QStringLiteral("-f"), QStringLiteral("--")} + cleanPaths,
+                 {},
+                 true,
+                 false});
+    }
 }
 
 void GitCliProvider::commit(const QString &message)
 {
-    if (!message.trimmed().isEmpty()) enqueue({{QStringLiteral("commit"), QStringLiteral("-m"), message}, {}, true});
+    const QString trimmed = message.trimmed();
+    if (trimmed.isEmpty()) {
+        return;
+    }
+    enqueue({Kind::Mutate, {QStringLiteral("commit"), QStringLiteral("-m"), trimmed}, {}, true, false});
 }
 
 void GitCliProvider::requestDiff(const QString &path, bool staged)
 {
+    if (path.isEmpty()) {
+        return;
+    }
     QStringList args{QStringLiteral("diff"), QStringLiteral("--no-color")};
-    if (staged) args << QStringLiteral("--cached");
+    if (staged) {
+        args << QStringLiteral("--cached");
+    }
     args << QStringLiteral("--") << path;
-    enqueue({args, path, false});
+    enqueue({Kind::Diff, args, path, false, !staged && isUntracked(path)});
 }
 
 void GitCliProvider::enqueue(Command command)
 {
-    if (m_workspace.isEmpty()) return;
+    if (m_workspace.isEmpty()) {
+        return;
+    }
     m_queue.enqueue(std::move(command));
     startNext();
 }
 
 void GitCliProvider::startNext()
 {
-    if (m_process->state() != QProcess::NotRunning || m_queue.isEmpty()) return;
-    m_current = m_queue.dequeue();
-    m_process->setWorkingDirectory(m_workspace);
-    emit busyChanged(true);
-    m_process->start(QStringLiteral("git"), m_current.arguments);
-}
-
-void GitCliProvider::handleFinished(int exitCode)
-{
-    const QByteArray output = m_process->readAllStandardOutput();
-    const QString error = QString::fromUtf8(m_process->readAllStandardError()).trimmed();
-    if (exitCode != 0) {
-        ScmStatus status;
-        status.isRepository = false;
-        if (m_current.arguments.value(0) == QStringLiteral("status")) emit statusChanged(status);
-        else emit operationFailed({error.isEmpty() ? tr("Git command failed.") : error, exitCode});
-    } else if (m_current.arguments.value(0) == QStringLiteral("status")) {
-        ScmStatus status = GitParsers::parseStatus(output);
-        status.repositoryRoot = m_workspace;
-        emit statusChanged(status);
-    } else if (!m_current.diffPath.isEmpty()) {
-        emit diffReady(m_current.diffPath, QString::fromUtf8(output));
+    if (m_running || m_queue.isEmpty()) {
+        return;
     }
-    const bool refreshAfter = exitCode == 0 && m_current.refreshAfter;
-    if (refreshAfter) m_queue.prepend({{QStringLiteral("status"), QStringLiteral("--porcelain=v1"), QStringLiteral("--branch"), QStringLiteral("-z")}, {}, false});
-    emit busyChanged(!m_queue.isEmpty());
-    startNext();
+
+    m_current = m_queue.dequeue();
+    m_running = true;
+    emit busyChanged(true);
+
+    const quint64 generation = m_generation;
+    const QString cwd = m_workspace;
+    const Command job = m_current;
+
+    auto *watcher = new QFutureWatcher<GitJobResult>(this);
+    connect(watcher, &QFutureWatcher<GitJobResult>::finished, this, [this, watcher, generation]() {
+        watcher->deleteLater();
+        if (generation != m_generation) {
+            m_running = false;
+            emit busyChanged(!m_queue.isEmpty());
+            startNext();
+            return;
+        }
+        const GitJobResult result = watcher->result();
+        m_running = false;
+
+        if (result.primary.error == QLatin1String("git-not-found")) {
+            qCWarning(lcScm) << "Git executable not found";
+            m_status = {};
+            emit statusChanged(m_status);
+            emit operationFailed({tr("Git was not found on PATH."), -1});
+            m_queue.clear();
+            emit busyChanged(false);
+            return;
+        }
+
+        if (m_current.kind == Kind::Refresh) {
+            if (!result.primary.ok()) {
+                m_status = {};
+                emit statusChanged(m_status);
+            } else {
+                m_status = GitParsers::parseStatus(result.primary.standardOutput);
+                GitParsers::makePathsAbsolute(
+                    m_status, result.repositoryRoot.isEmpty() ? m_workspace : result.repositoryRoot);
+                emit statusChanged(m_status);
+            }
+        } else if (m_current.kind == Kind::Diff) {
+            const QString text = result.synthesizedDiff.isEmpty()
+                ? QString::fromUtf8(result.primary.standardOutput)
+                : result.synthesizedDiff;
+            emit diffReady(m_current.diffPath, text);
+        } else if (!result.primary.ok()) {
+            emit operationFailed({result.primary.stderrText().isEmpty() ? tr("Git command failed.")
+                                                                       : result.primary.stderrText(),
+                                 result.primary.exitCode});
+        }
+
+        if (result.primary.ok() && m_current.refreshAfter) {
+            m_queue.prepend({Kind::Refresh, statusArgs(), {}, false, false});
+        }
+        emit busyChanged(!m_queue.isEmpty());
+        startNext();
+    });
+
+    watcher->setFuture(QtConcurrent::run([cwd, job]() {
+        return runJob(cwd, job.arguments, job.kind == Kind::Refresh, job.untrackedDiff, job.diffPath);
+    }));
 }
 
+bool GitCliProvider::isUntracked(const QString &path) const
+{
+    const QString clean = QDir::cleanPath(path);
+    for (const ScmChange &change : m_status.changes) {
+        if (change.state != ScmFileState::Untracked) {
+            continue;
+        }
+        if (QDir::cleanPath(change.path) == clean || change.path == path) {
+            return true;
+        }
+    }
+    return false;
+}

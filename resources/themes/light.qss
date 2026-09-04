@@ -243,7 +243,14 @@ QTabWidget#bottomTabs QTabBar::tab:selected {
     color: #000000;
 }
 
-QTreeWidget#problemsTree {
+QTreeWidget#problemsTree,
+QTreeWidget#sourceControlTree {
+    background-color: #ffffff;
+    color: #1e1e1e;
+    border: none;
+}
+
+QPlainTextEdit#diffText {
     background-color: #ffffff;
     color: #1e1e1e;
     border: none;

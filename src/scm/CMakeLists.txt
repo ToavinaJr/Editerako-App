@@ -1,16 +1,17 @@
-qt_add_library(EditerakoScm STATIC)
-
-target_sources(EditerakoScm PRIVATE
-    GitCliProvider.cpp
-    GitCliProvider.h
-    GitParsers.cpp
-    GitParsers.h
-    ISourceControlProvider.h
-    SourceControlTypes.h
+editerako_add_module(EditerakoScm
+    SOURCES
+        SourceControlTypes.h
+        ISourceControlProvider.h
+        GitParsers.cpp
+        GitParsers.h
+        GitProcess.cpp
+        GitProcess.h
+        GitCliProvider.cpp
+        GitCliProvider.h
+        TextDiff.cpp
+        TextDiff.h
+    LIBS
+        EditerakoCore
+        Qt6::Core
+        Qt6::Concurrent
 )
-
-target_include_directories(EditerakoScm PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(EditerakoScm PUBLIC Qt6::Core)
-target_compile_features(EditerakoScm PUBLIC cxx_std_20)
-editerako_enable_warnings(EditerakoScm)
-

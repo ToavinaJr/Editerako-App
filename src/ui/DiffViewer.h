@@ -12,6 +12,9 @@ class DiffViewer : public QWidget
 public:
     explicit DiffViewer(QWidget *parent = nullptr);
     void setDiff(const QString &path, const QString &text);
+    void setTexts(const QString &title, const QString &left, const QString &right,
+                  const QString &leftName = QStringLiteral("disk"),
+                  const QString &rightName = QStringLiteral("editor"));
 
 private:
     QLabel *m_title = nullptr;

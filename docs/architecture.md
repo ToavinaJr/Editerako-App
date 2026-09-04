@@ -8,7 +8,7 @@ src/main.cpp + src/app/MainWindow + src/ui/     cible Editerako
         ├── WorkspaceController  (project : Workspace + Explorer + Watcher + FileIndex)
         ├── SessionController    (core)
         ├── EditorManager / ViewerManager
-        ├── BottomPanel (Problems + Terminal)
+        ├── BottomPanel (Problems + Terminal + Source Control + Diff)
         └── ChatWidget
 ```
 
@@ -22,6 +22,7 @@ src/main.cpp + src/app/ + src/ui/     cible Editerako
         ├── EditerakoTerminal
         ├── EditerakoAI
         ├── EditerakoLsp
+        ├── EditerakoScm
         └── EditerakoCore
 ```
 
@@ -41,6 +42,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
+| `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
 
 `LspSession` (`src/app/`) démarre clangd pour C/C++, synchronise les buffers, et pilote completion / hover / diagnostics / navigation. [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
 
@@ -56,7 +58,9 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
-**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). `Ctrl+Shift+M` ouvre Problems. [adr/0012-problems-panel.md](adr/0012-problems-panel.md).
+**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md).
+
+**Git.** `GitCliProvider` détecte le dépôt du workspace, rafraîchit le statut hors UI, et alimente le panneau Source Control (Staged / Changes / Untracked) plus les badges de l’explorateur. Double-clic → diff unified. `file.compareWithDisk` compare le buffer éditeur au fichier disque.
 
 **Éditeur.** `CodeEditor` délègue à `src/editor/features/` : gutter, ligne courante (+ matching de brackets), multi-curseurs, indent, commentaires, paires auto, commandes de lignes, occurrences. Swap de lignes : **même algorithme** `toPlainText().mid`. Menu Edit + `CommandRegistry`. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).
 

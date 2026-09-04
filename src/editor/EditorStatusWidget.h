@@ -16,6 +16,7 @@ public:
 
     void setEditor(CodeEditor *editor);
     void setLspStatus(const QString &text);
+    void setGitBranch(const QString &text);
     void setProblemCounts(int errors, int warnings);
 
 signals:
@@ -30,6 +31,7 @@ private:
     QLabel *m_eol = nullptr;
     QLabel *m_language = nullptr;
     QLabel *m_lsp = nullptr;
+    QLabel *m_git = nullptr;
     QPushButton *m_problems = nullptr;
 };
 

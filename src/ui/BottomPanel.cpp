@@ -105,6 +105,12 @@ void BottomPanel::showTerminal()
     showAndSelect(m_terminalIndex);
 }
 
+void BottomPanel::showDiff(const QString &path, const QString &text)
+{
+    m_diff->setDiff(path, text);
+    showAndSelect(m_diffIndex);
+}
+
 void BottomPanel::updateProblemsTitle()
 {
     const int total = m_problems->model()->totalCount();

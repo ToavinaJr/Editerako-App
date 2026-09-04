@@ -2,12 +2,14 @@
 
 #include "scm/GitCliProvider.h"
 
+#include <QDir>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTreeWidget>
+#include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
 namespace {
@@ -57,7 +59,9 @@ SourceControlPanel::SourceControlPanel(GitCliProvider *provider, QWidget *parent
     connect(m_unstage, &QPushButton::clicked, this, [this]() { m_provider->unstage({selectedPath()}); });
     connect(m_discard, &QPushButton::clicked, this, [this]() {
         const QString path = selectedPath();
-        if (!path.isEmpty() && QMessageBox::question(this, tr("Discard Changes"), tr("Discard all working-tree changes to %1?").arg(path)) == QMessageBox::Yes) m_provider->discard({path});
+        if (!path.isEmpty() && QMessageBox::question(this, tr("Discard Changes"), tr("Discard all working-tree changes to %1?").arg(path)) == QMessageBox::Yes) {
+            m_provider->discard({path});
+        }
     });
     connect(refresh, &QPushButton::clicked, provider, &GitCliProvider::refresh);
     connect(commit, &QPushButton::clicked, this, [this]() { const QString text = m_message->text().trimmed(); if (!text.isEmpty()) { m_provider->commit(text); m_message->clear(); } });
@@ -74,13 +78,24 @@ void SourceControlPanel::rebuild(const ScmStatus &status)
     auto *staged = new QTreeWidgetItem(m_tree, {tr("Staged Changes")});
     auto *changes = new QTreeWidgetItem(m_tree, {tr("Changes")});
     auto *untracked = new QTreeWidgetItem(m_tree, {tr("Untracked")});
+    const QDir root(status.repositoryRoot);
     for (const ScmChange &change : status.changes) {
         QTreeWidgetItem *parent = change.state == ScmFileState::Untracked ? untracked : (change.staged ? staged : changes);
-        auto *item = new QTreeWidgetItem(parent, {change.path, stateText(change.state)});
+        QString label = change.path;
+        if (!status.repositoryRoot.isEmpty()) {
+            const QString relative = QDir::fromNativeSeparators(root.relativeFilePath(change.path));
+            if (!relative.startsWith(QLatin1String(".."))) {
+                label = relative;
+            }
+        }
+        auto *item = new QTreeWidgetItem(parent, {label, stateText(change.state)});
         item->setData(0, kPathRole, change.path);
         item->setData(0, kStagedRole, change.staged);
         item->setData(0, kStateRole, static_cast<int>(change.state));
-        if (!change.oldPath.isEmpty()) item->setToolTip(0, tr("Renamed from %1").arg(change.oldPath));
+        item->setToolTip(0, change.path);
+        if (!change.oldPath.isEmpty()) {
+            item->setToolTip(0, tr("Renamed from %1").arg(change.oldPath));
+        }
     }
     for (QTreeWidgetItem *group : {staged, changes, untracked}) {
         group->setText(0, QStringLiteral("%1 (%2)").arg(group->text(0)).arg(group->childCount()));
@@ -91,4 +106,11 @@ void SourceControlPanel::rebuild(const ScmStatus &status)
 
 QString SourceControlPanel::selectedPath() const { auto *item = m_tree->currentItem(); return item ? item->data(0, kPathRole).toString() : QString(); }
 bool SourceControlPanel::selectedStaged() const { auto *item = m_tree->currentItem(); return item && item->data(0, kStagedRole).toBool(); }
-void SourceControlPanel::updateActions() { auto *item = m_tree->currentItem(); const bool has = !selectedPath().isEmpty(); const bool staged = selectedStaged(); const bool untracked = item && item->data(0, kStateRole).toInt() == static_cast<int>(ScmFileState::Untracked); m_stage->setEnabled(has && !staged); m_unstage->setEnabled(has && staged); m_discard->setEnabled(has && !staged && !untracked); }
+void SourceControlPanel::updateActions()
+{
+    const bool has = !selectedPath().isEmpty();
+    const bool staged = selectedStaged();
+    m_stage->setEnabled(has && !staged);
+    m_unstage->setEnabled(has && staged);
+    m_discard->setEnabled(has && !staged);
+}

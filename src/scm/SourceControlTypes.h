@@ -1,6 +1,7 @@
 #ifndef EDITERAKO_SOURCECONTROLTYPES_H
 #define EDITERAKO_SOURCECONTROLTYPES_H
 
+#include <QMetaType>
 #include <QString>
 #include <QVector>
 
@@ -33,6 +34,10 @@ struct ScmError {
     QString message;
     int exitCode = 0;
 };
+
+Q_DECLARE_METATYPE(ScmChange)
+Q_DECLARE_METATYPE(ScmStatus)
+Q_DECLARE_METATYPE(ScmError)
 
 #endif
 

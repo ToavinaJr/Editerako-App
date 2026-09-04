@@ -26,6 +26,7 @@ public:
     void toggleProblems();
     void toggleSourceControl();
     void showTerminal();
+    void showDiff(const QString &path, const QString &text);
     void updateProblemsTitle();
 
 signals:

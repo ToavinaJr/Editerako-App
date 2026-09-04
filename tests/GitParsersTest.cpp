@@ -1,5 +1,6 @@
 #include "scm/GitParsers.h"
 
+#include <QDir>
 #include <QtTest>
 
 class GitParsersTest : public QObject
@@ -8,6 +9,8 @@ class GitParsersTest : public QObject
 private slots:
     void parsesBranchAndChanges();
     void parsesRenameAndUtf8();
+    void parsesStagedAndUnstagedSameFile();
+    void makesRelativePathsAbsolute();
 };
 
 void GitParsersTest::parsesBranchAndChanges()
@@ -34,6 +37,31 @@ void GitParsersTest::parsesRenameAndUtf8()
     QCOMPARE(status.changes.first().path, QStringLiteral("nouveau.cpp"));
     QCOMPARE(status.changes.first().oldPath, QStringLiteral("ancien.cpp"));
     QCOMPARE(status.changes.first().state, ScmFileState::Renamed);
+}
+
+void GitParsersTest::parsesStagedAndUnstagedSameFile()
+{
+    QByteArray input("## main");
+    input.append('\0');
+    input.append("MM both.cpp");
+    input.append('\0');
+    const ScmStatus status = GitParsers::parseStatus(input);
+    QCOMPARE(status.changes.size(), 2);
+    QVERIFY(status.changes.at(0).staged);
+    QVERIFY(!status.changes.at(1).staged);
+    QCOMPARE(status.changes.at(0).state, ScmFileState::Modified);
+    QCOMPARE(status.changes.at(1).state, ScmFileState::Modified);
+}
+
+void GitParsersTest::makesRelativePathsAbsolute()
+{
+    ScmStatus status;
+    ScmChange change;
+    change.path = QStringLiteral("src/main.cpp");
+    status.changes.append(change);
+    GitParsers::makePathsAbsolute(status, QStringLiteral("C:/repo"));
+    QCOMPARE(status.repositoryRoot, QStringLiteral("C:/repo"));
+    QCOMPARE(status.changes.first().path, QDir::cleanPath(QStringLiteral("C:/repo/src/main.cpp")));
 }
 
 QTEST_GUILESS_MAIN(GitParsersTest)
