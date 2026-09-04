@@ -1,0 +1,11 @@
+# LeakSanitizer: Qt / fontconfig / glib allocations that outlive QTest.
+# Keep this list tight — do not suppress leaks in src/.
+leak:libfontconfig
+leak:libglib
+leak:libQt6Core
+leak:libQt6Gui
+leak:libQt6Widgets
+leak:QFactoryLoader
+leak:QFontDatabase
+leak:QGlobalStatic
+leak:QArrayData

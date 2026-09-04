@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Remove preset build directories.
-# Usage: ./scripts/clean.sh [Debug|Release]
+# Usage: ./scripts/clean.sh [Debug|Release|Asan|Ubsan|Tsan]
 #        ./scripts/clean.sh --all
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

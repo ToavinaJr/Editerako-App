@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Run Editerako. Pass --build to compile first.
-# Usage: ./scripts/run.sh [Debug|Release] [--build]
+# Usage: ./scripts/run.sh [Debug|Release|Asan|Ubsan|Tsan] [--build]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_common.sh
@@ -13,9 +13,9 @@ do_build=0
 for arg in "$@"; do
     case "$arg" in
         --build) do_build=1 ;;
-        Debug|debug|Release|release) config="$(normalize_config "$arg")" ;;
+        Debug|debug|Release|release|Asan|asan|Ubsan|ubsan|Tsan|tsan) config="$(normalize_config "$arg")" ;;
         *)
-            echo "Usage: $0 [Debug|Release] [--build]" >&2
+            echo "Usage: $0 [Debug|Release|Asan|Ubsan|Tsan] [--build]" >&2
             exit 1
             ;;
     esac

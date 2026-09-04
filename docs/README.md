@@ -6,9 +6,11 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 |---|---|
 | [architecture.md](architecture.md) | Modules, rôle de `MainWindow`, flux fichiers / session / IA |
 | [build.md](build.md) | CMake, presets, Qt Creator, déploiement, pièges Windows |
+| [ci.md](ci.md) | Matrice GitHub Actions, sanitizers, packaging |
 | [conventions.md](conventions.md) | Includes, nommage, QSS, CMake, journalisation |
 | [testing.md](testing.md) | `ctest`, comment ajouter un test Qt Test |
 | [settings.md](settings.md) | Priorité user/workspace, JSON, raccourcis |
+| [plugins.md](plugins.md) | Plugins locaux `plugin.json` / `IPlugin` |
 | [adr/0001-modular-cmake-targets.md](adr/0001-modular-cmake-targets.md) | Cibles CMake par module |
 | [adr/0002-mainwindow-composition-root.md](adr/0002-mainwindow-composition-root.md) | MainWindow composition root |
 | [adr/0003-editor-features.md](adr/0003-editor-features.md) | Features extraits de `CodeEditor` / `EditorManager` |
@@ -25,4 +27,9 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) | Tasks `.editerako/tasks.json`, CMake CLI, Output |
 | [adr/0015-terminal-backend-pty.md](adr/0015-terminal-backend-pty.md) | `ITerminalBackend`, ConPTY/PTY, ANSI SGR |
 | [adr/0016-ai-account-chat.md](adr/0016-ai-account-chat.md) | Sign-in compte + APIs OpenAI / Anthropic / Gemini / Ollama |
+| [adr/0017-recovery-hot-exit.md](adr/0017-recovery-hot-exit.md) | Recovery, backups, Hot Exit |
+| [adr/0018-editor-groups.md](adr/0018-editor-groups.md) | EditorArea / split |
+| [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md) | Client DAP, Debug panel |
+| [adr/0020-plugin-system.md](adr/0020-plugin-system.md) | Plugins locaux |
+| [adr/0021-ci-sanitizers-packaging.md](adr/0021-ci-sanitizers-packaging.md) | CI, sanitizers, packaging |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

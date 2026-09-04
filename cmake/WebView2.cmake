@@ -59,4 +59,8 @@ function(editerako_deploy_webview2 target)
             "$<TARGET_FILE_DIR:${target}>/WebView2Loader.dll"
         COMMENT "Copy WebView2Loader.dll next to ${target}"
     )
+    include(GNUInstallDirs)
+    install(FILES "${EDITERAKO_WEBVIEW2_LOADER}"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        RENAME WebView2Loader.dll)
 endfunction()

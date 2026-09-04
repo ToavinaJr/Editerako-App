@@ -12,6 +12,8 @@ Suite **Qt Test** + **ctest**. On teste la logique isolée, pas `MainWindow` ni 
 
 Équivalent : `ctest --preset debug --output-on-failure`.
 
+Sanitizers : `./scripts/test.sh asan` ou `tsan` (Linux/macOS). Presets et CI : [ci.md](ci.md).
+
 ## Cibles actuelles
 
 Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne recompilent pas les `.cpp` métier.
@@ -119,10 +121,10 @@ editerako_add_test(test_Foo
 
 Lier la cible du module (`EditerakoCore`, `EditerakoSyntax`, …), pas les `.cpp` individuels, et pas `Editerako.exe`.
 
-3. Si le test crée un `QWidget`, utiliser `QTEST_MAIN`, et éventuellement :
+3. Si le test crée un `QWidget`, utiliser `QTEST_MAIN`, et :
 
 ```cmake
-set_tests_properties(test_Foo PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+editerako_test_offscreen(test_Foo)
 ```
 
 4. `.\scripts\test.ps1` — tout doit rester vert.

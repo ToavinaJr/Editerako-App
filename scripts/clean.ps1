@@ -5,7 +5,7 @@
 
 [CmdletBinding()]
 param(
-    [ValidateSet('Debug', 'Release')]
+    [ValidateSet('Debug', 'Release', 'Asan', 'Ubsan', 'Tsan')]
     [string] $Config = 'Debug',
     [switch] $All
 )

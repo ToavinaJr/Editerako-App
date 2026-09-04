@@ -11,7 +11,7 @@ function Get-ProjectRoot {
 function Get-PresetName {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Debug', 'Release')]
+        [ValidateSet('Debug', 'Release', 'Asan', 'Ubsan', 'Tsan')]
         [string] $Config
     )
     return $Config.ToLowerInvariant()
@@ -20,7 +20,7 @@ function Get-PresetName {
 function Get-BuildDir {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Debug', 'Release')]
+        [ValidateSet('Debug', 'Release', 'Asan', 'Ubsan', 'Tsan')]
         [string] $Config
     )
     return Join-Path (Get-ProjectRoot) "build\$(Get-PresetName $Config)"
@@ -29,7 +29,7 @@ function Get-BuildDir {
 function Get-ExecutablePath {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Debug', 'Release')]
+        [ValidateSet('Debug', 'Release', 'Asan', 'Ubsan', 'Tsan')]
         [string] $Config
     )
     return Join-Path (Get-BuildDir $Config) 'Editerako.exe'

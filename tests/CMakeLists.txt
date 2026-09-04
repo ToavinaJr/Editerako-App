@@ -20,9 +20,7 @@ editerako_add_test(test_WorkspaceController
     LIBS EditerakoProject
 )
 
-set_tests_properties(test_WorkspaceController PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_WorkspaceController)
 
 editerako_add_test(test_SessionController
     SOURCES SessionControllerTest.cpp
@@ -69,9 +67,7 @@ editerako_add_test(test_CommandRegistry
     LIBS EditerakoCore
 )
 
-set_tests_properties(test_CommandRegistry PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_CommandRegistry)
 
 editerako_add_test(test_AtomicFile
     SOURCES AtomicFileTest.cpp
@@ -98,9 +94,7 @@ editerako_add_test(test_KeybindingModel
     LIBS EditerakoCore
 )
 
-set_tests_properties(test_KeybindingModel PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_KeybindingModel)
 
 editerako_add_test(test_FuzzyMatcher
     SOURCES FuzzyMatcherTest.cpp
@@ -167,9 +161,7 @@ editerako_add_test(test_TreeSitterDocument
     LIBS EditerakoSyntax
 )
 
-set_tests_properties(test_TreeSitterDocument PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_TreeSitterDocument)
 
 editerako_add_test(test_HighlightQuery
     SOURCES HighlightQueryTest.cpp
@@ -195,9 +187,7 @@ editerako_add_test(test_LineMovementController
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_LineMovementController PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_LineMovementController)
 
 editerako_add_test(test_IndentOps
     SOURCES IndentOpsTest.cpp
@@ -219,36 +209,28 @@ editerako_add_test(test_LineEditCommands
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_LineEditCommands PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_LineEditCommands)
 
 editerako_add_test(test_MultiCursorController
     SOURCES MultiCursorControllerTest.cpp
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_MultiCursorController PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_MultiCursorController)
 
 editerako_add_test(test_EditorDocument
     SOURCES EditorDocumentTest.cpp
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_EditorDocument PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_EditorDocument)
 
 editerako_add_test(test_EditorArea
     SOURCES EditorAreaTest.cpp
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_EditorArea PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_EditorArea)
 
 editerako_add_test(test_LspMessageFramer
     SOURCES LspMessageFramerTest.cpp
@@ -310,18 +292,14 @@ editerako_add_test(test_CompletionModel
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_CompletionModel PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_CompletionModel)
 
 editerako_add_test(test_DiagnosticMarkup
     SOURCES DiagnosticMarkupTest.cpp
     LIBS EditerakoEditor
 )
 
-set_tests_properties(test_DiagnosticMarkup PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_DiagnosticMarkup)
 
 editerako_add_test(test_ProblemModel
     SOURCES ProblemModelTest.cpp
@@ -373,7 +351,5 @@ editerako_add_test(test_PluginManager
     LIBS EditerakoPlugins EditerakoViewers
 )
 
-set_tests_properties(test_PluginManager PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-)
+editerako_test_offscreen(test_PluginManager)
 

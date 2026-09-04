@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Build then run the Qt Test suite (ctest).
-# Usage: ./scripts/test.sh [Debug|Release]
+# Usage: ./scripts/test.sh [Debug|Release|Asan|Ubsan|Tsan]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_common.sh

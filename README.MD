@@ -41,6 +41,8 @@ Release : ajouter `-Config Release`. Compiler puis lancer : `.\scripts\run.ps1 -
 
 CMake : `cmake --preset debug` puis `cmake --build --preset debug`.
 
+CI, sanitizers (ASan+UBSan, TSan) et packaging : [docs/ci.md](docs/ci.md). Windows portable : `.\scripts\package.ps1` (Release).
+
 Qt Creator : ouvrir `CMakeLists.txt`, kit Qt 6 **avec PdfWidgets**. Le kit (`build/Desktop_Qt_…`) est distinct de `build/debug`.
 
 ## Build Linux

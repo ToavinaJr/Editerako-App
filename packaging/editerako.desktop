@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Editerako
+GenericName=Code Editor
+Comment=C++ / Qt 6 code editor
+Exec=Editerako
+Icon=editerako
+Terminal=false
+Categories=Development;IDE;TextEditor;
+StartupNotify=true

@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Sanitizers.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Libraries.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/WebView2.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreeSitter.cmake")
@@ -30,8 +31,10 @@ qt_standard_project_setup()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 enable_testing()
+include(GNUInstallDirs)
 add_subdirectory(src)
 add_subdirectory(tests)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Packaging.cmake")
 
 # Qt Creator requests this target when no QML modules exist.
 add_custom_target(all_qmllint

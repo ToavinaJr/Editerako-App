@@ -82,8 +82,11 @@ normalize_config() {
     case "${config,,}" in
         debug) echo "Debug" ;;
         release) echo "Release" ;;
+        asan) echo "Asan" ;;
+        ubsan) echo "Ubsan" ;;
+        tsan) echo "Tsan" ;;
         *)
-            echo "Configuration invalide: $config (Debug ou Release)" >&2
+            echo "Configuration invalide: $config (Debug, Release, Asan, Ubsan, Tsan)" >&2
             exit 1
             ;;
     esac

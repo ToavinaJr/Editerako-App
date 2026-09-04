@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Build Editerako. Configures first if the preset build directory is missing.
-# Usage: ./scripts/build.sh [Debug|Release]
+# Usage: ./scripts/build.sh [Debug|Release|Asan|Ubsan|Tsan]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_common.sh

@@ -1,0 +1,11 @@
+# ThreadSanitizer: Qt is not TSan-instrumented. Ignore races that only
+# originate inside Qt libraries so reports stay focused on Editerako.
+called_from_lib:libQt6Core
+called_from_lib:libQt6Gui
+called_from_lib:libQt6Widgets
+called_from_lib:libQt6Network
+called_from_lib:libQt6Sql
+called_from_lib:libQt6Test
+called_from_lib:libQt6Pdf
+called_from_lib:libQt6PdfWidgets
+called_from_lib:libQt6Concurrent

@@ -1,0 +1,224 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  QT_VERSION: "6.9.2"
+  QT_QPA_PLATFORM: offscreen
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.preset }} (${{ matrix.compiler }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: debug
+            compiler: gcc
+          - preset: release
+            compiler: gcc
+          - preset: asan
+            compiler: clang
+          - preset: tsan
+            compiler: clang
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ubuntu packages
+        run: bash scripts/ci/install-ubuntu-deps.sh
+
+      - name: Clang
+        if: matrix.compiler == 'clang'
+        run: sudo apt-get install -y --no-install-recommends clang
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: gcc_64
+          modules: qtpdf
+          cache: true
+
+      - name: Configure
+        run: |
+          extra=()
+          if [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            extra+=(-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++)
+          fi
+          cmake --preset "${{ matrix.preset }}" \
+            -DEDITERAKO_WARNINGS_AS_ERRORS=ON \
+            "${extra[@]}"
+
+      - name: Build
+        run: cmake --build --preset "${{ matrix.preset }}"
+
+      - name: Test
+        run: ctest --preset "${{ matrix.preset }}" --output-on-failure
+
+      - name: Package tarball
+        if: matrix.preset == 'release' && github.event_name != 'pull_request'
+        run: |
+          chmod +x scripts/package.sh
+          ./scripts/package.sh Release
+
+      - name: Upload Linux package
+        if: matrix.preset == 'release' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Editerako-linux
+          path: dist/*
+          if-no-files-found: error
+
+  windows:
+    name: Windows MinGW Release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          modules: qtpdf
+          tools: tools_mingw1310
+          cache: true
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake --preset release `
+            -DEDITERAKO_WARNINGS_AS_ERRORS=ON `
+            -DCMAKE_C_COMPILER=gcc `
+            -DCMAKE_CXX_COMPILER=g++
+
+      - name: Build
+        run: cmake --build --preset release
+
+      - name: Test
+        run: ctest --preset release --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      - name: Package zip
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: .\scripts\package.ps1
+
+      - name: Upload Windows package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Editerako-windows
+          path: dist/*.zip
+          if-no-files-found: error
+
+  macos:
+    name: macOS Release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt using aqtinstall
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt mac desktop ${QT_VERSION} clang_64
+          aqt install-qt mac desktop ${QT_VERSION} clang_64 -m qtpdf
+          echo "QT_DIR=$(pwd)/${QT_VERSION}/macos" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: brew install ninja create-dmg
+
+      - name: Configure
+        run: |
+          cmake --preset release \
+            -DCMAKE_PREFIX_PATH="$QT_DIR" \
+            -DEDITERAKO_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build --preset release
+
+      - name: Test
+        run: ctest --preset release --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      - name: Package DMG
+        if: github.event_name != 'pull_request'
+        run: |
+          APP="build/release/Editerako.app"
+          if [ ! -d "$APP" ]; then
+            echo "Erreur : $APP introuvable"
+            ls -la build/release || true
+            exit 1
+          fi
+          mkdir -p dist
+          create-dmg \
+            --volname "Editerako Installer" \
+            --window-size 500 300 \
+            --icon-size 100 \
+            --app-drop-link 400 150 \
+            "dist/Editerako.dmg" "$APP"
+
+      - name: Upload macOS artifacts
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Editerako-macos
+          path: |
+            build/release/Editerako.app
+            dist/*.dmg
+          if-no-files-found: error
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ubuntu packages
+        run: |
+          bash scripts/ci/install-ubuntu-deps.sh
+          sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: gcc_64
+          modules: qtpdf
+          cache: true
+
+      - name: Configure
+        run: cmake --preset debug
+
+      - name: clang-tidy
+        run: |
+          chmod +x scripts/tidy.sh
+          ./scripts/tidy.sh debug
+
+      - name: cppcheck
+        run: |
+          cppcheck --enable=warning,performance --force --inline-suppr \
+            --error-exitcode=0 -I src src tests \
+            --suppress=missingIncludeSystem \
+            --suppress=unmatchedSuppression

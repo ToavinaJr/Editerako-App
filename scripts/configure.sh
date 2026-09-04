@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Configure the Editerako CMake build (Ninja preset).
-# Usage: ./scripts/configure.sh [Debug|Release]
+# Usage: ./scripts/configure.sh [Debug|Release|Asan|Ubsan|Tsan]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_common.sh
