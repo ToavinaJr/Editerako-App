@@ -43,10 +43,13 @@ CTestTestfile.cmake
 *_autogen/
 x64/
 Win32/
-Debug/
-Release/
-RelWithDebInfo/
-MinSizeRel/
+# Visual Studio in-source configuration dirs (root only).
+# Do not use a bare "Debug/" : on Windows Git is case-insensitive and would
+# ignore src/debug/ (DAP module).
+/Debug/
+/Release/
+/RelWithDebInfo/
+/MinSizeRel/
 .vs/
 
 # ---- Qt / Qt Creator ----

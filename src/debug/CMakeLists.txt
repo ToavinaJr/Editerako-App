@@ -1,0 +1,15 @@
+editerako_add_module(EditerakoDap
+    SOURCES
+        DapTypes.cpp
+        DapTypes.h
+        DapClient.cpp
+        DapClient.h
+        LaunchFile.cpp
+        LaunchFile.h
+        BreakpointStore.cpp
+        BreakpointStore.h
+    LIBS
+        EditerakoCore
+        EditerakoLsp
+        Qt6::Core
+)
