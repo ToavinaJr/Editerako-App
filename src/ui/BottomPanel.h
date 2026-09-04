@@ -10,6 +10,8 @@ class DiffViewer;
 class TaskManager;
 class TasksPanel;
 class OutputPanel;
+class DebugSession;
+class DebugPanel;
 class QTabWidget;
 class TerminalPanel;
 
@@ -18,13 +20,15 @@ class BottomPanel : public QWidget
     Q_OBJECT
 
 public:
-    explicit BottomPanel(GitCliProvider *scm, TaskManager *tasks, QWidget *parent = nullptr);
+    explicit BottomPanel(GitCliProvider *scm, TaskManager *tasks, DebugSession *debug,
+                         QWidget *parent = nullptr);
 
     [[nodiscard]] ProblemsPanel *problemsPanel() const { return m_problems; }
     [[nodiscard]] TerminalPanel *terminalPanel() const { return m_terminal; }
     [[nodiscard]] SourceControlPanel *sourceControlPanel() const { return m_sourceControl; }
     [[nodiscard]] TasksPanel *tasksPanel() const { return m_tasks; }
     [[nodiscard]] OutputPanel *outputPanel() const { return m_output; }
+    [[nodiscard]] DebugPanel *debugPanel() const { return m_debug; }
 
     void toggleTerminal(const QString &focusCwd);
     void showProblems();
@@ -32,9 +36,11 @@ public:
     void toggleSourceControl();
     void toggleTasks();
     void toggleOutput();
+    void toggleDebug();
     void showTerminal();
     void showOutput();
     void showTasks();
+    void showDebug();
     void showDiff(const QString &path, const QString &text);
     void updateProblemsTitle();
 
@@ -51,12 +57,14 @@ private:
     SourceControlPanel *m_sourceControl = nullptr;
     DiffViewer *m_diff = nullptr;
     TasksPanel *m_tasks = nullptr;
+    DebugPanel *m_debug = nullptr;
     int m_problemsIndex = 0;
     int m_outputIndex = 1;
     int m_terminalIndex = 2;
     int m_sourceControlIndex = 3;
     int m_diffIndex = 4;
     int m_tasksIndex = 5;
+    int m_debugIndex = 6;
     bool m_userVisible = true;
 };
 

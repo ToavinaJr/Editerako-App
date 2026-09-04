@@ -285,6 +285,26 @@ editerako_add_test(test_LspServerProcess
     LIBS EditerakoLsp
 )
 
+editerako_add_test(test_DapClient
+    SOURCES DapClientTest.cpp
+    LIBS EditerakoDap
+)
+
+editerako_add_test(test_LaunchFile
+    SOURCES LaunchFileTest.cpp
+    LIBS EditerakoDap
+)
+
+editerako_add_test(test_BreakpointStore
+    SOURCES BreakpointStoreTest.cpp
+    LIBS EditerakoDap
+)
+
+editerako_add_test(test_DapTypes
+    SOURCES DapTypesTest.cpp
+    LIBS EditerakoDap
+)
+
 editerako_add_test(test_CompletionModel
     SOURCES CompletionModelTest.cpp
     LIBS EditerakoEditor

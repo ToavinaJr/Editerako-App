@@ -11,10 +11,12 @@
 
 #include <QPlainTextEdit>
 #include <QPoint>
+#include <QSet>
 #include <QVector>
 #include <QWheelEvent>
 
 class LineNumberArea;
+class QMouseEvent;
 
 class CodeEditor : public QPlainTextEdit
 {
@@ -48,6 +50,10 @@ public:
     void setDiagnostics(const QVector<EditorDiagnostic> &diagnostics);
     [[nodiscard]] const QVector<EditorDiagnostic> &diagnostics() const { return m_diagnostics; }
 
+    void setBreakpointLines(const QSet<int> &lines);
+    void setDebugLine(int line);
+    void gutterMousePress(QMouseEvent *event);
+
 signals:
     void completionRequested();
     void signatureHelpRequested();
@@ -55,6 +61,7 @@ signals:
     void hoverCanceled();
     void definitionRequested();
     void fontZoomRequested(int delta);
+    void breakpointToggled(int line);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -82,6 +89,8 @@ private:
     LineEditCommands m_lineEdits;
     OccurrenceController m_occurrences;
     QVector<EditorDiagnostic> m_diagnostics;
+    QSet<int> m_breakpointLines;
+    int m_debugLine = -1;
     class QTimer *m_hoverTimer = nullptr;
     QPoint m_hoverLocalPos;
 };

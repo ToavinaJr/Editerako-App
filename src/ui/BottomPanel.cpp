@@ -6,13 +6,15 @@
 #include "ui/DiffViewer.h"
 #include "ui/OutputPanel.h"
 #include "ui/TasksPanel.h"
+#include "ui/DebugPanel.h"
 #include "scm/GitCliProvider.h"
 #include "tasks/TaskManager.h"
 
 #include <QVBoxLayout>
 #include <QTabWidget>
 
-BottomPanel::BottomPanel(GitCliProvider *scm, TaskManager *tasks, QWidget *parent)
+BottomPanel::BottomPanel(GitCliProvider *scm, TaskManager *tasks, DebugSession *debug,
+                         QWidget *parent)
     : QWidget(parent)
     , m_tabs(new QTabWidget(this))
     , m_problems(new ProblemsPanel(this))
@@ -21,6 +23,7 @@ BottomPanel::BottomPanel(GitCliProvider *scm, TaskManager *tasks, QWidget *paren
     , m_sourceControl(new SourceControlPanel(scm, this))
     , m_diff(new DiffViewer(this))
     , m_tasks(new TasksPanel(tasks, this))
+    , m_debug(new DebugPanel(debug, this))
 {
     setObjectName(QStringLiteral("bottomPanel"));
     m_tabs->setObjectName(QStringLiteral("bottomTabs"));
@@ -31,6 +34,7 @@ BottomPanel::BottomPanel(GitCliProvider *scm, TaskManager *tasks, QWidget *paren
     m_sourceControlIndex = m_tabs->addTab(m_sourceControl, tr("Source Control"));
     m_diffIndex = m_tabs->addTab(m_diff, tr("Diff"));
     m_tasksIndex = m_tabs->addTab(m_tasks, tr("Tasks"));
+    m_debugIndex = m_tabs->addTab(m_debug, tr("Debug"));
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -143,6 +147,17 @@ void BottomPanel::toggleOutput()
     emit editorFocusRequested();
 }
 
+void BottomPanel::toggleDebug()
+{
+    if (!m_userVisible || m_tabs->currentIndex() != m_debugIndex) {
+        showDebug();
+        return;
+    }
+    m_userVisible = false;
+    setVisible(false);
+    emit editorFocusRequested();
+}
+
 void BottomPanel::showTerminal()
 {
     showAndSelect(m_terminalIndex);
@@ -156,6 +171,11 @@ void BottomPanel::showOutput()
 void BottomPanel::showTasks()
 {
     showAndSelect(m_tasksIndex);
+}
+
+void BottomPanel::showDebug()
+{
+    showAndSelect(m_debugIndex);
 }
 
 void BottomPanel::showDiff(const QString &path, const QString &text)

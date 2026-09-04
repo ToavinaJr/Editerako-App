@@ -59,6 +59,20 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+\\")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.splitEditorDown")),
              QKeySequence(QStringLiteral("Ctrl+Shift+\\")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.debug")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+Y")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.startContinue")),
+             QKeySequence(QStringLiteral("F5")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.stop")),
+             QKeySequence(QStringLiteral("Shift+F5")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.toggleBreakpoint")),
+             QKeySequence(QStringLiteral("F9")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.stepOver")),
+             QKeySequence(QStringLiteral("F10")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.stepInto")),
+             QKeySequence(QStringLiteral("F11")));
+    QCOMPARE(defaults.value(QStringLiteral("debug.stepOut")),
+             QKeySequence(QStringLiteral("Shift+F11")));
 }
 
 void KeybindingModelTest::overrideAndReset()

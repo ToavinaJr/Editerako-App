@@ -8,7 +8,7 @@ src/main.cpp + src/app/MainWindow + src/ui/     cible Editerako
         ├── WorkspaceController  (project : Workspace + Explorer + Watcher + FileIndex)
         ├── SessionController    (core)
         ├── EditorManager / ViewerManager
-        ├── BottomPanel (Problems + Terminal + Source Control + Diff)
+        ├── BottomPanel (Problems + Terminal + Source Control + Diff + Tasks + Debug)
         └── ChatWidget
 ```
 
@@ -25,6 +25,7 @@ src/main.cpp + src/app/ + src/ui/     cible Editerako
         ├── EditerakoLsp
         ├── EditerakoScm
         ├── EditerakoTasks
+        ├── EditerakoDap
         └── EditerakoCore
 ```
 
@@ -46,8 +47,11 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
 | `tasks/` | `EditerakoTasks` | `tasks.json`, CMake CLI (presets, configure/build/test/run), runner async, problem matcher. [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) |
+| `debug/` | `EditerakoDap` | Client DAP (pas LSP), `launch.json`, breakpoints. Pas d’UI. [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md) |
 
 `LspSession` (`src/app/`) démarre clangd pour C/C++ et alimente l’UI. Même classe, unités de compilation séparées : `LspSession.cpp` (cycle de vie, sync, diagnostics), `LspSessionFeatures.cpp` (completion / hover / signature), `LspSessionNavigation.cpp` (définition, références, rename, symboles). clangd reçoit `--compile-commands-dir` vers `lspCompileCommandsDir` (`build/debug`, …) pour résoudre les types du projet. Les lignes des pickers sont formatées par `lspLocationRows` / `lspSymbolRows` (`EditerakoLsp`). [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
+
+`DebugSession` (`src/app/`) spawn l’adaptateur DAP (`gdb --interpreter=dap` ou `lldb-dap`), synchronise les breakpoints, et alimente l’onglet Debug (stack, variables, console). [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md).
 
 `MainWindow` reste le composition root, découpé par responsabilité (même classe) : `MainWindow.cpp` (cycle de vie / session), `MainWindowCommands.cpp` (menus), `MainWindowSetup.cpp` (câblage), `MainWindowWorkspace.cpp` (fichiers / disque / D&D), `MainWindowDialogs.cpp` (palettes). L’explorateur : menu dans `FileExplorerMenu.cpp`, icônes / badges dans `FileExplorerDecorations`.
 
@@ -63,7 +67,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
-**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). Commandes = one-shot via `ProcessTerminalBackend` par défaut ; PTY optionnel (`terminal/usePty`). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. `Ctrl+Shift+B` lance le build. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md), [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md), [adr/0015-terminal-backend-pty.md](adr/0015-terminal-backend-pty.md).
+**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). Commandes = one-shot via `ProcessTerminalBackend` par défaut ; PTY optionnel (`terminal/usePty`). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. `Ctrl+Shift+B` lance le build. `Ctrl+Shift+Y` ouvre Debug (F5 démarre / continue). [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md), [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md), [adr/0015-terminal-backend-pty.md](adr/0015-terminal-backend-pty.md), [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md).
 
 **Git.** `GitCliProvider` détecte le dépôt du workspace, rafraîchit le statut hors UI, et alimente le panneau Source Control (Staged / Changes / Untracked) plus les badges de l’explorateur. Double-clic → diff unified. `file.compareWithDisk` compare le buffer éditeur au fichier disque.
 

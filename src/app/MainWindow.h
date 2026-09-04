@@ -14,6 +14,7 @@ class EditorStatusWidget;
 class KeybindingManager;
 class LspServerManager;
 class LspSession;
+class DebugSession;
 class BottomPanel;
 class TerminalPanel;
 class ViewerManager;
@@ -82,6 +83,7 @@ private slots:
     void toggleSourceControl();
     void toggleTasks();
     void toggleOutput();
+    void toggleDebug();
     void runBuildTask();
     void compareWithDisk();
     void openPreferences();
@@ -98,6 +100,7 @@ private:
     ViewerManager *m_viewerManager = nullptr;
     LspServerManager *m_lsp = nullptr;
     LspSession *m_lspSession = nullptr;
+    DebugSession *m_debugSession = nullptr;
     BottomPanel *m_bottomPanel = nullptr;
     WorkspaceController *m_workspaceController = nullptr;
     TerminalPanel *m_terminalPanel = nullptr;

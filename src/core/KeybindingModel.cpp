@@ -60,6 +60,13 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("editor.zoomReset"), QKeySequence(QStringLiteral("Ctrl+0")));
     defaults.insert(QStringLiteral("workbench.splitEditorRight"), QKeySequence(QStringLiteral("Ctrl+\\")));
     defaults.insert(QStringLiteral("workbench.splitEditorDown"), QKeySequence(QStringLiteral("Ctrl+Shift+\\")));
+    defaults.insert(QStringLiteral("workbench.debug"), QKeySequence(QStringLiteral("Ctrl+Shift+Y")));
+    defaults.insert(QStringLiteral("debug.startContinue"), QKeySequence(QStringLiteral("F5")));
+    defaults.insert(QStringLiteral("debug.stop"), QKeySequence(QStringLiteral("Shift+F5")));
+    defaults.insert(QStringLiteral("debug.toggleBreakpoint"), QKeySequence(QStringLiteral("F9")));
+    defaults.insert(QStringLiteral("debug.stepOver"), QKeySequence(QStringLiteral("F10")));
+    defaults.insert(QStringLiteral("debug.stepInto"), QKeySequence(QStringLiteral("F11")));
+    defaults.insert(QStringLiteral("debug.stepOut"), QKeySequence(QStringLiteral("Shift+F11")));
     return defaults;
 }
 

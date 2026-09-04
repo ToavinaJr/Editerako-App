@@ -22,6 +22,7 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextEdit>
+#include <QTextFormat>
 #include <QTimer>
 
 CodeEditor::CodeEditor(QWidget *parent)
@@ -67,7 +68,7 @@ int CodeEditor::lineNumberAreaWidth() const
         ++digits;
     }
 
-    int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+    int space = 14 + 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
     space += diagnosticGutterExtraWidth(m_diagnostics);
     return space;
 }
@@ -101,6 +102,16 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 void CodeEditor::highlightCurrentLine()
 {
     QList<QTextEdit::ExtraSelection> extras = diagnosticExtraSelections(this, m_diagnostics);
+    if (m_debugLine >= 0) {
+        const QTextBlock debugBlock = document()->findBlockByNumber(m_debugLine);
+        if (debugBlock.isValid()) {
+            QTextEdit::ExtraSelection debugSel;
+            debugSel.format.setBackground(QColor(200, 160, 40, 80));
+            debugSel.format.setProperty(QTextFormat::FullWidthSelection, true);
+            debugSel.cursor = QTextCursor(debugBlock);
+            extras.append(debugSel);
+        }
+    }
     const BracketMatch match = findBracketMatch(toPlainText(), textCursor().position());
     if (match.isValid()) {
         QTextEdit::ExtraSelection open;
@@ -135,13 +146,24 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
+            if (blockNumber == m_debugLine) {
+                painter.fillRect(0, top, m_lineNumberArea->width(), bottom - top,
+                                 QColor(200, 160, 40, 70));
+            }
+            if (m_breakpointLines.contains(blockNumber)) {
+                painter.setBrush(QColor(220, 50, 50));
+                painter.setPen(Qt::NoPen);
+                const int size = 8;
+                const int y = top + qMax(0, (fontMetrics().height() - size) / 2);
+                painter.drawEllipse(3, y, size, size);
+            }
             const auto it = worst.constFind(block.blockNumber());
             if (it != worst.cend()) {
                 painter.setBrush(diagnosticColor(it.value()));
                 painter.setPen(Qt::NoPen);
                 const int size = 6;
                 const int y = top + qMax(0, (fontMetrics().height() - size) / 2);
-                painter.drawEllipse(2, y, size, size);
+                painter.drawEllipse(14, y, size, size);
             }
             const QString number = QString::number(blockNumber + 1);
             painter.setPen(QColor(128, 128, 128));
@@ -169,6 +191,49 @@ void CodeEditor::setLineNumbersVisible(bool visible)
 bool CodeEditor::isLineNumbersVisible() const
 {
     return m_lineNumbersVisible;
+}
+
+void CodeEditor::setBreakpointLines(const QSet<int> &lines)
+{
+    if (m_breakpointLines == lines) {
+        return;
+    }
+    m_breakpointLines = lines;
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::setDebugLine(int line)
+{
+    if (m_debugLine == line) {
+        return;
+    }
+    m_debugLine = line;
+    highlightCurrentLine();
+    if (m_lineNumberArea) {
+        m_lineNumberArea->update();
+    }
+}
+
+void CodeEditor::gutterMousePress(QMouseEvent *event)
+{
+    if (!event || event->button() != Qt::LeftButton || !m_lineNumbersVisible) {
+        return;
+    }
+
+    QTextBlock block = firstVisibleBlock();
+    int top = qRound(blockBoundingGeometry(block).translated(contentOffset()).top());
+    while (block.isValid()) {
+        const int bottom = top + qRound(blockBoundingRect(block).height());
+        if (event->pos().y() >= top && event->pos().y() < bottom) {
+            emit breakpointToggled(block.blockNumber());
+            event->accept();
+            return;
+        }
+        block = block.next();
+        top = bottom;
+    }
 }
 
 void CodeEditor::mousePressEvent(QMouseEvent *event)

@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 
 #include "ai/ChatWidget.h"
+#include "app/DebugSession.h"
 #include "app/LspSession.h"
 #include "core/AppSettings.h"
 #include "core/BackupService.h"
@@ -50,6 +51,22 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    m_debugSession = new DebugSession(m_editorManager, this);
+    connect(m_debugSession, &DebugSession::statusMessage, this,
+            [this](const QString &message, int timeoutMs) {
+                if (statusBar()) {
+                    statusBar()->showMessage(message, timeoutMs);
+                }
+            });
+    connect(m_debugSession, &DebugSession::debugStatusChanged, this, [this](const QString &text) {
+        if (m_editorStatus) {
+            m_editorStatus->setDebugStatus(text);
+        }
+    });
+    connect(m_debugSession, &DebugSession::stateChanged, this, [this](DebugSession::State) {
+        updateCommandStates();
+    });
+
     connectActions();
     restartAutoSave();
     updateWindowTitle();
@@ -74,6 +91,9 @@ MainWindow::~MainWindow()
 {
     if (m_lsp) {
         m_lsp->stopAll();
+    }
+    if (m_debugSession) {
+        m_debugSession->stop();
     }
     if (m_terminalPanel) {
         m_terminalPanel->shutdownAll();
@@ -276,6 +296,13 @@ void MainWindow::toggleOutput()
     }
 }
 
+void MainWindow::toggleDebug()
+{
+    if (m_bottomPanel) {
+        m_bottomPanel->toggleDebug();
+    }
+}
+
 void MainWindow::runBuildTask()
 {
     if (m_tasks) {
@@ -304,6 +331,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     if (m_lsp) {
         m_lsp->stopAll();
+    }
+    if (m_debugSession) {
+        m_debugSession->stop();
     }
 
     if (m_terminalPanel) {

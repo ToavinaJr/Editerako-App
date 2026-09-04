@@ -10,6 +10,7 @@ add_subdirectory(viewers)
 add_subdirectory(ai)
 add_subdirectory(scm)
 add_subdirectory(tasks)
+add_subdirectory(debug)
 
 set(editerako_app_sources
     main.cpp
@@ -24,6 +25,8 @@ set(editerako_app_sources
     app/LspSession.h
     app/LspSessionFeatures.cpp
     app/LspSessionNavigation.cpp
+    app/DebugSession.cpp
+    app/DebugSession.h
     ui/UiHelpers.cpp
     ui/UiHelpers.h
     ui/KeybindingEditor.cpp
@@ -50,6 +53,8 @@ set(editerako_app_sources
     ui/OutputPanel.h
     ui/TasksPanel.cpp
     ui/TasksPanel.h
+    ui/DebugPanel.cpp
+    ui/DebugPanel.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})
@@ -72,6 +77,7 @@ target_link_libraries(Editerako PRIVATE
     EditerakoLsp
     EditerakoScm
     EditerakoTasks
+    EditerakoDap
 )
 
 qt_add_resources(Editerako editerako_themes

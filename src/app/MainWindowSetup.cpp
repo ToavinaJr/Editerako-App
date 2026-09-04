@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 
 #include "ai/ChatWidget.h"
+#include "app/DebugSession.h"
 #include "app/LspSession.h"
 #include "core/AppSettings.h"
 #include "editor/CodeEditor.h"
@@ -37,6 +38,9 @@ void MainWindow::connectWorkspaceCollaborators()
                 }
                 if (m_lspSession) {
                     m_lspSession->setWorkspaceRoot(path);
+                }
+                if (m_debugSession) {
+                    m_debugSession->setWorkspaceRoot(path);
                 }
                 if (m_bottomPanel) {
                     m_bottomPanel->problemsPanel()->setWorkspaceRoot(path);
@@ -141,7 +145,7 @@ void MainWindow::setupBottomPanel()
 {
     m_scm = new GitCliProvider(this);
     m_tasks = new TaskManager(this);
-    m_bottomPanel = new BottomPanel(m_scm, m_tasks, this);
+    m_bottomPanel = new BottomPanel(m_scm, m_tasks, m_debugSession, this);
     m_terminalPanel = m_bottomPanel->terminalPanel();
     if (ui->verticalLayout) {
         ui->verticalLayout->addWidget(m_bottomPanel);
@@ -158,6 +162,10 @@ void MainWindow::setupBottomPanel()
             currentEditor()->setFocus();
         }
     });
+    if (m_debugSession) {
+        connect(m_debugSession, &DebugSession::panelRevealRequested, m_bottomPanel,
+                &BottomPanel::showDebug);
+    }
     connect(m_bottomPanel->problemsPanel(), &ProblemsPanel::problemActivated, this,
             [this](const QString &path, int line, int column) {
                 if (m_editorManager) {

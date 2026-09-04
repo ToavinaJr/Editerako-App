@@ -1,6 +1,7 @@
 #include "app/MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "app/DebugSession.h"
 #include "app/LspSession.h"
 #include "core/AppSettings.h"
 #include "core/CommandRegistry.h"
@@ -8,12 +9,14 @@
 #include "editor/CodeEditor.h"
 #include "editor/EditorManager.h"
 #include "tasks/TaskManager.h"
+#include "ui/BottomPanel.h"
 
 #include <QAction>
 #include <QCheckBox>
 #include <QMenu>
 #include <QMenuBar>
 #include <QPushButton>
+#include <QStatusBar>
 #include <QStringList>
 #include <QTabWidget>
 
@@ -158,6 +161,9 @@ void MainWindow::connectActions()
     QAction *toggleOutput = m_commands->create(QStringLiteral("workbench.output"),
                                                tr("Toggle Output"));
     connect(toggleOutput, &QAction::triggered, this, &MainWindow::toggleOutput);
+    QAction *toggleDebug = m_commands->create(QStringLiteral("workbench.debug"),
+                                              tr("Toggle Debug"));
+    connect(toggleDebug, &QAction::triggered, this, &MainWindow::toggleDebug);
     QAction *buildTask = m_commands->create(QStringLiteral("workbench.build"),
                                             tr("Run Build Task"));
     connect(buildTask, &QAction::triggered, this, &MainWindow::runBuildTask);
@@ -234,6 +240,65 @@ void MainWindow::connectActions()
                                              tr("Close Editor Group"));
     connect(closeGroup, &QAction::triggered, this, &MainWindow::closeEditorGroup);
 
+    QAction *debugStart = m_commands->create(QStringLiteral("debug.startContinue"),
+                                             tr("Start Debugging"));
+    connect(debugStart, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->start();
+        }
+    });
+    QAction *debugStop = m_commands->create(QStringLiteral("debug.stop"), tr("Stop Debugging"));
+    connect(debugStop, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->stop();
+        }
+    });
+    QAction *debugPause = m_commands->create(QStringLiteral("debug.pause"), tr("Pause"));
+    connect(debugPause, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->pause();
+        }
+    });
+    QAction *debugStepOver = m_commands->create(QStringLiteral("debug.stepOver"), tr("Step Over"));
+    connect(debugStepOver, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->stepOver();
+        }
+    });
+    QAction *debugStepInto = m_commands->create(QStringLiteral("debug.stepInto"), tr("Step Into"));
+    connect(debugStepInto, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->stepInto();
+        }
+    });
+    QAction *debugStepOut = m_commands->create(QStringLiteral("debug.stepOut"), tr("Step Out"));
+    connect(debugStepOut, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->stepOut();
+        }
+    });
+    QAction *debugToggleBp = m_commands->create(QStringLiteral("debug.toggleBreakpoint"),
+                                                tr("Toggle Breakpoint"));
+    connect(debugToggleBp, &QAction::triggered, this, [this]() {
+        if (m_debugSession) {
+            m_debugSession->toggleBreakpointAtCursor();
+        }
+    });
+    QAction *debugLaunchJson = m_commands->create(QStringLiteral("debug.createLaunchJson"),
+                                                  tr("Create launch.json"));
+    connect(debugLaunchJson, &QAction::triggered, this, [this]() {
+        if (!m_debugSession) {
+            return;
+        }
+        QString error;
+        if (!m_debugSession->createLaunchFile(&error) && statusBar()) {
+            statusBar()->showMessage(error, 4000);
+        }
+        if (m_bottomPanel) {
+            m_bottomPanel->showDebug();
+        }
+    });
+
     m_keybindings = new KeybindingManager(m_commands, this);
     m_keybindings->apply();
 
@@ -280,6 +345,7 @@ void MainWindow::connectActions()
     viewMenu->addAction(toggleSourceControl);
     viewMenu->addAction(toggleTasks);
     viewMenu->addAction(toggleOutput);
+    viewMenu->addAction(toggleDebug);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addAction(compareWithDisk);
     viewMenu->addSeparator();
@@ -302,6 +368,19 @@ void MainWindow::connectActions()
     buildMenu->addAction(cmakeClean);
     buildMenu->addAction(cmakeTest);
     buildMenu->addAction(cmakeRun);
+
+    QMenu *debugMenu = menuBar()->addMenu(tr("Debug"));
+    debugMenu->addAction(debugStart);
+    debugMenu->addAction(debugStop);
+    debugMenu->addAction(debugPause);
+    debugMenu->addSeparator();
+    debugMenu->addAction(debugStepOver);
+    debugMenu->addAction(debugStepInto);
+    debugMenu->addAction(debugStepOut);
+    debugMenu->addSeparator();
+    debugMenu->addAction(debugToggleBp);
+    debugMenu->addAction(debugLaunchJson);
+    debugMenu->addAction(toggleDebug);
 
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);
@@ -379,4 +458,18 @@ void MainWindow::updateCommandStates()
     m_commands->setEnabled(QStringLiteral("workbench.splitEditorDown"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("workbench.moveEditor"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("workbench.closeEditorGroup"), groups > 1);
+
+    const auto debugState = m_debugSession ? m_debugSession->state() : DebugSession::State::Idle;
+    const bool debugActive = debugState == DebugSession::State::Starting
+        || debugState == DebugSession::State::Running
+        || debugState == DebugSession::State::Stopped;
+    m_commands->setEnabled(QStringLiteral("debug.startContinue"),
+                           debugState != DebugSession::State::Starting
+                               && debugState != DebugSession::State::Running);
+    m_commands->setEnabled(QStringLiteral("debug.stop"), debugActive);
+    m_commands->setEnabled(QStringLiteral("debug.pause"), debugState == DebugSession::State::Running);
+    m_commands->setEnabled(QStringLiteral("debug.stepOver"), debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.stepInto"), debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.stepOut"), debugState == DebugSession::State::Stopped);
+    m_commands->setEnabled(QStringLiteral("debug.toggleBreakpoint"), hasEditor);
 }

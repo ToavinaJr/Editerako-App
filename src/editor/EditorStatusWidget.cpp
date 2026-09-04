@@ -32,6 +32,7 @@ EditorStatusWidget::EditorStatusWidget(QWidget *parent)
     m_language = makeLabel(QStringLiteral("editorStatusLanguage"));
     m_lsp = makeLabel(QStringLiteral("editorStatusLsp"));
     m_git = makeLabel(QStringLiteral("editorStatusGit"));
+    m_debug = makeLabel(QStringLiteral("editorStatusDebug"));
 
     m_problems = new QPushButton(this);
     m_problems->setObjectName(QStringLiteral("editorStatusProblems"));
@@ -95,6 +96,11 @@ void EditorStatusWidget::setLspStatus(const QString &text)
 void EditorStatusWidget::setGitBranch(const QString &text)
 {
     m_git->setText(text);
+}
+
+void EditorStatusWidget::setDebugStatus(const QString &text)
+{
+    m_debug->setText(text);
 }
 
 void EditorStatusWidget::setProblemCounts(int errors, int warnings)
