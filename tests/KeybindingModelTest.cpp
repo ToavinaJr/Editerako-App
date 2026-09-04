@@ -25,6 +25,10 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
 {
     const auto defaults = KeybindingModel::defaultShortcuts();
     QVERIFY(defaults.contains(QStringLiteral("file.save")));
+    QCOMPARE(defaults.value(QStringLiteral("file.close")),
+             QKeySequence(QStringLiteral("Ctrl+W")));
+    QCOMPARE(defaults.value(QStringLiteral("file.markdownPreview")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+V")));
     QCOMPARE(defaults.value(QStringLiteral("view.terminal")),
              QKeySequence(QStringLiteral("Ctrl+J")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.problems")),

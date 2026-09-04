@@ -11,6 +11,7 @@
 #include "scm/TextDiff.h"
 #include "ui/BottomPanel.h"
 #include "ui/UiHelpers.h"
+#include "viewers/FileKind.h"
 #include "viewers/ViewerManager.h"
 
 #include <QDragEnterEvent>
@@ -197,6 +198,25 @@ void MainWindow::compareWithDisk()
     m_bottomPanel->showDiff(tr("%1 (disk ↔ editor)").arg(QFileInfo(path).fileName()),
                             TextDiff::unified(loaded.text, editor->toPlainText(),
                                               QStringLiteral("disk"), QStringLiteral("editor")));
+}
+
+void MainWindow::openMarkdownPreview()
+{
+    if (!m_viewerManager || !m_editorManager) {
+        return;
+    }
+    const QString path = m_editorManager->currentFilePath();
+    if (!isMarkdownPath(path)) {
+        return;
+    }
+    const ViewerManager::OpenResult result = m_viewerManager->openMarkdownPreview(path);
+    if (result == ViewerManager::OpenResult::Opened) {
+        ui->centralStack->setCurrentIndex(CodeViewer);
+        raise();
+        activateWindow();
+        syncFileWatches();
+        saveSession();
+    }
 }
 
 void MainWindow::onFileChangedOnDisk(const QString &path)

@@ -62,6 +62,18 @@ editerako_add_test(test_FileKind
     LIBS EditerakoViewers
 )
 
+editerako_add_test(test_CsvParser
+    SOURCES CsvParserTest.cpp
+    LIBS EditerakoViewers
+)
+
+editerako_add_test(test_BuiltinViewers
+    SOURCES BuiltinViewersTest.cpp
+    LIBS EditerakoViewers
+)
+
+editerako_test_offscreen(test_BuiltinViewers)
+
 editerako_add_test(test_CommandRegistry
     SOURCES CommandRegistryTest.cpp
     LIBS EditerakoCore

@@ -44,7 +44,9 @@ public:
     CodeEditor *openUntitled();
     bool openTextFile(const QString &filePath);
     bool activateExisting(const QString &filePath);
+    bool activateWidget(QWidget *widget);
     void addViewerTab(QWidget *widget, const QString &filePath);
+    [[nodiscard]] QList<QWidget *> tabWidgets() const;
 
     [[nodiscard]] QStringList openFilePaths() const;
     [[nodiscard]] CodeEditor *editorForPath(const QString &filePath) const;

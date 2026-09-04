@@ -88,6 +88,7 @@ private slots:
     void toggleDebug();
     void runBuildTask();
     void compareWithDisk();
+    void openMarkdownPreview();
     void openPreferences();
     void openCommandPalette();
     void openQuickOpen();

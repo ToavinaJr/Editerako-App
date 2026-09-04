@@ -12,13 +12,15 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/WebView2.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/TreeSitter.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Apple.cmake")
 
-# Qt 6. PdfWidgets is a separate Qt module (Qt PDF); install it if find_package fails.
+# Qt 6. PdfWidgets and SvgWidgets are separate Qt modules; install them if find_package fails.
 find_package(Qt6 REQUIRED COMPONENTS
     Widgets
     Network
     Sql
     Concurrent
     PdfWidgets
+    Svg
+    SvgWidgets
     Test
 )
 

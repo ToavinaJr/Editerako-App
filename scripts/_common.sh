@@ -71,7 +71,7 @@ require_tools() {
     fi
     if ((${#missing[@]} > 0)); then
         echo "Outils introuvables: ${missing[*]}" >&2
-        echo "Installez CMake (>= 3.21), Ninja, un compilateur C++20, Qt 6 (Widgets, Network, Sql, Concurrent, PdfWidgets)." >&2
+        echo "Installez CMake (>= 3.21), Ninja, un compilateur C++20, Qt 6 (Widgets, Network, Sql, Concurrent, PdfWidgets, Svg)." >&2
         echo "Definissez CMAKE_PREFIX_PATH ou QTDIR si CMake ne trouve pas Qt." >&2
         exit 1
     fi

@@ -32,4 +32,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md) | Client DAP, Debug panel |
 | [adr/0020-plugin-system.md](adr/0020-plugin-system.md) | Plugins locaux |
 | [adr/0021-ci-sanitizers-packaging.md](adr/0021-ci-sanitizers-packaging.md) | CI, sanitizers, packaging |
+| [adr/0022-file-viewers.md](adr/0022-file-viewers.md) | Viewers Markdown, SVG, CSV |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

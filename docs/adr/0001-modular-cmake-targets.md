@@ -19,7 +19,7 @@ Introduire des bibliothèques **statiques** internes, une par module, créées v
 | `EditerakoEditor` | `src/editor/` | `EditerakoCore`, `EditerakoSyntax`, `EditerakoLsp`, `Qt6::Widgets` |
 | `EditerakoProject` | `src/project/` | `EditerakoCore`, `Qt6::Widgets` |
 | `EditerakoTerminal` | `src/terminal/` | `EditerakoCore`, `Qt6::Widgets`, `Qt6::Concurrent` |
-| `EditerakoViewers` | `src/viewers/` | `EditerakoCore`, `EditerakoEditor`, `Qt6::Widgets`, `Qt6::PdfWidgets` |
+| `EditerakoViewers` | `src/viewers/` | `EditerakoCore`, `EditerakoEditor`, `Qt6::Widgets`, `Qt6::PdfWidgets`, `Qt6::Svg`, `Qt6::SvgWidgets` |
 | `EditerakoAI` | `src/ai/` | `EditerakoCore`, `Qt6::Widgets`, `Qt6::Network`, `Qt6::Sql` |
 | `EditerakoLsp` | `src/lsp/` | `EditerakoCore`, `Qt6::Core` |
 | `EditerakoScm` | `src/scm/` | `EditerakoCore`, `Qt6::Core`, `Qt6::Concurrent` |

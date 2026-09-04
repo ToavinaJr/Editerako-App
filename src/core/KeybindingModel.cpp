@@ -29,6 +29,8 @@ QHash<QString, QKeySequence> KeybindingModel::defaultShortcuts()
     defaults.insert(QStringLiteral("file.save"), QKeySequence::Save);
     defaults.insert(QStringLiteral("file.saveAs"), QKeySequence::SaveAs);
     defaults.insert(QStringLiteral("file.close"), QKeySequence(QStringLiteral("Ctrl+W")));
+    defaults.insert(QStringLiteral("file.markdownPreview"),
+                    QKeySequence(QStringLiteral("Ctrl+Shift+V")));
     defaults.insert(QStringLiteral("edit.find"), QKeySequence::Find);
     defaults.insert(QStringLiteral("edit.gotoLine"), QKeySequence(QStringLiteral("Ctrl+G")));
     defaults.insert(QStringLiteral("edit.toggleLineComment"), QKeySequence(QStringLiteral("Ctrl+/")));

@@ -48,7 +48,7 @@ PR / push master
 
 Hors pull request : ZIP Windows, TGZ/AppImage Linux, DMG macOS en artefacts.
 
-Qt CI : **6.9.2** + module `qtpdf` (aqt / `jurplel/install-qt-action`). Linux : arch `linux_gcc_64` (plus `gcc_64` depuis Qt 6.7). Tests : `QT_QPA_PLATFORM=offscreen`.
+Qt CI : **6.9.2** + modules `qtpdf` et `qtsvg` (aqt / `jurplel/install-qt-action`). Linux : arch `linux_gcc_64` (plus `gcc_64` depuis Qt 6.7). Tests : `QT_QPA_PLATFORM=offscreen`.
 
 ## clang-format / clang-tidy
 

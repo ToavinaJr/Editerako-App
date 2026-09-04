@@ -16,6 +16,8 @@ function(editerako_strip_agl_from_qt)
             Qt6::OpenGLWidgets
             Qt6::Pdf
             Qt6::PdfWidgets
+            Qt6::Svg
+            Qt6::SvgWidgets
             WrapOpenGL::WrapOpenGL)
         if(NOT TARGET "${_tgt}")
             continue()

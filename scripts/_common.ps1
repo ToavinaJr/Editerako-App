@@ -136,7 +136,7 @@ Outils introuvables: $($missing -join ', ').
 Installez CMake, Ninja et un compilateur C++20, puis soit:
   - ajoutez-les au PATH
   - soit definissez CMAKE_PREFIX_PATH ou QTDIR vers le kit Qt (ex. ...\6.x.y\mingw_64)
-Le module Qt PDF (PdfWidgets) doit etre installe.
+Le module Qt PDF (PdfWidgets) et Qt SVG (SvgWidgets) doivent etre installes.
 "@
     }
 }

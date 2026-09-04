@@ -1,11 +1,15 @@
 #include "viewers/ViewerManager.h"
 
 #include "core/Logging.h"
+#include "editor/EditorDocument.h"
 #include "editor/EditorManager.h"
 #include "plugins/IFileViewerProvider.h"
+#include "viewers/CsvViewer.h"
 #include "viewers/FileKind.h"
 #include "viewers/ImageViewer.h"
+#include "viewers/MarkdownViewer.h"
 #include "viewers/PdfViewer.h"
+#include "viewers/SvgViewer.h"
 
 #include <QFileInfo>
 #include <QMessageBox>
@@ -58,11 +62,45 @@ ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
         return openPdf(filePath);
     case FileKind::Image:
         return openImage(filePath);
+    case FileKind::Svg:
+        return openSvg(filePath);
+    case FileKind::Csv:
+        return openCsv(filePath);
     case FileKind::Unsupported:
         qCInfo(lcViewer) << "Unsupported file type" << filePath;
         return OpenResult::Unsupported;
     }
     return OpenResult::Unsupported;
+}
+
+ViewerManager::OpenResult ViewerManager::openMarkdownPreview(const QString &filePath)
+{
+    if (!m_editors || filePath.isEmpty() || !isMarkdownPath(filePath)) {
+        return OpenResult::Failed;
+    }
+
+    const QString normalized = EditorDocument::normalizePath(filePath);
+    for (QWidget *widget : m_editors->tabWidgets()) {
+        if (auto *preview = qobject_cast<MarkdownViewer *>(widget)) {
+            if (EditorDocument::normalizePath(preview->filePath()) == normalized) {
+                m_editors->activateWidget(widget);
+                return OpenResult::Opened;
+            }
+        }
+    }
+
+    auto *viewer = new MarkdownViewer(m_editors->tabWidget());
+    if (!viewer->load(filePath)) {
+        delete viewer;
+        QMessageBox::warning(qobject_cast<QWidget *>(parent()),
+                             tr("Error"),
+                             tr("Could not open Markdown preview:\n%1").arg(filePath));
+        return OpenResult::Failed;
+    }
+
+    m_editors->addViewerTab(viewer, filePath);
+    qCInfo(lcViewer) << "Opened Markdown preview" << filePath;
+    return OpenResult::Opened;
 }
 
 ViewerManager::OpenResult ViewerManager::openPdf(const QString &filePath)
@@ -94,6 +132,38 @@ ViewerManager::OpenResult ViewerManager::openImage(const QString &filePath)
 
     m_editors->addViewerTab(viewer, filePath);
     qCInfo(lcViewer) << "Opened image" << filePath;
+    return OpenResult::Opened;
+}
+
+ViewerManager::OpenResult ViewerManager::openSvg(const QString &filePath)
+{
+    auto *viewer = new SvgViewer(m_editors->tabWidget());
+    if (!viewer->load(filePath)) {
+        delete viewer;
+        QMessageBox::warning(qobject_cast<QWidget *>(parent()),
+                             tr("Error"),
+                             tr("Could not open SVG:\n%1").arg(filePath));
+        return OpenResult::Failed;
+    }
+
+    m_editors->addViewerTab(viewer, filePath);
+    qCInfo(lcViewer) << "Opened SVG" << filePath;
+    return OpenResult::Opened;
+}
+
+ViewerManager::OpenResult ViewerManager::openCsv(const QString &filePath)
+{
+    auto *viewer = new CsvViewer(m_editors->tabWidget());
+    if (!viewer->load(filePath)) {
+        delete viewer;
+        QMessageBox::warning(qobject_cast<QWidget *>(parent()),
+                             tr("Error"),
+                             tr("Could not open CSV:\n%1").arg(filePath));
+        return OpenResult::Failed;
+    }
+
+    m_editors->addViewerTab(viewer, filePath);
+    qCInfo(lcViewer) << "Opened CSV" << filePath;
     return OpenResult::Opened;
 }
 

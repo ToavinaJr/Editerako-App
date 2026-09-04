@@ -43,7 +43,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `editor/` | `EditerakoEditor` | `CodeEditor`, `EditorDocument`, `EditorArea` / `EditorGroup` (split), `EditorManager`, `EditorIo` / `EditorStyle` / `HighlighterSync` / `EditorStatusWidget` ; `features/` |
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceFileIndex`, `WorkspacePath` / `WorkspaceOps`, `GitIgnore`, `WorkspaceSearch`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `ITerminalBackend` (`Process` / `Pty`), `AnsiSgr`, `ShellProfiles` |
-| `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
+| `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, PDF / image / SVG / CSV, aperçu Markdown |
 | `ai/` | `EditerakoAI` | `AiProvider` (Gemini / OpenAI / Anthropic / Ollama), chat **compte** (WebView2), `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
@@ -63,7 +63,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 ## Flux importants
 
-**Ouvrir un fichier.** `MainWindow::openFileInEditor` → `ViewerManager::open` → `fileKindForPath` : texte (`EditorManager`), PDF, image, ou page « non supporté ».
+**Ouvrir un fichier.** `MainWindow::openFileInEditor` → `ViewerManager::open` → `fileKindForPath` : texte (`EditorManager`), PDF, image, SVG, CSV, ou page « non supporté ». Markdown et JSON restent du texte ; aperçu Markdown : `file.markdownPreview`. [adr/0022-file-viewers.md](adr/0022-file-viewers.md).
 
 **PDF.** Ne pas appeler `QPdfView::setDocument` avant `QPdfDocument::Status::Ready` (crash sinon). L’onglet est ajouté d’abord, le document ensuite.
 

@@ -31,7 +31,9 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |
 | `test_AiCatalog` | `EditerakoAI` | défaut compte ChatGPT, kinds account/API |
 | `test_AiResponseParse` | `EditerakoAI` | JSON Gemini / OpenAI / Anthropic, SSE |
-| `test_FileKind` | `EditerakoViewers` | texte / PDF / image / vide |
+| `test_FileKind` | `EditerakoViewers` | texte / PDF / image / SVG / CSV / Markdown reste texte |
+| `test_CsvParser` | `EditerakoViewers` | virgules, quotes, CRLF, newline quoté |
+| `test_BuiltinViewers` | `EditerakoViewers` | load Markdown / SVG / CSV (`offscreen`) |
 | `test_CommandRegistry` | `EditerakoCore` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode, octets bruts |
 | `test_TextFileFormat` | `EditerakoCore` | UTF-8/BOM, UTF-16, Latin1, LF/CRLF, upgrade Unicode |

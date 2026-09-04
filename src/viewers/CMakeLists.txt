@@ -1,11 +1,19 @@
 editerako_add_module(EditerakoViewers
     SOURCES
+        CsvParser.cpp
+        CsvParser.h
+        CsvViewer.cpp
+        CsvViewer.h
         FileKind.cpp
         FileKind.h
         ImageViewer.cpp
         ImageViewer.h
+        MarkdownViewer.cpp
+        MarkdownViewer.h
         PdfViewer.cpp
         PdfViewer.h
+        SvgViewer.cpp
+        SvgViewer.h
         ViewerManager.cpp
         ViewerManager.h
     LIBS
@@ -13,4 +21,6 @@ editerako_add_module(EditerakoViewers
         EditerakoEditor
         Qt6::Widgets
         Qt6::PdfWidgets
+        Qt6::Svg
+        Qt6::SvgWidgets
 )

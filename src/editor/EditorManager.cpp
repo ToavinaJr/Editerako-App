@@ -426,6 +426,33 @@ bool EditorManager::activateExisting(const QString &filePath)
     return false;
 }
 
+bool EditorManager::activateWidget(QWidget *widget)
+{
+    EditorGroup *group = groupForWidget(widget);
+    if (!group || !widget) {
+        return false;
+    }
+    setActiveGroup(group);
+    group->tabWidget()->setCurrentWidget(widget);
+    widget->setFocus();
+    return true;
+}
+
+QList<QWidget *> EditorManager::tabWidgets() const
+{
+    QList<QWidget *> widgets;
+    if (!m_area) {
+        return widgets;
+    }
+    for (EditorGroup *group : m_area->groups()) {
+        QTabWidget *tabs = group->tabWidget();
+        for (int i = 0; i < tabs->count(); ++i) {
+            widgets.append(tabs->widget(i));
+        }
+    }
+    return widgets;
+}
+
 bool EditorManager::openTextFile(const QString &filePath)
 {
     if (filePath.isEmpty()) {
@@ -500,7 +527,11 @@ void EditorManager::addViewerTab(QWidget *widget, const QString &filePath)
     }
     const QString normalized = EditorDocument::normalizePath(filePath);
     widget->setProperty("filePath", normalized);
-    const int idx = tabWidget()->addTab(widget, QFileInfo(filePath).fileName());
+    QString label = widget->windowTitle();
+    if (label.isEmpty()) {
+        label = QFileInfo(filePath).fileName();
+    }
+    const int idx = tabWidget()->addTab(widget, label);
     tabWidget()->setTabToolTip(idx, normalized);
     tabWidget()->setCurrentIndex(idx);
 }

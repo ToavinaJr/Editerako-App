@@ -12,7 +12,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 - Recherche, remplacement, regex, Go To Line
 - Command Palette (`Ctrl+Shift+P`), Quick Open (`Ctrl+P`, `fichier:ligne`), Search workspace (`Ctrl+Shift+F`)
 - Explorateur de fichiers, menu contextuel (rename, delete, copy/cut/paste, …), création de fichiers et de dossiers
-- Prévisualisation PDF et images
+- Prévisualisation PDF, images, SVG, CSV ; aperçu Markdown (`Ctrl+Shift+V`)
 - Terminal intégré (plusieurs sessions, historique, autocomplete, découverte de commandes via `QProcess`)
 - Chat IA Gemini, historique SQLite par projet (`.editerako/`, non versionné)
 
@@ -23,7 +23,7 @@ Documentation détaillée : [docs/](docs/README.md) (architecture, build, conven
 ## Requirements
 
 - **CMake** ≥ 3.21, **Ninja**, compilateur C++20
-- **Qt 6** : Widgets, Network, Sql, Concurrent, **PdfWidgets** (module Qt PDF), Test
+- **Qt 6** : Widgets, Network, Sql, Concurrent, **PdfWidgets** (module Qt PDF), **Svg / SvgWidgets**, Test
 
 Qt est localisé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake`, ou (Windows) `C:\Qt\<version>\mingw_64`. Détail : [docs/build.md](docs/build.md).
 
@@ -43,7 +43,7 @@ CMake : `cmake --preset debug` puis `cmake --build --preset debug`.
 
 CI, sanitizers (ASan+UBSan, TSan) et packaging : [docs/ci.md](docs/ci.md). Windows portable : `.\scripts\package.ps1` (Release).
 
-Qt Creator : ouvrir `CMakeLists.txt`, kit Qt 6 **avec PdfWidgets**. Le kit (`build/Desktop_Qt_…`) est distinct de `build/debug`.
+Qt Creator : ouvrir `CMakeLists.txt`, kit Qt 6 **avec PdfWidgets et Svg**. Le kit (`build/Desktop_Qt_…`) est distinct de `build/debug`.
 
 ## Build Linux
 

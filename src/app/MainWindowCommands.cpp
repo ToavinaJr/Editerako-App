@@ -10,6 +10,7 @@
 #include "editor/EditorManager.h"
 #include "tasks/TaskManager.h"
 #include "ui/BottomPanel.h"
+#include "viewers/FileKind.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -187,6 +188,10 @@ void MainWindow::connectActions()
         QStringLiteral("file.compareWithDisk"), tr("Compare with Disk"));
     connect(compareWithDisk, &QAction::triggered, this, &MainWindow::compareWithDisk);
 
+    QAction *markdownPreview = m_commands->create(
+        QStringLiteral("file.markdownPreview"), tr("Open Markdown Preview"));
+    connect(markdownPreview, &QAction::triggered, this, &MainWindow::openMarkdownPreview);
+
     QAction *commandPalette = m_commands->create(
         QStringLiteral("workbench.commandPalette"),
         tr("Command Palette"));
@@ -348,6 +353,7 @@ void MainWindow::connectActions()
     viewMenu->addAction(toggleDebug);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addAction(compareWithDisk);
+    viewMenu->addAction(markdownPreview);
     viewMenu->addSeparator();
     viewMenu->addAction(zoomIn);
     viewMenu->addAction(zoomOut);
@@ -451,6 +457,9 @@ void MainWindow::updateCommandStates()
     const bool hasSavedEditor = hasEditor && m_editorManager
         && !m_editorManager->currentFilePath().isEmpty();
     m_commands->setEnabled(QStringLiteral("file.compareWithDisk"), hasSavedEditor);
+    m_commands->setEnabled(QStringLiteral("file.markdownPreview"),
+                           isMarkdownPath(m_editorManager ? m_editorManager->currentFilePath()
+                                                         : QString()));
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
     m_commands->setEnabled(QStringLiteral("file.closeAll"), totalTabs > 0);

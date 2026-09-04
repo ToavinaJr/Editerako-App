@@ -28,6 +28,7 @@ public:
     [[nodiscard]] static FileKind kindForPath(const QString &path);
     OpenResult open(const QString &filePath);
     OpenResult openNew(const QString &filePath);
+    OpenResult openMarkdownPreview(const QString &filePath);
 
     void addProvider(IFileViewerProvider *provider);
     void removeProvider(IFileViewerProvider *provider);
@@ -35,6 +36,8 @@ public:
 private:
     OpenResult openPdf(const QString &filePath);
     OpenResult openImage(const QString &filePath);
+    OpenResult openSvg(const QString &filePath);
+    OpenResult openCsv(const QString &filePath);
     OpenResult openWithProvider(IFileViewerProvider *provider, const QString &filePath);
 
     EditorManager *m_editors = nullptr;
