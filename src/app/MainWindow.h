@@ -19,6 +19,7 @@ class ViewerManager;
 class WorkspaceController;
 class WorkspaceSearchDialog;
 class GitCliProvider;
+class TaskManager;
 
 class QCloseEvent;
 class QDragEnterEvent;
@@ -74,6 +75,9 @@ private slots:
     void toggleTerminal();
     void toggleProblems();
     void toggleSourceControl();
+    void toggleTasks();
+    void toggleOutput();
+    void runBuildTask();
     void compareWithDisk();
     void openPreferences();
     void openCommandPalette();
@@ -94,6 +98,7 @@ private:
     TerminalPanel *m_terminalPanel = nullptr;
     WorkspaceSearchDialog *m_searchDialog = nullptr;
     GitCliProvider *m_scm = nullptr;
+    TaskManager *m_tasks = nullptr;
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
     QTimer *m_autoSaveTimer = nullptr;

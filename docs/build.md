@@ -32,7 +32,7 @@ cmake/Warnings.cmake    -Wall ou /W4 sur les cibles app/tests, pas sur Tree-sitt
 cmake/Libraries.cmake   editerako_add_module() — libs statiques internes
 cmake/TreeSitter.cmake  runtime + OBJECT libs par grammaire
 cmake/Testing.cmake     editerako_add_test()
-src/<module>/CMakeLists.txt  EditerakoCore, Editor, Syntax, Project, Terminal, Viewers, AI
+src/<module>/CMakeLists.txt  EditerakoCore, Editor, Syntax, Project, Terminal, Viewers, AI, Lsp, Scm, Tasks
 src/CMakeLists.txt      sous-modules, cible Editerako, qt_add_resources, install / deploy
 tests/CMakeLists.txt    exécutables Qt Test (lient les libs de module)
 ```

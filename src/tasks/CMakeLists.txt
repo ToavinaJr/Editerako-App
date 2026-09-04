@@ -1,0 +1,21 @@
+editerako_add_module(EditerakoTasks
+    SOURCES
+        TaskDefinition.h
+        TaskVariables.cpp
+        TaskVariables.h
+        TaskFile.cpp
+        TaskFile.h
+        CMakePresets.cpp
+        CMakePresets.h
+        CMakeCommands.cpp
+        CMakeCommands.h
+        ProblemMatcher.cpp
+        ProblemMatcher.h
+        TaskRunner.cpp
+        TaskRunner.h
+        TaskManager.cpp
+        TaskManager.h
+    LIBS
+        EditerakoCore
+        Qt6::Core
+)

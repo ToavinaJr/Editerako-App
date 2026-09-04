@@ -253,7 +253,8 @@ QTreeWidget#sourceControlTree {
     border: none;
 }
 
-QPlainTextEdit#diffText {
+QPlainTextEdit#diffText,
+QPlainTextEdit#outputText {
     background-color: #1e1e1e;
     color: #cccccc;
     border: none;

@@ -31,6 +31,8 @@ void KeybindingModelTest::defaultsIncludeSaveAndTerminal()
              QKeySequence(QStringLiteral("Ctrl+Shift+M")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.sourceControl")),
              QKeySequence(QStringLiteral("Ctrl+Shift+G")));
+    QCOMPARE(defaults.value(QStringLiteral("workbench.build")),
+             QKeySequence(QStringLiteral("Ctrl+Shift+B")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.commandPalette")),
              QKeySequence(QStringLiteral("Ctrl+Shift+P")));
     QCOMPARE(defaults.value(QStringLiteral("workbench.quickOpen")),

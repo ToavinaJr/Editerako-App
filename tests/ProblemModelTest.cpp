@@ -11,6 +11,7 @@ private slots:
     void filterErrorsAndWarnings();
     void clearFileRemovesOnlyThatPath();
     void emptyDiagnosticsClearFile();
+    void setSourceProblemsKeepsOtherSources();
 };
 
 void ProblemModelTest::replacesPerFileAndCounts()
@@ -86,6 +87,29 @@ void ProblemModelTest::emptyDiagnosticsClearFile()
     model.setFileProblems(QStringLiteral("/a.cpp"), {});
     QVERIFY(model.isEmpty());
     QCOMPARE(model.totalCount(), 0);
+}
+
+void ProblemModelTest::setSourceProblemsKeepsOtherSources()
+{
+    ProblemModel model;
+    ProblemItem lsp;
+    lsp.path = QStringLiteral("/a.cpp");
+    lsp.severity = EditorDiagnostic::Severity::Error;
+    lsp.message = QStringLiteral("lsp");
+    lsp.source = QStringLiteral("clangd");
+    model.setFileProblems(QStringLiteral("/a.cpp"), {lsp});
+
+    ProblemItem task;
+    task.path = QStringLiteral("/a.cpp");
+    task.line = 4;
+    task.severity = EditorDiagnostic::Severity::Warning;
+    task.message = QStringLiteral("gcc");
+    model.setSourceProblems(QStringLiteral("task"), {task});
+    QCOMPARE(model.totalCount(), 2);
+
+    model.setSourceProblems(QStringLiteral("task"), {});
+    QCOMPARE(model.totalCount(), 1);
+    QCOMPARE(model.visibleItems().front().source, QStringLiteral("clangd"));
 }
 
 QTEST_GUILESS_MAIN(ProblemModelTest)

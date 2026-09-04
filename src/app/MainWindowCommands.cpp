@@ -7,6 +7,7 @@
 #include "core/KeybindingManager.h"
 #include "editor/CodeEditor.h"
 #include "editor/EditorManager.h"
+#include "tasks/TaskManager.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -152,6 +153,30 @@ void MainWindow::connectActions()
         QStringLiteral("workbench.sourceControl"), tr("Toggle Source Control"));
     connect(toggleSourceControl, &QAction::triggered, this, &MainWindow::toggleSourceControl);
 
+    QAction *toggleTasks = m_commands->create(QStringLiteral("workbench.tasks"), tr("Toggle Tasks"));
+    connect(toggleTasks, &QAction::triggered, this, &MainWindow::toggleTasks);
+    QAction *toggleOutput = m_commands->create(QStringLiteral("workbench.output"),
+                                               tr("Toggle Output"));
+    connect(toggleOutput, &QAction::triggered, this, &MainWindow::toggleOutput);
+    QAction *buildTask = m_commands->create(QStringLiteral("workbench.build"),
+                                            tr("Run Build Task"));
+    connect(buildTask, &QAction::triggered, this, &MainWindow::runBuildTask);
+
+    auto bindCMake = [this](const QString &id, const QString &text) {
+        QAction *action = m_commands->create(id, text);
+        connect(action, &QAction::triggered, this, [this, id]() {
+            if (m_tasks) {
+                m_tasks->run(id);
+            }
+        });
+        return action;
+    };
+    QAction *cmakeConfigure = bindCMake(QStringLiteral("cmake.configure"), tr("CMake: Configure"));
+    QAction *cmakeBuild = bindCMake(QStringLiteral("cmake.build"), tr("CMake: Build"));
+    QAction *cmakeClean = bindCMake(QStringLiteral("cmake.clean"), tr("CMake: Clean"));
+    QAction *cmakeTest = bindCMake(QStringLiteral("cmake.test"), tr("CMake: Test"));
+    QAction *cmakeRun = bindCMake(QStringLiteral("cmake.run"), tr("CMake: Run"));
+
     QAction *compareWithDisk = m_commands->create(
         QStringLiteral("file.compareWithDisk"), tr("Compare with Disk"));
     connect(compareWithDisk, &QAction::triggered, this, &MainWindow::compareWithDisk);
@@ -240,6 +265,8 @@ void MainWindow::connectActions()
     viewMenu->addSeparator();
     viewMenu->addAction(toggleProblems);
     viewMenu->addAction(toggleSourceControl);
+    viewMenu->addAction(toggleTasks);
+    viewMenu->addAction(toggleOutput);
     viewMenu->addAction(toggleTerminal);
     viewMenu->addAction(compareWithDisk);
     viewMenu->addSeparator();
@@ -248,6 +275,15 @@ void MainWindow::connectActions()
     viewMenu->addAction(zoomReset);
     viewMenu->addSeparator();
     viewMenu->addAction(preferences);
+
+    QMenu *buildMenu = menuBar()->addMenu(tr("Build"));
+    buildMenu->addAction(buildTask);
+    buildMenu->addSeparator();
+    buildMenu->addAction(cmakeConfigure);
+    buildMenu->addAction(cmakeBuild);
+    buildMenu->addAction(cmakeClean);
+    buildMenu->addAction(cmakeTest);
+    buildMenu->addAction(cmakeRun);
 
     connect(ui->addFileButton, &QPushButton::clicked, this, &MainWindow::onAddFileClicked);
     connect(ui->newFolderButton, &QPushButton::clicked, this, &MainWindow::onNewFolderClicked);

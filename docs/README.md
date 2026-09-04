@@ -22,4 +22,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md) | clangd, completion, hover, diagnostics, navigation |
 | [adr/0012-problems-panel.md](adr/0012-problems-panel.md) | Problems Panel, BottomPanel, filtres Errors/Warnings |
 | [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) | Git CLI async, panneau SCM, décorations, Diff |
+| [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) | Tasks `.editerako/tasks.json`, CMake CLI, Output |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

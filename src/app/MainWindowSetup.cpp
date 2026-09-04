@@ -7,15 +7,19 @@
 #include "editor/CodeEditor.h"
 #include "editor/EditorManager.h"
 #include "editor/EditorStatusWidget.h"
+#include "editor/EditorDiagnostic.h"
 #include "editor/ProblemModel.h"
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "scm/GitCliProvider.h"
 #include "scm/GitParsers.h"
+#include "tasks/TaskDefinition.h"
+#include "tasks/TaskManager.h"
 #include "terminal/TerminalPanel.h"
 #include "ui/BottomPanel.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/SourceControlPanel.h"
+#include "ui/TasksPanel.h"
 #include "ui/UiHelpers.h"
 #include "viewers/ViewerManager.h"
 
@@ -37,6 +41,7 @@ void MainWindow::connectWorkspaceCollaborators()
                 if (m_bottomPanel) {
                     m_bottomPanel->problemsPanel()->setWorkspaceRoot(path);
                     m_bottomPanel->sourceControlPanel()->setWorkspace(path);
+                    m_bottomPanel->tasksPanel()->setWorkspace(path);
                 }
                 if (m_terminalPanel) {
                     m_terminalPanel->setWorkingDirectory(path);
@@ -91,6 +96,9 @@ void MainWindow::setupCodeEditor()
     statusBar()->addPermanentWidget(m_editorStatus);
     connect(m_editorManager, &EditorManager::currentChanged, this, [this]() {
         m_editorStatus->setEditor(currentEditor());
+        if (m_tasks) {
+            m_tasks->setActiveFile(m_editorManager->currentFilePath());
+        }
     });
     m_editorStatus->setEditor(currentEditor());
 }
@@ -126,7 +134,8 @@ void MainWindow::setupFileTree()
 void MainWindow::setupBottomPanel()
 {
     m_scm = new GitCliProvider(this);
-    m_bottomPanel = new BottomPanel(m_scm, this);
+    m_tasks = new TaskManager(this);
+    m_bottomPanel = new BottomPanel(m_scm, m_tasks, this);
     m_terminalPanel = m_bottomPanel->terminalPanel();
     if (ui->verticalLayout) {
         ui->verticalLayout->addWidget(m_bottomPanel);
@@ -180,6 +189,35 @@ void MainWindow::setupBottomPanel()
                 m_editorStatus->setGitBranch(tr("Git: %1").arg(branch));
             }
         });
+    }
+    if (m_tasks) {
+        connect(m_tasks, &TaskManager::problemsMatched, this,
+                [this](const QVector<TaskProblem> &problems) {
+                    QVector<ProblemItem> items;
+                    items.reserve(problems.size());
+                    for (const TaskProblem &problem : problems) {
+                        ProblemItem item;
+                        item.path = problem.path;
+                        item.line = problem.line;
+                        item.column = problem.column;
+                        item.message = problem.message;
+                        item.source = QStringLiteral("task");
+                        switch (problem.severity) {
+                        case TaskProblem::Severity::Warning:
+                            item.severity = EditorDiagnostic::Severity::Warning;
+                            break;
+                        case TaskProblem::Severity::Information:
+                            item.severity = EditorDiagnostic::Severity::Information;
+                            break;
+                        case TaskProblem::Severity::Error:
+                            item.severity = EditorDiagnostic::Severity::Error;
+                            break;
+                        }
+                        items.append(item);
+                    }
+                    m_bottomPanel->problemsPanel()->model()->setSourceProblems(
+                        QStringLiteral("task"), items);
+                });
     }
 }
 

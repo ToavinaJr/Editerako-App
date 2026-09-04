@@ -65,6 +65,10 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_GitParsers` | `EditerakoScm` | porcelain `-z`, rename, MM, chemins absolus |
 | `test_TextDiff` | `EditerakoScm` | LCS, unified, EOL |
 | `test_GitCliProvider` | `EditerakoScm` | non-repo, stage (skip si `git` absent) |
+| `test_TaskFile` | `EditerakoTasks` | parse `tasks.json`, variables `${workspaceFolder}` |
+| `test_CMakePresets` | `EditerakoTasks` | presets visibles, `binaryDir`, specs CLI |
+| `test_ProblemMatcher` | `EditerakoTasks` | gcc / msvc |
+| `test_TaskManager` | `EditerakoTasks` | tasks custom + CMake, runner echo |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

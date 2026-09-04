@@ -24,6 +24,7 @@ src/main.cpp + src/app/ + src/ui/     cible Editerako
         ├── EditerakoAI
         ├── EditerakoLsp
         ├── EditerakoScm
+        ├── EditerakoTasks
         └── EditerakoCore
 ```
 
@@ -44,6 +45,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
+| `tasks/` | `EditerakoTasks` | `tasks.json`, CMake CLI (presets, configure/build/test/run), runner async, problem matcher. [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) |
 
 `LspSession` (`src/app/`) démarre clangd pour C/C++ et alimente l’UI. Même classe, unités de compilation séparées : `LspSession.cpp` (cycle de vie, sync, diagnostics), `LspSessionFeatures.cpp` (completion / hover / signature), `LspSessionNavigation.cpp` (définition, références, rename, symboles). clangd reçoit `--compile-commands-dir` vers `lspCompileCommandsDir` (`build/debug`, …) pour résoudre les types du projet. Les lignes des pickers sont formatées par `lspLocationRows` / `lspSymbolRows` (`EditerakoLsp`). [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
 
@@ -61,9 +63,11 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Disque.** `WorkspaceController` câble `FileWatcher` (debounce 250 ms) et l’arbre. `EditorManager::aboutToSave` appelle `ignoreNextChange`. Un changement externe passe par `diskChangeAction()` ; `MainWindow` affiche les prompts.
 
-**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md).
+**Terminal.** Cwd = dossier du fichier texte actif, sinon le workspace. Le terminal vit dans `BottomPanel` (onglet Terminal). Fermer le dernier onglet terminal masque le panneau inférieur. `Ctrl+J` bascule la visibilité (après setup le panneau est masqué avec le flag « visible » : le premier `Ctrl+J` ne fait qu’aligner l’état). `Ctrl+Shift+M` ouvre Problems. `Ctrl+Shift+G` ouvre Source Control. `Ctrl+Shift+B` lance le build. [adr/0012-problems-panel.md](adr/0012-problems-panel.md), [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md), [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md).
 
 **Git.** `GitCliProvider` détecte le dépôt du workspace, rafraîchit le statut hors UI, et alimente le panneau Source Control (Staged / Changes / Untracked) plus les badges de l’explorateur. Double-clic → diff unified. `file.compareWithDisk` compare le buffer éditeur au fichier disque.
+
+**Tasks / CMake.** `TaskManager` charge `.editerako/tasks.json` et, si `CMakeLists.txt` est à la racine, expose Configure / Build / Clean / Test / Run via le CLI CMake (`--preset`). La sortie va dans l’onglet Output ; gcc/msvc alimentent Problems sans écraser clangd. `Ctrl+Shift+B` lance le build. [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md).
 
 **Éditeur.** `CodeEditor` délègue à `src/editor/features/` : gutter, ligne courante (+ matching de brackets), multi-curseurs, indent, commentaires, paires auto, commandes de lignes, occurrences. Swap de lignes : **même algorithme** `toPlainText().mid`. Menu Edit + `CommandRegistry`. Détail : [adr/0003-editor-features.md](adr/0003-editor-features.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md), [adr/0004-document-encoding-eol.md](adr/0004-document-encoding-eol.md).
 

@@ -23,6 +23,46 @@ void ProblemModel::setFileProblems(const QString &path, const QVector<ProblemIte
     emit changed();
 }
 
+void ProblemModel::setSourceProblems(const QString &source, const QVector<ProblemItem> &items)
+{
+    if (source.isEmpty()) {
+        return;
+    }
+
+    bool updated = false;
+    for (auto it = m_byFile.begin(); it != m_byFile.end();) {
+        QVector<ProblemItem> kept;
+        for (const ProblemItem &item : it.value()) {
+            if (item.source == source) {
+                updated = true;
+            } else {
+                kept.append(item);
+            }
+        }
+        if (kept.isEmpty()) {
+            it = m_byFile.erase(it);
+        } else {
+            it.value() = kept;
+            ++it;
+        }
+    }
+
+    for (ProblemItem item : items) {
+        item.source = source;
+        if (item.path.isEmpty()) {
+            continue;
+        }
+        m_byFile[item.path].append(item);
+        updated = true;
+    }
+
+    if (!updated) {
+        return;
+    }
+    recount();
+    emit changed();
+}
+
 void ProblemModel::clearFile(const QString &path)
 {
     setFileProblems(path, {});

@@ -32,6 +32,7 @@ public:
     explicit ProblemModel(QObject *parent = nullptr);
 
     void setFileProblems(const QString &path, const QVector<ProblemItem> &items);
+    void setSourceProblems(const QString &source, const QVector<ProblemItem> &items);
     void clearFile(const QString &path);
     void clearAll();
     void setFilter(Filter filter);

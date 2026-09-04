@@ -278,3 +278,24 @@ editerako_add_test(test_GitCliProvider
     SOURCES GitCliProviderTest.cpp
     LIBS EditerakoScm
 )
+
+editerako_add_test(test_TaskFile
+    SOURCES TaskFileTest.cpp
+    LIBS EditerakoTasks
+)
+
+editerako_add_test(test_CMakePresets
+    SOURCES CMakePresetsTest.cpp
+    LIBS EditerakoTasks
+)
+
+editerako_add_test(test_ProblemMatcher
+    SOURCES ProblemMatcherTest.cpp
+    LIBS EditerakoTasks
+)
+
+editerako_add_test(test_TaskManager
+    SOURCES TaskManagerTest.cpp
+    LIBS EditerakoTasks
+)
+

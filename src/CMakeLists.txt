@@ -9,6 +9,7 @@ add_subdirectory(terminal)
 add_subdirectory(viewers)
 add_subdirectory(ai)
 add_subdirectory(scm)
+add_subdirectory(tasks)
 
 set(editerako_app_sources
     main.cpp
@@ -45,6 +46,10 @@ set(editerako_app_sources
     ui/SourceControlPanel.h
     ui/DiffViewer.cpp
     ui/DiffViewer.h
+    ui/OutputPanel.cpp
+    ui/OutputPanel.h
+    ui/TasksPanel.cpp
+    ui/TasksPanel.h
 )
 
 qt_add_executable(Editerako ${editerako_app_sources})
@@ -66,6 +71,7 @@ target_link_libraries(Editerako PRIVATE
     EditerakoAI
     EditerakoLsp
     EditerakoScm
+    EditerakoTasks
 )
 
 qt_add_resources(Editerako editerako_themes

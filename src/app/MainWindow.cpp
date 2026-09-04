@@ -12,6 +12,7 @@
 #include "lsp/LspServerManager.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
+#include "tasks/TaskManager.h"
 #include "ui/BottomPanel.h"
 
 #include <QApplication>
@@ -225,6 +226,27 @@ void MainWindow::toggleSourceControl()
 {
     if (m_bottomPanel) {
         m_bottomPanel->toggleSourceControl();
+    }
+}
+
+void MainWindow::toggleTasks()
+{
+    if (m_bottomPanel) {
+        m_bottomPanel->toggleTasks();
+    }
+}
+
+void MainWindow::toggleOutput()
+{
+    if (m_bottomPanel) {
+        m_bottomPanel->toggleOutput();
+    }
+}
+
+void MainWindow::runBuildTask()
+{
+    if (m_tasks) {
+        m_tasks->runBuild();
     }
 }
 
