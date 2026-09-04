@@ -182,7 +182,7 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings,
         buttons->addWidget(reload);
         buttons->addStretch(1);
         layout->addLayout(buttons);
-        connect(openFolder, &QPushButton::clicked, this, [this]() {
+        connect(openFolder, &QPushButton::clicked, this, []() {
             const QString dir = PluginManager::userPluginsDirectory();
             QDir().mkpath(dir);
             QDesktopServices::openUrl(QUrl::fromLocalFile(dir));

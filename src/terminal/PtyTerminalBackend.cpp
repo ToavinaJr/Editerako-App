@@ -9,9 +9,9 @@
 #include <vector>
 
 #ifdef Q_OS_WIN
-#include <windows.h>
-#include <cstring>
 #include <QWinEventNotifier>
+#include <cstring>
+#include <windows.h>
 #ifndef HPCON
 typedef VOID *HPCON;
 #endif
@@ -19,6 +19,7 @@ typedef VOID *HPCON;
 #define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE 0x00020016
 #endif
 #else
+#include <QSocketNotifier>
 #include <cerrno>
 #include <fcntl.h>
 #include <signal.h>
@@ -26,10 +27,10 @@ typedef VOID *HPCON;
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <QSocketNotifier>
 #endif
 
-struct PtyTerminalBackend::Impl {
+struct PtyTerminalBackend::Impl
+{
 #ifdef Q_OS_WIN
     HANDLE inWrite = INVALID_HANDLE_VALUE;
     HANDLE outRead = INVALID_HANDLE_VALUE;
@@ -69,7 +70,7 @@ QString quoteWinArg(const QString &arg)
     return quoted;
 }
 
-template<typename Fn>
+template <typename Fn>
 Fn loadKernelProc(const char *name)
 {
     Fn fn{};
@@ -86,9 +87,7 @@ Fn loadKernelProc(const char *name)
 
 #endif
 
-PtyTerminalBackend::PtyTerminalBackend(QObject *parent)
-    : ITerminalBackend(parent)
-    , m_impl(new Impl)
+PtyTerminalBackend::PtyTerminalBackend(QObject *parent) : ITerminalBackend(parent), m_impl(new Impl)
 {
 #ifdef Q_OS_WIN
     m_impl->create = loadKernelProc<Impl::CreateFn>("CreatePseudoConsole");
@@ -126,8 +125,8 @@ PtyTerminalBackend::PtyTerminalBackend(QObject *parent)
                 emit dataReceived(buffer, false);
             }
         }
-        if (m_impl->process != INVALID_HANDLE_VALUE
-            && WaitForSingleObject(m_impl->process, 0) == WAIT_OBJECT_0 && m_impl->running) {
+        if (m_impl->process != INVALID_HANDLE_VALUE &&
+            WaitForSingleObject(m_impl->process, 0) == WAIT_OBJECT_0 && m_impl->running) {
             DWORD code = 0;
             GetExitCodeProcess(m_impl->process, &code);
             m_impl->running = false;
@@ -173,8 +172,11 @@ bool PtyTerminalBackend::isAvailable()
 #endif
 }
 
-void PtyTerminalBackend::start(const QString &program, const QStringList &arguments,
-                               const QString &workingDirectory, int columns, int rows)
+void PtyTerminalBackend::start(const QString &program,
+                               const QStringList &arguments,
+                               const QString &workingDirectory,
+                               int columns,
+                               int rows)
 {
     if (!m_impl || m_impl->running || program.isEmpty() || !isAvailable()) {
         emit failed(tr("PTY is not available"));
@@ -189,8 +191,8 @@ void PtyTerminalBackend::start(const QString &program, const QStringList &argume
     sa.bInheritHandle = TRUE;
     HANDLE inRead = INVALID_HANDLE_VALUE;
     HANDLE outWrite = INVALID_HANDLE_VALUE;
-    if (!CreatePipe(&inRead, &m_impl->inWrite, &sa, 0)
-        || !CreatePipe(&m_impl->outRead, &outWrite, &sa, 0)) {
+    if (!CreatePipe(&inRead, &m_impl->inWrite, &sa, 0) ||
+        !CreatePipe(&m_impl->outRead, &outWrite, &sa, 0)) {
         emit failed(tr("Failed to create PTY pipes"));
         return;
     }
@@ -212,8 +214,13 @@ void PtyTerminalBackend::start(const QString &program, const QStringList &argume
         emit failed(tr("Failed to init process attributes"));
         return;
     }
-    UpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, m_impl->console,
-                              sizeof(m_impl->console), nullptr, nullptr);
+    UpdateProcThreadAttribute(attrs,
+                              0,
+                              PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
+                              m_impl->console,
+                              sizeof(m_impl->console),
+                              nullptr,
+                              nullptr);
     STARTUPINFOEXW si{};
     si.StartupInfo.cb = sizeof(si);
     si.lpAttributeList = attrs;
@@ -223,9 +230,16 @@ void PtyTerminalBackend::start(const QString &program, const QStringList &argume
     }
     std::wstring cmdLine = cmd.toStdWString();
     PROCESS_INFORMATION pi{};
-    const BOOL ok = CreateProcessW(
-        nullptr, cmdLine.data(), nullptr, nullptr, FALSE, EXTENDED_STARTUPINFO_PRESENT, nullptr,
-        cwd.isEmpty() ? nullptr : reinterpret_cast<LPCWSTR>(cwd.utf16()), &si.StartupInfo, &pi);
+    const BOOL ok = CreateProcessW(nullptr,
+                                   cmdLine.data(),
+                                   nullptr,
+                                   nullptr,
+                                   FALSE,
+                                   EXTENDED_STARTUPINFO_PRESENT,
+                                   nullptr,
+                                   cwd.isEmpty() ? nullptr : reinterpret_cast<LPCWSTR>(cwd.utf16()),
+                                   &si.StartupInfo,
+                                   &pi);
     DeleteProcThreadAttributeList(attrs);
     HeapFree(GetProcessHeap(), 0, attrs);
     if (!ok) {
@@ -242,9 +256,9 @@ void PtyTerminalBackend::start(const QString &program, const QStringList &argume
             return;
         }
         DWORD available = 0;
-        if (m_impl->outRead != INVALID_HANDLE_VALUE
-            && PeekNamedPipe(m_impl->outRead, nullptr, 0, nullptr, &available, nullptr)
-            && available > 0) {
+        if (m_impl->outRead != INVALID_HANDLE_VALUE &&
+            PeekNamedPipe(m_impl->outRead, nullptr, 0, nullptr, &available, nullptr) &&
+            available > 0) {
             QByteArray buffer;
             buffer.resize(static_cast<int>(available));
             DWORD read = 0;
@@ -300,9 +314,7 @@ void PtyTerminalBackend::start(const QString &program, const QStringList &argume
             close(slave);
         }
         close(m_impl->master);
-        if (!cwdUtf8.empty()) {
-            chdir(cwdUtf8.c_str());
-        }
+        [[maybe_unused]] const int cwdChanged = cwdUtf8.empty() ? 0 : ::chdir(cwdUtf8.c_str());
         execvp(argv[0], argv.data());
         _exit(127);
     }
@@ -332,10 +344,23 @@ void PtyTerminalBackend::write(const QByteArray &data)
     }
 #ifdef Q_OS_WIN
     DWORD written = 0;
-    WriteFile(m_impl->inWrite, data.constData(), static_cast<DWORD>(data.size()), &written, nullptr);
+    WriteFile(
+        m_impl->inWrite, data.constData(), static_cast<DWORD>(data.size()), &written, nullptr);
 #else
     if (m_impl->master >= 0) {
-        ::write(m_impl->master, data.constData(), static_cast<size_t>(data.size()));
+        const char *bytes = data.constData();
+        size_t remaining = static_cast<size_t>(data.size());
+        while (remaining > 0) {
+            const ssize_t n = ::write(m_impl->master, bytes, remaining);
+            if (n < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                break;
+            }
+            bytes += n;
+            remaining -= static_cast<size_t>(n);
+        }
     }
 #endif
 }
@@ -358,7 +383,7 @@ void PtyTerminalBackend::resize(int columns, int rows)
     }
 #else
     if (m_impl->master >= 0) {
-        struct winsize ws {};
+        struct winsize ws{};
         ws.ws_col = static_cast<unsigned short>(m_impl->columns);
         ws.ws_row = static_cast<unsigned short>(m_impl->rows);
         ioctl(m_impl->master, TIOCSWINSZ, &ws);
