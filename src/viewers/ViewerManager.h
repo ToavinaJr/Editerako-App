@@ -3,10 +3,12 @@
 
 #include "viewers/FileKind.h"
 
+#include <QList>
 #include <QObject>
 #include <QString>
 
 class EditorManager;
+class IFileViewerProvider;
 
 class ViewerManager : public QObject
 {
@@ -27,11 +29,16 @@ public:
     OpenResult open(const QString &filePath);
     OpenResult openNew(const QString &filePath);
 
+    void addProvider(IFileViewerProvider *provider);
+    void removeProvider(IFileViewerProvider *provider);
+
 private:
     OpenResult openPdf(const QString &filePath);
     OpenResult openImage(const QString &filePath);
+    OpenResult openWithProvider(IFileViewerProvider *provider, const QString &filePath);
 
     EditorManager *m_editors = nullptr;
+    QList<IFileViewerProvider *> m_providers;
 };
 
 #endif

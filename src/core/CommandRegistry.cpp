@@ -65,3 +65,14 @@ bool CommandRegistry::setEnabled(const QString &id, bool enabled)
     cmd->setEnabled(enabled);
     return true;
 }
+
+bool CommandRegistry::remove(const QString &id)
+{
+    QAction *cmd = m_actions.take(id);
+    if (!cmd) {
+        return false;
+    }
+    cmd->setParent(nullptr);
+    delete cmd;
+    return true;
+}

@@ -1,5 +1,7 @@
 #include "viewers/FileKind.h"
 
+#include "syntax/LanguageRegistry.h"
+
 #include <QFileInfo>
 #include <QMimeDatabase>
 #include <QMimeType>
@@ -28,6 +30,9 @@ FileKind fileKindForPath(const QString &path)
     }
     if (mimeName.startsWith(QLatin1String("image/"))) {
         return FileKind::Image;
+    }
+    if (LanguageRegistry::isExtraLanguagePath(path)) {
+        return FileKind::Text;
     }
     return FileKind::Unsupported;
 }

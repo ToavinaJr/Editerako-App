@@ -26,6 +26,7 @@ src/main.cpp + src/app/ + src/ui/     cible Editerako
         ├── EditerakoScm
         ├── EditerakoTasks
         ├── EditerakoDap
+        ├── EditerakoPlugins
         └── EditerakoCore
 ```
 
@@ -48,10 +49,13 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
 | `tasks/` | `EditerakoTasks` | `tasks.json`, CMake CLI (presets, configure/build/test/run), runner async, problem matcher. [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) |
 | `debug/` | `EditerakoDap` | Client DAP (pas LSP), `launch.json`, breakpoints. Pas d’UI. [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md) |
+| `plugins/` | `EditerakoPlugins` | `IPlugin` / `PluginManager` / `plugin.json`. Pas de marketplace. [adr/0020-plugin-system.md](adr/0020-plugin-system.md) |
 
 `LspSession` (`src/app/`) démarre clangd pour C/C++ et alimente l’UI. Même classe, unités de compilation séparées : `LspSession.cpp` (cycle de vie, sync, diagnostics), `LspSessionFeatures.cpp` (completion / hover / signature), `LspSessionNavigation.cpp` (définition, références, rename, symboles). clangd reçoit `--compile-commands-dir` vers `lspCompileCommandsDir` (`build/debug`, …) pour résoudre les types du projet. Les lignes des pickers sont formatées par `lspLocationRows` / `lspSymbolRows` (`EditerakoLsp`). [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
 
 `DebugSession` (`src/app/`) spawn l’adaptateur DAP (`gdb --interpreter=dap` ou `lldb-dap`), synchronise les breakpoints, et alimente l’onglet Debug (stack, variables, console). [adr/0019-dap-debugger.md](adr/0019-dap-debugger.md).
+
+`PluginManager` (`src/plugins/`, créé par `MainWindow`) scanne `%AppData%/Editerako/plugins` et `{workspace}/.editerako/plugins`. [adr/0020-plugin-system.md](adr/0020-plugin-system.md), [plugins.md](plugins.md).
 
 `MainWindow` reste le composition root, découpé par responsabilité (même classe) : `MainWindow.cpp` (cycle de vie / session), `MainWindowCommands.cpp` (menus), `MainWindowSetup.cpp` (câblage), `MainWindowWorkspace.cpp` (fichiers / disque / D&D), `MainWindowDialogs.cpp` (palettes). L’explorateur : menu dans `FileExplorerMenu.cpp`, icônes / badges dans `FileExplorerDecorations`.
 

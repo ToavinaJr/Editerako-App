@@ -22,6 +22,8 @@ class WorkspaceController;
 class WorkspaceSearchDialog;
 class GitCliProvider;
 class TaskManager;
+class PluginManager;
+class QMenu;
 
 class QCloseEvent;
 class QDragEnterEvent;
@@ -107,6 +109,8 @@ private:
     WorkspaceSearchDialog *m_searchDialog = nullptr;
     GitCliProvider *m_scm = nullptr;
     TaskManager *m_tasks = nullptr;
+    PluginManager *m_pluginManager = nullptr;
+    QMenu *m_pluginMenu = nullptr;
     ChatWidget *chatWidget = nullptr;
     SessionController m_session;
     QTimer *m_autoSaveTimer = nullptr;
@@ -127,6 +131,7 @@ private:
     void setupCodeEditor();
     void setupBottomPanel();
     void installChatWidget();
+    void setupPlugins();
     void focusMainWindowAndEditor();
     void openFileInEditor(const QString &filePath);
     void promptOpenFolderOrFile();

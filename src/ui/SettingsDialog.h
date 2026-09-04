@@ -6,10 +6,12 @@
 class CommandRegistry;
 class KeybindingManager;
 class KeybindingEditor;
+class PluginManager;
 class QCheckBox;
 class QComboBox;
 class QFontComboBox;
 class QLineEdit;
+class QListWidget;
 class QPlainTextEdit;
 class QSpinBox;
 
@@ -18,7 +20,8 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands, QWidget *parent = nullptr);
+    SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands, PluginManager *plugins,
+                   QWidget *parent = nullptr);
 
 signals:
     void settingsApplied();
@@ -27,6 +30,8 @@ private:
     void load();
     void save();
     void applyClicked();
+
+    void rebuildPluginList();
 
     QComboBox *m_theme = nullptr;
     QCheckBox *m_autoSave = nullptr;
@@ -47,6 +52,8 @@ private:
     QLineEdit *m_aiModel = nullptr;
     QLineEdit *m_aiEndpoint = nullptr;
     KeybindingEditor *m_keybindings = nullptr;
+    PluginManager *m_plugins = nullptr;
+    QListWidget *m_pluginList = nullptr;
 };
 
 #endif

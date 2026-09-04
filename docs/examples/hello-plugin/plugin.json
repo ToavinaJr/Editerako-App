@@ -1,0 +1,14 @@
+{
+  "id": "example.hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "contributes": {
+    "commands": [
+      { "id": "hello.greet", "title": "Hello: Greet" }
+    ],
+    "languages": [
+      { "id": "toml", "displayName": "TOML", "extensions": [".toml"] }
+    ]
+  }
+}

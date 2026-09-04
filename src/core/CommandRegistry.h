@@ -25,6 +25,7 @@ public:
     [[nodiscard]] QAction *action(const QString &id) const;
     [[nodiscard]] QStringList ids() const;
     bool setEnabled(const QString &id, bool enabled);
+    bool remove(const QString &id);
 
 private:
     QWidget *m_actionParent = nullptr;

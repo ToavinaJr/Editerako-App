@@ -43,6 +43,8 @@ public:
     void showDebug();
     void showDiff(const QString &path, const QString &text);
     void updateProblemsTitle();
+    void addPluginTab(const QString &id, const QString &title, QWidget *widget);
+    void removePluginTab(const QString &id);
 
 signals:
     void editorFocusRequested();

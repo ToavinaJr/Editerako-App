@@ -75,6 +75,12 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_CMakePresets` | `EditerakoTasks` | presets visibles, `binaryDir`, specs CLI |
 | `test_ProblemMatcher` | `EditerakoTasks` | gcc / msvc |
 | `test_TaskManager` | `EditerakoTasks` | tasks custom + CMake, runner echo |
+| `test_DapClient` | `EditerakoDap` | framing DAP, initialize mock |
+| `test_LaunchFile` | `EditerakoDap` | parse `launch.json` |
+| `test_BreakpointStore` | `EditerakoDap` | breakpoints par fichier |
+| `test_DapTypes` | `EditerakoDap` | séquence, events, variables |
+| `test_PluginManifest` | `EditerakoPlugins` | parse `plugin.json`, `apiVersion`, refus `library` hors dossier |
+| `test_PluginManager` | `EditerakoPlugins` | chargement JSON, désactivation, `IPlugin` in-process (`offscreen`) |
 
 Les binaires sont dans `build/<preset>/tests/`.
 

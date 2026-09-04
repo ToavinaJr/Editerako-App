@@ -3,12 +3,14 @@
 #include "core/AppSettings.h"
 #include "core/ThemeManager.h"
 #include "ai/AiCatalog.h"
+#include "plugins/PluginManager.h"
 #include "terminal/PtyTerminalBackend.h"
 #include "terminal/ShellProfiles.h"
 #include "ui/KeybindingEditor.h"
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDesktopServices>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFont>
@@ -18,11 +20,13 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QtGlobal>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace {
@@ -48,8 +52,10 @@ int bytesToMb(qint64 bytes)
 
 } // namespace
 
-SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands, QWidget *parent)
+SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *commands,
+                               PluginManager *plugins, QWidget *parent)
     : QDialog(parent)
+    , m_plugins(plugins)
 {
     setWindowTitle(tr("Preferences"));
     setObjectName(QStringLiteral("settingsDialog"));
@@ -152,6 +158,46 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
     addPage(tr("Keyboard"), m_keybindings);
 
     {
+        auto *page = new QWidget;
+        auto *layout = new QVBoxLayout(page);
+        layout->addWidget(new QLabel(tr("Local plugins: user folder and {workspace}/.editerako/plugins. "
+                                        "Uncheck to disable."),
+                                     page));
+        m_pluginList = new QListWidget(page);
+        m_pluginList->setObjectName(QStringLiteral("settingsPluginList"));
+        layout->addWidget(m_pluginList, 1);
+        auto *buttons = new QHBoxLayout;
+        auto *openFolder = new QPushButton(tr("Open user plugins folder"), page);
+        auto *reload = new QPushButton(tr("Reload plugins"), page);
+        buttons->addWidget(openFolder);
+        buttons->addWidget(reload);
+        buttons->addStretch(1);
+        layout->addLayout(buttons);
+        connect(openFolder, &QPushButton::clicked, this, [this]() {
+            const QString dir = PluginManager::userPluginsDirectory();
+            QDir().mkpath(dir);
+            QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
+        });
+        connect(reload, &QPushButton::clicked, this, [this]() {
+            if (!m_plugins) {
+                return;
+            }
+            QStringList disabled;
+            for (int i = 0; i < m_pluginList->count(); ++i) {
+                QListWidgetItem *item = m_pluginList->item(i);
+                if (item && item->checkState() != Qt::Checked) {
+                    disabled.append(item->data(Qt::UserRole).toString());
+                }
+            }
+            AppSettings().setDisabledPlugins(disabled);
+            m_plugins->setDisabledIds(disabled);
+            m_plugins->reload();
+            rebuildPluginList();
+        });
+        addPage(tr("Plugins"), page);
+    }
+
+    {
         auto *form = new QFormLayout;
         m_aiProvider = new QComboBox(this);
         for (const AiService &service : aiServices()) {
@@ -222,6 +268,45 @@ void SettingsDialog::load()
     m_aiProvider->setCurrentIndex(aiIndex >= 0 ? aiIndex : 0);
     m_aiModel->setText(settings.aiModel());
     m_aiEndpoint->setText(settings.aiEndpoint());
+    rebuildPluginList();
+}
+
+void SettingsDialog::rebuildPluginList()
+{
+    if (!m_pluginList) {
+        return;
+    }
+    m_pluginList->clear();
+    if (!m_plugins) {
+        auto *item = new QListWidgetItem(tr("No plugin manager"));
+        item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+        m_pluginList->addItem(item);
+        return;
+    }
+    const QVector<PluginInfo> plugins = m_plugins->plugins();
+    if (plugins.isEmpty()) {
+        auto *item = new QListWidgetItem(tr("No local plugins found"));
+        item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+        m_pluginList->addItem(item);
+        return;
+    }
+    for (const PluginInfo &plugin : plugins) {
+        QString source = tr("user");
+        if (plugin.source == PluginInfo::Source::Workspace) {
+            source = tr("workspace");
+        } else if (plugin.source == PluginInfo::Source::InProcess) {
+            source = tr("built-in");
+        }
+        QString text = QStringLiteral("%1  %2  (%3)").arg(plugin.name, plugin.version, source);
+        if (!plugin.error.isEmpty()) {
+            text += QStringLiteral(" — ") + plugin.error;
+        }
+        auto *item = new QListWidgetItem(text);
+        item->setData(Qt::UserRole, plugin.id);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(plugin.enabled ? Qt::Checked : Qt::Unchecked);
+        m_pluginList->addItem(item);
+    }
 }
 
 void SettingsDialog::save()
@@ -261,6 +346,22 @@ void SettingsDialog::save()
     settings.setAiProvider(m_aiProvider->currentData().toString());
     settings.setAiModel(m_aiModel->text().trimmed());
     settings.setAiEndpoint(m_aiEndpoint->text().trimmed());
+
+    QStringList disabled;
+    if (m_pluginList) {
+        for (int i = 0; i < m_pluginList->count(); ++i) {
+            QListWidgetItem *item = m_pluginList->item(i);
+            if (item && item->data(Qt::UserRole).isValid() && item->checkState() != Qt::Checked) {
+                disabled.append(item->data(Qt::UserRole).toString());
+            }
+        }
+    }
+    const QStringList previous = settings.disabledPlugins();
+    settings.setDisabledPlugins(disabled);
+    if (m_plugins && disabled != previous) {
+        m_plugins->setDisabledIds(disabled);
+        m_plugins->reload();
+    }
 }
 
 void SettingsDialog::applyClicked()

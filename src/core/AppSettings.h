@@ -66,6 +66,9 @@ public:
     [[nodiscard]] qint64 largeFileDisableSyntaxBytes() const;
     void setLargeFileDisableSyntaxBytes(qint64 bytes);
 
+    [[nodiscard]] QStringList disabledPlugins() const;
+    void setDisabledPlugins(const QStringList &ids);
+
     static QStringList defaultExcludedFolders();
     static QString defaultAiModel();
 

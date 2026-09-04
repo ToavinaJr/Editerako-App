@@ -13,6 +13,8 @@
 #include "editor/EditorManager.h"
 #include "editor/EditorStatusWidget.h"
 #include "lsp/LspServerManager.h"
+#include "plugins/IFileViewerProvider.h"
+#include "plugins/PluginManager.h"
 #include "project/WorkspaceController.h"
 #include "terminal/TerminalPanel.h"
 #include "tasks/TaskManager.h"
@@ -77,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupBottomPanel();
     installChatWidget();
+    setupPlugins();
     connectWorkspaceCollaborators();
 
     setAcceptDrops(true);
@@ -89,6 +92,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if (m_pluginManager) {
+        m_pluginManager->unloadAll();
+    }
     if (m_lsp) {
         m_lsp->stopAll();
     }

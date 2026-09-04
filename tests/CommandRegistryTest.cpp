@@ -12,6 +12,7 @@ private slots:
     void createAndLookup();
     void rejectsInvalidAndDuplicates();
     void setEnabled();
+    void removeCommand();
 };
 
 void CommandRegistryTest::createAndLookup()
@@ -45,6 +46,16 @@ void CommandRegistryTest::setEnabled()
     QVERIFY(registry.setEnabled(QStringLiteral("view.term"), false));
     QVERIFY(!action->isEnabled());
     QVERIFY(!registry.setEnabled(QStringLiteral("missing"), true));
+}
+
+void CommandRegistryTest::removeCommand()
+{
+    QWidget parent;
+    CommandRegistry registry(&parent);
+    QVERIFY(registry.create(QStringLiteral("plugin.hello"), QStringLiteral("Hello")));
+    QVERIFY(registry.remove(QStringLiteral("plugin.hello")));
+    QVERIFY(registry.action(QStringLiteral("plugin.hello")) == nullptr);
+    QVERIFY(!registry.remove(QStringLiteral("plugin.hello")));
 }
 
 QTEST_MAIN(CommandRegistryTest)

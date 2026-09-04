@@ -13,6 +13,7 @@ private slots:
     void futureLanguageExtensions();
     void cmakeListsByFileName();
     void unknownExtensionIsPlainText();
+    void extraLanguages();
     void displayNames();
     void treeSitterLanguages();
     void highlightQueryPaths();
@@ -65,6 +66,21 @@ void LanguageRegistryTest::unknownExtensionIsPlainText()
 {
     QCOMPARE(LanguageRegistry::idForPath(QStringLiteral("notes.txt")), LanguageId::PlainText);
     QCOMPARE(LanguageRegistry::idForPath(QStringLiteral("app.rs")), LanguageId::PlainText);
+}
+
+void LanguageRegistryTest::extraLanguages()
+{
+    LanguageRegistry::ExtraLanguage extra;
+    extra.id = QStringLiteral("toml");
+    extra.displayName = QStringLiteral("TOML");
+    extra.extensions = {QStringLiteral("toml")};
+    LanguageRegistry::setExtraLanguages({extra});
+    QCOMPARE(LanguageRegistry::idForPath(QStringLiteral("x.toml")), LanguageId::PlainText);
+    QCOMPARE(LanguageRegistry::extraDisplayNameForPath(QStringLiteral("x.toml")),
+             QStringLiteral("TOML"));
+    QVERIFY(LanguageRegistry::isExtraLanguagePath(QStringLiteral("cfg.toml")));
+    LanguageRegistry::setExtraLanguages({});
+    QVERIFY(!LanguageRegistry::isExtraLanguagePath(QStringLiteral("x.toml")));
 }
 
 void LanguageRegistryTest::displayNames()

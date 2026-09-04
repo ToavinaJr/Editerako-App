@@ -218,3 +218,41 @@ CommentTokens LanguageRegistry::commentTokens(LanguageId id)
 {
     return definition(id).commentTokens;
 }
+
+QVector<LanguageRegistry::ExtraLanguage> &LanguageRegistry::extraLanguageStore()
+{
+    static QVector<ExtraLanguage> extras;
+    return extras;
+}
+
+void LanguageRegistry::setExtraLanguages(const QVector<ExtraLanguage> &languages)
+{
+    extraLanguageStore() = languages;
+}
+
+QVector<LanguageRegistry::ExtraLanguage> LanguageRegistry::extraLanguages()
+{
+    return extraLanguageStore();
+}
+
+QString LanguageRegistry::extraDisplayNameForPath(const QString &path)
+{
+    if (path.isEmpty()) {
+        return {};
+    }
+    const QString ext = QFileInfo(path).suffix().toLower();
+    if (ext.isEmpty()) {
+        return {};
+    }
+    for (const ExtraLanguage &language : extraLanguageStore()) {
+        if (language.extensions.contains(ext)) {
+            return language.displayName;
+        }
+    }
+    return {};
+}
+
+bool LanguageRegistry::isExtraLanguagePath(const QString &path)
+{
+    return !extraDisplayNameForPath(path).isEmpty();
+}

@@ -2,6 +2,7 @@
 
 #include "core/Logging.h"
 #include "editor/EditorManager.h"
+#include "plugins/IFileViewerProvider.h"
 #include "viewers/FileKind.h"
 #include "viewers/ImageViewer.h"
 #include "viewers/PdfViewer.h"
@@ -39,6 +40,15 @@ ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
 {
     if (!m_editors || filePath.isEmpty()) {
         return OpenResult::Failed;
+    }
+
+    for (IFileViewerProvider *provider : m_providers) {
+        if (provider && provider->canOpen(filePath)) {
+            const OpenResult result = openWithProvider(provider, filePath);
+            if (result != OpenResult::Unsupported) {
+                return result;
+            }
+        }
     }
 
     switch (kindForPath(filePath)) {
@@ -84,5 +94,33 @@ ViewerManager::OpenResult ViewerManager::openImage(const QString &filePath)
 
     m_editors->addViewerTab(viewer, filePath);
     qCInfo(lcViewer) << "Opened image" << filePath;
+    return OpenResult::Opened;
+}
+
+void ViewerManager::addProvider(IFileViewerProvider *provider)
+{
+    if (provider && !m_providers.contains(provider)) {
+        m_providers.prepend(provider);
+    }
+}
+
+void ViewerManager::removeProvider(IFileViewerProvider *provider)
+{
+    m_providers.removeAll(provider);
+}
+
+ViewerManager::OpenResult ViewerManager::openWithProvider(IFileViewerProvider *provider,
+                                                          const QString &filePath)
+{
+    QString error;
+    QWidget *widget = provider->create(filePath, m_editors->tabWidget(), &error);
+    if (!widget) {
+        if (!error.isEmpty()) {
+            QMessageBox::warning(qobject_cast<QWidget *>(parent()), tr("Error"), error);
+        }
+        return OpenResult::Failed;
+    }
+    m_editors->addViewerTab(widget, filePath);
+    qCInfo(lcViewer) << "Opened with plugin viewer" << provider->id() << filePath;
     return OpenResult::Opened;
 }

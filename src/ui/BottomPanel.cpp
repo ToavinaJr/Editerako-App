@@ -193,3 +193,27 @@ void BottomPanel::updateProblemsTitle()
     }
     m_tabs->setTabText(m_problemsIndex, tr("Problems (%1)").arg(total));
 }
+
+void BottomPanel::addPluginTab(const QString &id, const QString &title, QWidget *widget)
+{
+    if (!widget || id.isEmpty()) {
+        return;
+    }
+    removePluginTab(id);
+    widget->setObjectName(QStringLiteral("plugin:") + id);
+    m_tabs->addTab(widget, title.isEmpty() ? id : title);
+}
+
+void BottomPanel::removePluginTab(const QString &id)
+{
+    const QString name = QStringLiteral("plugin:") + id;
+    for (int i = 0; i < m_tabs->count(); ++i) {
+        QWidget *page = m_tabs->widget(i);
+        if (!page || page->objectName() != name) {
+            continue;
+        }
+        m_tabs->removeTab(i);
+        page->deleteLater();
+        return;
+    }
+}

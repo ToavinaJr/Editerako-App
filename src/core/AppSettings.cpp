@@ -29,6 +29,7 @@ constexpr auto kTerminalUsePty = "terminal/usePty";
 constexpr auto kAiProvider = "ai/provider";
 constexpr auto kAiModel = "ai/model";
 constexpr auto kAiEndpoint = "ai/endpoint";
+constexpr auto kDisabledPlugins = "plugins/disabled";
 constexpr auto kLargeFileWarnBytes = "files/largeFileWarnBytes";
 constexpr auto kLargeFileDisableSyntaxBytes = "files/largeFileDisableSyntaxBytes";
 
@@ -364,4 +365,14 @@ qint64 AppSettings::largeFileDisableSyntaxBytes() const
 void AppSettings::setLargeFileDisableSyntaxBytes(qint64 bytes)
 {
     setValue(kLargeFileDisableSyntaxBytes, QVariant::fromValue(qMax(qint64(1), bytes)));
+}
+
+QStringList AppSettings::disabledPlugins() const
+{
+    return value(kDisabledPlugins, QStringList{}).toStringList();
+}
+
+void AppSettings::setDisabledPlugins(const QStringList &ids)
+{
+    setValue(kDisabledPlugins, ids);
 }

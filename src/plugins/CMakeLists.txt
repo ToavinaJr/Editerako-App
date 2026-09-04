@@ -1,0 +1,15 @@
+editerako_add_module(EditerakoPlugins
+    SOURCES
+        IPlugin.h
+        IFileViewerProvider.h
+        PluginManifest.cpp
+        PluginManifest.h
+        PluginContext.cpp
+        PluginContext.h
+        PluginManager.cpp
+        PluginManager.h
+    LIBS
+        EditerakoCore
+        EditerakoSyntax
+        Qt6::Widgets
+)

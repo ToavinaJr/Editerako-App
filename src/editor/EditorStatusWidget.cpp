@@ -86,6 +86,12 @@ void EditorStatusWidget::refresh()
     m_encoding->setText(encodingDisplayName(meta.encoding, meta.bom));
     m_eol->setText(lineEndingDisplayName(meta.lineEnding));
     m_language->setText(LanguageRegistry::displayName(doc ? doc->language() : LanguageId::PlainText));
+    if (doc && doc->language() == LanguageId::PlainText) {
+        const QString extra = LanguageRegistry::extraDisplayNameForPath(doc->filePath());
+        if (!extra.isEmpty()) {
+            m_language->setText(extra);
+        }
+    }
 }
 
 void EditorStatusWidget::setLspStatus(const QString &text)

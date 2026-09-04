@@ -11,6 +11,7 @@ add_subdirectory(ai)
 add_subdirectory(scm)
 add_subdirectory(tasks)
 add_subdirectory(debug)
+add_subdirectory(plugins)
 
 set(editerako_app_sources
     main.cpp
@@ -78,6 +79,7 @@ target_link_libraries(Editerako PRIVATE
     EditerakoScm
     EditerakoTasks
     EditerakoDap
+    EditerakoPlugins
 )
 
 qt_add_resources(Editerako editerako_themes

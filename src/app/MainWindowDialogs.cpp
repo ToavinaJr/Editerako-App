@@ -5,6 +5,7 @@
 #include "editor/EditorManager.h"
 #include "editor/FindReplaceDialog.h"
 #include "editor/GoToLineDialog.h"
+#include "plugins/PluginManager.h"
 #include "project/WorkspaceController.h"
 #include "ui/CommandPaletteDialog.h"
 #include "ui/QuickOpenDialog.h"
@@ -17,7 +18,7 @@
 
 void MainWindow::openPreferences()
 {
-    SettingsDialog dialog(m_keybindings, m_commands, this);
+    SettingsDialog dialog(m_keybindings, m_commands, m_pluginManager, this);
     connect(&dialog, &SettingsDialog::settingsApplied, this, &MainWindow::applyPreferences);
     dialog.exec();
 }

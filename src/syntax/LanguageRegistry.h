@@ -5,6 +5,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <QVector>
 
 extern "C" {
 struct TSLanguage;
@@ -61,6 +62,20 @@ public:
     [[nodiscard]] static QString highlightQueryResourcePath(LanguageId id);
     [[nodiscard]] static QByteArray highlightQuerySource(LanguageId id);
     [[nodiscard]] static CommentTokens commentTokens(LanguageId id);
+
+    struct ExtraLanguage {
+        QString id;
+        QString displayName;
+        QStringList extensions;
+    };
+
+    static void setExtraLanguages(const QVector<ExtraLanguage> &languages);
+    [[nodiscard]] static QVector<ExtraLanguage> extraLanguages();
+    [[nodiscard]] static QString extraDisplayNameForPath(const QString &path);
+    [[nodiscard]] static bool isExtraLanguagePath(const QString &path);
+
+private:
+    static QVector<ExtraLanguage> &extraLanguageStore();
 };
 
 #endif

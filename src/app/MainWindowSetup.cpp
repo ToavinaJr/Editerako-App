@@ -10,6 +10,8 @@
 #include "editor/EditorStatusWidget.h"
 #include "editor/EditorDiagnostic.h"
 #include "editor/ProblemModel.h"
+#include "plugins/IFileViewerProvider.h"
+#include "plugins/PluginManager.h"
 #include "project/FileExplorer.h"
 #include "project/WorkspaceController.h"
 #include "scm/GitCliProvider.h"
@@ -25,6 +27,8 @@
 #include "viewers/ViewerManager.h"
 
 #include <QFileInfo>
+#include <QMenu>
+#include <QMenuBar>
 #include <QStatusBar>
 #include <QTabWidget>
 
@@ -41,6 +45,9 @@ void MainWindow::connectWorkspaceCollaborators()
                 }
                 if (m_debugSession) {
                     m_debugSession->setWorkspaceRoot(path);
+                }
+                if (m_pluginManager) {
+                    m_pluginManager->setWorkspaceRoot(path);
                 }
                 if (m_bottomPanel) {
                     m_bottomPanel->problemsPanel()->setWorkspaceRoot(path);
@@ -243,4 +250,38 @@ void MainWindow::installChatWidget()
         chatWidget->setProjectDirectory(root);
     }
     replacePlaceholder(ui->rightChatPlaceholder, chatWidget, ui->rightSidebar);
+}
+
+void MainWindow::setupPlugins()
+{
+    m_pluginManager = new PluginManager(this);
+    m_pluginManager->setCommandRegistry(m_commands);
+    m_pluginManager->setDialogParent(this);
+    m_pluginManager->setDisabledIds(AppSettings().disabledPlugins());
+    if (m_viewerManager) {
+        m_pluginManager->setViewerHandlers(
+            [this](IFileViewerProvider *provider) { m_viewerManager->addProvider(provider); },
+            [this](IFileViewerProvider *provider) { m_viewerManager->removeProvider(provider); });
+    }
+    if (m_bottomPanel) {
+        m_pluginManager->setPanelHandlers(
+            [this](const QString &id, const QString &title, QWidget *widget) {
+                m_bottomPanel->addPluginTab(id, title, widget);
+            },
+            [this](const QString &id) { m_bottomPanel->removePluginTab(id); });
+    }
+    connect(m_pluginManager, &PluginManager::statusMessage, this,
+            [this](const QString &message, int timeoutMs) {
+                if (statusBar()) {
+                    statusBar()->showMessage(message, timeoutMs);
+                }
+            });
+
+    m_pluginMenu = menuBar()->addMenu(tr("Plugins"));
+    connect(m_pluginManager, &PluginManager::pluginsChanged, this, [this]() {
+        if (m_pluginManager && m_pluginMenu) {
+            m_pluginManager->fillMenu(m_pluginMenu);
+        }
+    });
+    m_pluginManager->reload();
 }

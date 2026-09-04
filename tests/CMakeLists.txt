@@ -363,3 +363,17 @@ editerako_add_test(test_TaskManager
     LIBS EditerakoTasks
 )
 
+editerako_add_test(test_PluginManifest
+    SOURCES PluginManifestTest.cpp
+    LIBS EditerakoPlugins
+)
+
+editerako_add_test(test_PluginManager
+    SOURCES PluginManagerTest.cpp
+    LIBS EditerakoPlugins EditerakoViewers
+)
+
+set_tests_properties(test_PluginManager PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
