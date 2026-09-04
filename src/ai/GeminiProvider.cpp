@@ -1,6 +1,7 @@
 #include "ai/GeminiProvider.h"
 
-#include "ai/AiProvider.h"
+#include "ai/AiCatalog.h"
+#include "ai/AiResponseParse.h"
 #include "core/AppSettings.h"
 #include "core/Logging.h"
 
@@ -11,15 +12,6 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QUrl>
-
-AiProvider *AiProvider::create(QObject *parent)
-{
-    const QString id = AppSettings().aiProvider();
-    if (!id.isEmpty() && id != QLatin1String("gemini")) {
-        qCWarning(lcAi) << "Unknown AI provider" << id << "- using Gemini";
-    }
-    return new GeminiProvider(parent);
-}
 
 GeminiProvider::GeminiProvider(QObject *parent)
     : AiProvider(parent)
@@ -34,7 +26,17 @@ GeminiProvider::~GeminiProvider()
 
 QString GeminiProvider::displayName() const
 {
-    return QStringLiteral("Gemini");
+    return aiServiceById(QStringLiteral("gemini")).name;
+}
+
+bool GeminiProvider::isBusy() const
+{
+    return m_reply != nullptr;
+}
+
+void GeminiProvider::cancel()
+{
+    abortActiveReply();
 }
 
 void GeminiProvider::abortActiveReply()
@@ -53,21 +55,21 @@ void GeminiProvider::send(const QString &prompt)
 {
     const QByteArray apiKey = qgetenv("GEMINI_API_KEY");
     if (apiKey.isEmpty()) {
-        emit errorOccurred(tr("GEMINI_API_KEY not set in environment. Set it and retry."));
+        emit errorOccurred(tr("GEMINI_API_KEY is not set. Add it to .env, or pick ChatGPT / Claude "
+                              "in the chat panel and sign in with your account."));
         return;
     }
 
     abortActiveReply();
 
-    const QString model = [&] {
-        const QString configured = AppSettings().aiModel();
-        return configured.isEmpty() ? AppSettings::defaultAiModel() : configured;
-    }();
+    const AiService service = aiServiceById(QStringLiteral("gemini"));
+    QString model = AppSettings().aiModel();
+    if (model.isEmpty()) {
+        model = service.defaultModel;
+    }
     QString endpoint = AppSettings().aiEndpoint();
     if (endpoint.isEmpty()) {
-        endpoint = QStringLiteral(
-                       "https://generativelanguage.googleapis.com/v1beta/models/%1:generateContent")
-                       .arg(model);
+        endpoint = service.defaultEndpoint.arg(model);
     }
 
     QJsonObject partObj;
@@ -123,27 +125,6 @@ void GeminiProvider::onReplyFinished()
         return;
     }
 
-    QJsonParseError parseError;
-    const QJsonDocument jdoc = QJsonDocument::fromJson(resp, &parseError);
-    QString outText;
-    if (parseError.error == QJsonParseError::NoError && jdoc.isObject()) {
-        const QJsonObject obj = jdoc.object();
-        const QJsonArray cand = obj.value(QStringLiteral("candidates")).toArray();
-        if (!cand.isEmpty() && cand.at(0).isObject()) {
-            const QJsonObject content = cand.at(0).toObject().value(QStringLiteral("content")).toObject();
-            const QJsonArray parts = content.value(QStringLiteral("parts")).toArray();
-            for (const QJsonValue &partVal : parts) {
-                if (partVal.isObject()) {
-                    outText += partVal.toObject().value(QStringLiteral("text")).toString();
-                }
-            }
-        }
-        if (outText.isEmpty()) {
-            outText = QString::fromUtf8(resp);
-        }
-    } else {
-        outText = QString::fromUtf8(resp);
-    }
-
-    emit responseReady(outText);
+    const QString text = parseGeminiResponse(resp);
+    emit responseReady(text.isEmpty() ? QString::fromUtf8(resp) : text);
 }

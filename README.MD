@@ -55,7 +55,9 @@ Release : argument `Release`. Compiler puis lancer : `./scripts/run.sh --build`.
 
 ## AI
 
-Le chat lit `GEMINI_API_KEY`. Copier [`.env.example`](.env.example) vers `.env` à la racine (ignoré par Git). Ne jamais committer de clé.
+Le panneau chat se connecte par **sign-in** à votre compte (ChatGPT, Claude, Gemini Google, Copilot). Aucune clé Gemini n’est requise pour ça.
+
+Les backends API (Gemini, OpenAI, Anthropic, Ollama) restent optionnels : copier [`.env.example`](.env.example) vers `.env` si vous les utilisez. Ne jamais committer de clé.
 
 ## Contributing
 

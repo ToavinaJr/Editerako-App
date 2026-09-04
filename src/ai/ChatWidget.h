@@ -8,10 +8,13 @@
 #include <QList>
 #include <QWidget>
 
+class AccountChatView;
 class AiProvider;
-class QTextEdit;
+class QComboBox;
 class QLineEdit;
 class QPushButton;
+class QStackedWidget;
+class QTextEdit;
 
 class ChatWidget : public QWidget
 {
@@ -28,6 +31,7 @@ public:
     void saveChatHistory();
     void loadChatHistory();
     void clearChat();
+    void reloadFromSettings();
 
 public slots:
     void sendMessage();
@@ -36,7 +40,17 @@ private:
     void appendMessage(const QString &who, const QString &text, bool addToHistory = true);
     void onProviderResponse(const QString &text);
     void onProviderError(const QString &message);
+    void bindProvider();
+    void onServiceChanged();
+    void applyService(const QString &id);
+    void newChat();
 
+    QComboBox *m_serviceCombo = nullptr;
+    QPushButton *m_browserButton = nullptr;
+    QPushButton *m_newChatButton = nullptr;
+    QStackedWidget *m_stack = nullptr;
+    AccountChatView *m_accountView = nullptr;
+    QWidget *m_apiPage = nullptr;
     QTextEdit *conversationView = nullptr;
     QLineEdit *inputLine = nullptr;
     QPushButton *sendButton = nullptr;

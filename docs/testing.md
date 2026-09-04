@@ -27,6 +27,8 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_DropPaths` | `EditerakoCore` | extraction de chemins depuis `QMimeData` |
 | `test_SessionStore` | `EditerakoCore` | round-trip via `QSettings` Ini temporaire |
 | `test_ContextBuilder` | `EditerakoAI` | prompt, troncature, fenêtre d’historique |
+| `test_AiCatalog` | `EditerakoAI` | défaut compte ChatGPT, kinds account/API |
+| `test_AiResponseParse` | `EditerakoAI` | JSON Gemini / OpenAI / Anthropic, SSE |
 | `test_FileKind` | `EditerakoViewers` | texte / PDF / image / vide |
 | `test_CommandRegistry` | `EditerakoCore` | enregistrement, doublons, `setEnabled` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_AtomicFile` | `EditerakoCore` | écriture atomique, Unicode, octets bruts |

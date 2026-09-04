@@ -1,24 +1,24 @@
-#ifndef EDITERAKO_GEMINIPROVIDER_H
-#define EDITERAKO_GEMINIPROVIDER_H
+#ifndef EDITERAKO_ANTHROPICPROVIDER_H
+#define EDITERAKO_ANTHROPICPROVIDER_H
 
 #include "ai/AiProvider.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
 
-class GeminiProvider : public AiProvider
+class AnthropicProvider final : public AiProvider
 {
     Q_OBJECT
 
 public:
-    explicit GeminiProvider(QObject *parent = nullptr);
-    ~GeminiProvider() override;
+    explicit AnthropicProvider(QObject *parent = nullptr);
+    ~AnthropicProvider() override;
 
     void send(const QString &prompt) override;
-    [[nodiscard]] QString displayName() const override;
-    [[nodiscard]] QString providerId() const override { return QStringLiteral("gemini"); }
     void cancel() override;
     [[nodiscard]] bool isBusy() const override;
+    [[nodiscard]] QString displayName() const override;
+    [[nodiscard]] QString providerId() const override { return QStringLiteral("anthropic"); }
 
 private:
     void abortActiveReply();

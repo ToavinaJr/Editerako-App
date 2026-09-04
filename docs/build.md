@@ -4,6 +4,7 @@
 
 - CMake ≥ 3.21, Ninja, compilateur C++20
 - Qt 6 : Widgets, Network, Sql, Concurrent, **PdfWidgets**, Test
+- Windows : runtime **Edge WebView2** (généralement déjà installé) ; le SDK est téléchargé au configure dans `build/_deps/webview2`
 
 Qt est trouvé via `CMAKE_PREFIX_PATH`, `QTDIR`, `qtpaths` / `qmake`, ou (Windows) `C:\Qt\<version>\mingw_64`.
 

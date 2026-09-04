@@ -111,6 +111,8 @@ set_target_properties(Editerako PROPERTIES
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${editerako_app_sources})
 
+editerako_deploy_webview2(Editerako)
+
 install(TARGETS Editerako
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

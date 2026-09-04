@@ -160,7 +160,7 @@ QStringList AppSettings::defaultExcludedFolders()
 
 QString AppSettings::defaultAiModel()
 {
-    return QStringLiteral("gemini-2.0-flash-001");
+    return {};
 }
 
 QVariant AppSettings::value(const char *key, const QVariant &fallback) const
@@ -306,7 +306,7 @@ void AppSettings::setTerminalUsePty(bool enabled)
 
 QString AppSettings::aiProvider() const
 {
-    return value(kAiProvider, QStringLiteral("gemini")).toString();
+    return value(kAiProvider, QStringLiteral("chatgpt")).toString();
 }
 
 void AppSettings::setAiProvider(const QString &provider)

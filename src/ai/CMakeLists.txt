@@ -1,10 +1,20 @@
 editerako_add_module(EditerakoAI
     SOURCES
         ChatMessage.h
+        AiCatalog.cpp
+        AiCatalog.h
+        AiResponseParse.cpp
+        AiResponseParse.h
         AiProvider.cpp
         AiProvider.h
         GeminiProvider.cpp
         GeminiProvider.h
+        OpenAiCompatProvider.cpp
+        OpenAiCompatProvider.h
+        AnthropicProvider.cpp
+        AnthropicProvider.h
+        AccountChatView.cpp
+        AccountChatView.h
         ChatRepository.cpp
         ChatRepository.h
         ContextBuilder.cpp
@@ -17,3 +27,4 @@ editerako_add_module(EditerakoAI
         Qt6::Network
         Qt6::Sql
 )
+editerako_use_webview2(EditerakoAI)

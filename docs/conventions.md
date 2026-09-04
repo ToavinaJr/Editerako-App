@@ -35,7 +35,7 @@ Catégories dans `core/Logging.h` : `lcCore`, `lcEditor`, `lcSyntax`, `lcProject
 
 | Chemin | Rôle |
 |---|---|
-| `.env` | `GEMINI_API_KEY=...` |
+| `.env` | `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` (optionnel ; le chat compte n’en a pas besoin) |
 | `{projet}/.editerako/` | `chat_history.db`, `settings.json`, `tasks.json` (overlay workspace) |
 | `build/` | artefacts CMake |
 

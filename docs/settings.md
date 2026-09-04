@@ -33,13 +33,13 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
     "usePty": false
   },
   "ai": {
-    "provider": "gemini",
-    "model": "gemini-2.0-flash-001",
+    "provider": "chatgpt",
+    "model": "",
     "endpoint": ""
   }
 }
 ```
 
-Les clés API ne vont **pas** dans ce fichier. Utiliser `.env` (`GEMINI_API_KEY`).
+Les clés API ne vont **pas** dans ce fichier. Le chat par défaut est un **sign-in** (ChatGPT / Claude / compte Google / Copilot). Pour un backend API, utiliser `.env` (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 
 Raccourcis : overrides user sous `keybindings/<commandId>` (QSettings). Les conflits sont refusés. Défauts : `workbench.commandPalette` = `Ctrl+Shift+P`, `workbench.quickOpen` = `Ctrl+P`, `workbench.search` = `Ctrl+Shift+F`, `edit.toggleLineComment` = `Ctrl+/`, `edit.moveLineUp/Down` = `Ctrl+Up/Down`, `edit.selectNextOccurrence` = `Ctrl+D`. Détail : [adr/0005-settings-keybindings.md](adr/0005-settings-keybindings.md), [adr/0008-editing-commands.md](adr/0008-editing-commands.md).

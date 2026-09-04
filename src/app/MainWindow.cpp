@@ -95,6 +95,9 @@ void MainWindow::applyPreferences()
         const QSignalBlocker blocker(ui->checkBox);
         ui->checkBox->setChecked(settings.editorLineNumbers());
     }
+    if (chatWidget) {
+        chatWidget->reloadFromSettings();
+    }
     restartAutoSave();
 }
 

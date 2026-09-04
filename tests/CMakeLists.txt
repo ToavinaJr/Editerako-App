@@ -49,6 +49,16 @@ editerako_add_test(test_ContextBuilder
     LIBS EditerakoAI
 )
 
+editerako_add_test(test_AiCatalog
+    SOURCES AiCatalogTest.cpp
+    LIBS EditerakoAI
+)
+
+editerako_add_test(test_AiResponseParse
+    SOURCES AiResponseParseTest.cpp
+    LIBS EditerakoAI
+)
+
 editerako_add_test(test_FileKind
     SOURCES FileKindTest.cpp
     LIBS EditerakoViewers

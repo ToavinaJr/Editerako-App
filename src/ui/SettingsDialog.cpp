@@ -2,6 +2,7 @@
 
 #include "core/AppSettings.h"
 #include "core/ThemeManager.h"
+#include "ai/AiCatalog.h"
 #include "terminal/PtyTerminalBackend.h"
 #include "terminal/ShellProfiles.h"
 #include "ui/KeybindingEditor.h"
@@ -151,14 +152,20 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings, CommandRegistry *
     {
         auto *form = new QFormLayout;
         m_aiProvider = new QComboBox(this);
-        m_aiProvider->addItem(QStringLiteral("gemini"));
+        for (const AiService &service : aiServices()) {
+            const QString label = service.kind == AiService::Kind::Account
+                ? tr("Sign in — %1").arg(service.name)
+                : tr("API — %1").arg(service.name);
+            m_aiProvider->addItem(label, service.id);
+        }
         m_aiModel = new QLineEdit(this);
         m_aiEndpoint = new QLineEdit(this);
-        m_aiEndpoint->setPlaceholderText(tr("Empty = default Gemini URL for the model"));
-        form->addRow(tr("Provider"), m_aiProvider);
-        form->addRow(tr("Model"), m_aiModel);
-        form->addRow(tr("Endpoint"), m_aiEndpoint);
-        form->addRow(new QLabel(tr("API keys stay in the environment / .env file."), this));
+        form->addRow(tr("Chat"), m_aiProvider);
+        form->addRow(tr("API model"), m_aiModel);
+        form->addRow(tr("API endpoint"), m_aiEndpoint);
+        form->addRow(new QLabel(tr("Account chat: sign in with your own ChatGPT, Claude, Gemini or Copilot session. "
+                                  "API keys stay in the environment / .env file."),
+                               this));
         addPage(tr("AI"), wrapForm(form));
     }
 
@@ -208,7 +215,8 @@ void SettingsDialog::load()
         m_shell->setEditText(shell);
     }
     m_usePty->setChecked(settings.terminalUsePty());
-    m_aiProvider->setCurrentText(settings.aiProvider());
+    const int aiIndex = m_aiProvider->findData(settings.aiProvider());
+    m_aiProvider->setCurrentIndex(aiIndex >= 0 ? aiIndex : 0);
     m_aiModel->setText(settings.aiModel());
     m_aiEndpoint->setText(settings.aiEndpoint());
 }
@@ -246,7 +254,7 @@ void SettingsDialog::save()
     }
     settings.setTerminalShell(shell);
     settings.setTerminalUsePty(m_usePty->isChecked());
-    settings.setAiProvider(m_aiProvider->currentText());
+    settings.setAiProvider(m_aiProvider->currentData().toString());
     settings.setAiModel(m_aiModel->text().trimmed());
     settings.setAiEndpoint(m_aiEndpoint->text().trimmed());
 }

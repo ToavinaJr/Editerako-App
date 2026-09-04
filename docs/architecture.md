@@ -42,7 +42,7 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `project/` | `EditerakoProject` | `Workspace`, `FileExplorer`, `FileWatcher`, `WorkspaceFileIndex`, `WorkspacePath` / `WorkspaceOps`, `GitIgnore`, `WorkspaceSearch`, `WorkspaceController` |
 | `terminal/` | `EditerakoTerminal` | `Terminal`, `TerminalProcess`, `ITerminalBackend` (`Process` / `Pty`), `AnsiSgr`, `ShellProfiles` |
 | `viewers/` | `EditerakoViewers` | `fileKindForPath`, `ViewerManager`, `PdfViewer`, `ImageViewer` |
-| `ai/` | `EditerakoAI` | `AiProvider` / `GeminiProvider`, `ChatWidget`, `ChatRepository`, `ContextBuilder` |
+| `ai/` | `EditerakoAI` | `AiProvider` (Gemini / OpenAI / Anthropic / Ollama), chat **compte** (WebView2), `ChatWidget`, `ChatRepository`, `ContextBuilder` |
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
 | `tasks/` | `EditerakoTasks` | `tasks.json`, CMake CLI (presets, configure/build/test/run), runner async, problem matcher. [adr/0014-tasks-cmake.md](adr/0014-tasks-cmake.md) |
@@ -75,7 +75,7 @@ Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et 
 
 **Navigation.** Command Palette (`Ctrl+Shift+P`) filtre `CommandRegistry`. Quick Open (`Ctrl+P`) utilise `WorkspaceFileIndex` (scan hors UI, exclusions respectées) et `fichier:ligne`. Search workspace (`Ctrl+Shift+F`) : texte/regex hors UI, preview, replace. Détail : [adr/0006-command-palette-quick-open.md](adr/0006-command-palette-quick-open.md), [adr/0007-workspace-search-explorer-ops.md](adr/0007-workspace-search-explorer-ops.md).
 
-**Chat.** `GEMINI_API_KEY` (`.env` chargé au démarrage). Historique SQLite : `{projet}/.editerako/chat_history.db` (non versionné). Modèle / endpoint : `AppSettings` (`gemini-2.0-flash-001` par défaut). `AiProvider::create` est le point d’extension pour un autre backend.
+**Chat.** Par défaut **sign-in** (ChatGPT, Claude, Gemini Google, Copilot) dans le panneau : session du compte, pas de clé Gemini. WebView2 sous Windows (profil `%AppData%/Editerako/webview-profile`). Backends API optionnels (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, Ollama local). Historique SQLite API : `{projet}/.editerako/chat_history.db`. [adr/0016-ai-account-chat.md](adr/0016-ai-account-chat.md).
 
 ## Ce que MainWindow ne doit plus contenir
 

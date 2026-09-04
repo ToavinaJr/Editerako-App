@@ -11,7 +11,7 @@ Les préférences existaient dans `AppSettings` (QSettings) sans UI. Les raccour
 ## Décision
 
 - **Priorité de lecture :** défaut < user (`QSettings`) < `{workspace}/.editerako/settings.json`. Les setters de l’UI écrivent le **profil user**. Overlay language-specific réservé, pas implémenté.
-- **UI** `SettingsDialog` (catégories General, Editor, Files, Workspace, Terminal, Appearance, Keyboard, AI). Pas de champ clé API ; `GEMINI_API_KEY` reste dans `.env`.
+- **UI** `SettingsDialog` (catégories General, Editor, Files, Workspace, Terminal, Appearance, Keyboard, AI). Pas de champ clé API ; sign-in compte par défaut, clés API dans `.env`.
 - **`KeybindingModel`** : table des défauts unique. Overrides sous `keybindings/<commandId>`. **`KeybindingManager`** applique les séquences aux `QAction` du `CommandRegistry`. Conflit = refus.
 - Raccourcis **inchangés** par défaut (New/Open/Save/SaveAs, Ctrl+W, Find, Ctrl+G, Ctrl+J). `preferences.open` = Ctrl+,.
 - `insert spaces` **désactivé** par défaut (Tab insère encore `\t`). Auto-save **off** par défaut ; ignore les untitled / read-only.
