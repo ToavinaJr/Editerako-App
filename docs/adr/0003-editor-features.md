@@ -16,7 +16,7 @@
 |---|---|
 | `LineNumberArea` | Widget gutter ; le paint reste délégué à `CodeEditor` |
 | `CurrentLineHighlighter` | Extra-sélection de la ligne courante |
-| `MultiCursorController` | Cursors extra, Ctrl+clic, insert/delete, paint des carets |
+| `MultiCursorController` | Cursors extra, Alt+clic, insert/delete, paint des carets |
 | `LineMovementController` | Ctrl+Up/Down — **même algorithme** `toPlainText().mid` |
 
 `EditorManager` reste l’orchestrateur d’onglets et de dialogs. Extraire uniquement :

@@ -16,12 +16,17 @@ public:
     void showMarkdown(const QString &markdown, const QPoint &globalPos);
     void hidePopup();
 
+signals:
+    void goToDefinitionRequested();
+
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void installAppFilter();
     void removeAppFilter();
+    [[nodiscard]] bool isInsidePopup(QObject *watched) const;
+    void applyDocumentStyle();
 
     QTextBrowser *m_browser = nullptr;
     bool m_appFilterInstalled = false;

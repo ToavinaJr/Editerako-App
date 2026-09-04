@@ -226,6 +226,11 @@ editerako_add_test(test_LspCompileCommands
     LIBS EditerakoLsp
 )
 
+editerako_add_test(test_LspHoverHtml
+    SOURCES LspHoverHtmlTest.cpp
+    LIBS EditerakoLsp
+)
+
 editerako_add_test(test_LspClient
     SOURCES LspClientTest.cpp
     LIBS EditerakoLsp

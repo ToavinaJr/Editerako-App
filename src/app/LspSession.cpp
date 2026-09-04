@@ -82,6 +82,9 @@ LspSession::LspSession(LspServerManager *manager, EditorManager *editors, QWidge
     }
 
     connect(m_completion, &CompletionPopup::itemActivated, this, &LspSession::applyCompletion);
+    connect(m_hover, &HoverPopup::goToDefinitionRequested, this, [this]() {
+        requestDefinition(m_hoverLine, m_hoverCharacter);
+    });
 }
 
 void LspSession::setWorkspaceRoot(const QString &root)
@@ -99,6 +102,7 @@ void LspSession::attachEditor(CodeEditor *editor)
     connect(editor, &CodeEditor::signatureHelpRequested, this, &LspSession::triggerSignatureHelp);
     connect(editor, &CodeEditor::hoverRequested, this, &LspSession::onHoverRequested);
     connect(editor, &CodeEditor::hoverCanceled, this, &LspSession::dismissHover);
+    connect(editor, &CodeEditor::definitionRequested, this, &LspSession::goToDefinition);
     if (auto *doc = EditorDocument::fromEditor(editor)) {
         connect(doc, &EditorDocument::versionChanged, this, [this, editor](int) {
             onEditorContentsChanged(editor);

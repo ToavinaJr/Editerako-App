@@ -62,6 +62,7 @@ private:
     void openOnServer(CodeEditor *editor);
     void closeOnServer(const QString &path);
     [[nodiscard]] bool currentPosition(QString *uri, int *line, int *character) const;
+    void requestDefinition(int line, int character);
     void applyCompletion(const CompletionItem &item);
     void applyWorkspaceEdits(const QJsonObject &edit);
     void goToLocations(const QVector<LspLocation> &locations, const QString &title);
@@ -79,6 +80,8 @@ private:
     CodeEditor *m_pendingChangeEditor = nullptr;
     int m_completionGeneration = 0;
     int m_hoverGeneration = 0;
+    int m_hoverLine = 0;
+    int m_hoverCharacter = 0;
     bool m_clangdRegistered = false;
     bool m_missingWarned = false;
     bool m_completeWhenReady = false;

@@ -58,5 +58,6 @@ editerako_add_module(EditerakoEditor
     LIBS
         EditerakoCore
         EditerakoSyntax
+        EditerakoLsp
         Qt6::Widgets
 )

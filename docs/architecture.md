@@ -16,7 +16,8 @@ src/main.cpp + src/app/MainWindow + src/ui/     cible Editerako
 src/main.cpp + src/app/ + src/ui/     cible Editerako
         │
         ├── EditerakoEditor  ← EditerakoSyntax ← tree_sitter
-        │         ↑
+        │         ↑                    ↑
+        │         └── EditerakoLsp ────┘
         ├── EditerakoViewers
         ├── EditerakoProject
         ├── EditerakoTerminal

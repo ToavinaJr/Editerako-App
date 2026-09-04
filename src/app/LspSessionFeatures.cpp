@@ -62,6 +62,8 @@ void LspSession::onHoverRequested(int line, int character, const QPoint &globalP
         return;
     }
     const int gen = ++m_hoverGeneration;
+    m_hoverLine = line;
+    m_hoverCharacter = character;
     hover->hover(uri, line, character, [this, gen, globalPos](const LspHover &result) {
         if (gen != m_hoverGeneration) {
             return;

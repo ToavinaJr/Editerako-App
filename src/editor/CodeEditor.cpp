@@ -174,6 +174,13 @@ void CodeEditor::mousePressEvent(QMouseEvent *event)
 {
     emit hoverCanceled();
     m_hoverTimer->stop();
+    if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ControlModifier)
+        && !(event->modifiers() & Qt::AltModifier)) {
+        setTextCursor(cursorForPosition(event->pos()));
+        emit definitionRequested();
+        event->accept();
+        return;
+    }
     if (m_multiCursor.handleMousePress(event)) {
         return;
     }
@@ -183,6 +190,8 @@ void CodeEditor::mousePressEvent(QMouseEvent *event)
 void CodeEditor::mouseMoveEvent(QMouseEvent *event)
 {
     QPlainTextEdit::mouseMoveEvent(event);
+    viewport()->setCursor((event->modifiers() & Qt::ControlModifier) ? Qt::PointingHandCursor
+                                                                     : Qt::IBeamCursor);
     const QTextCursor now = cursorForPosition(event->pos());
     const QTextCursor previous = cursorForPosition(m_hoverLocalPos);
     if (now.blockNumber() != previous.blockNumber()) {
@@ -195,7 +204,7 @@ void CodeEditor::mouseMoveEvent(QMouseEvent *event)
 void CodeEditor::leaveEvent(QEvent *event)
 {
     m_hoverTimer->stop();
-    emit hoverCanceled();
+    viewport()->unsetCursor();
     QPlainTextEdit::leaveEvent(event);
 }
 
@@ -222,6 +231,10 @@ void CodeEditor::paintEvent(QPaintEvent *event)
 
 void CodeEditor::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_Control) {
+        viewport()->setCursor(Qt::PointingHandCursor);
+    }
+
     if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier) {
         emit hoverCanceled();
         emit completionRequested();
@@ -295,6 +308,14 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
             emit completionRequested();
         }
     }
+}
+
+void CodeEditor::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Control) {
+        viewport()->setCursor(Qt::IBeamCursor);
+    }
+    QPlainTextEdit::keyReleaseEvent(event);
 }
 
 void CodeEditor::indentSelection()

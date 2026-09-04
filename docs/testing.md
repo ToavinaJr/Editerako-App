@@ -56,6 +56,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_LspTypes` | `EditerakoLsp` | Position, diagnostics, hover, completion, URI |
 | `test_LspPickerItems` | `EditerakoLsp` | labels / hints / fallback path des pickers définition & symboles |
 | `test_LspCompileCommands` | `EditerakoLsp` | localisation de `compile_commands.json` (racine, `build/<preset>`) |
+| `test_LspHoverHtml` | `EditerakoLsp` | échappement des templates, couleurs C++, lien Go to Definition |
 | `test_LspClient` | `EditerakoLsp` | initialize mock, didOpen, diagnostics, providers |
 | `test_LspServerProcess` | `EditerakoLsp` | commande vide, binaire absent, spec inconnue |
 | `test_CompletionModel` | `EditerakoEditor` | filtre, sortText, insert / textEdit (`offscreen`) |

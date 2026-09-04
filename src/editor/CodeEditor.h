@@ -52,6 +52,7 @@ signals:
     void signatureHelpRequested();
     void hoverRequested(int line, int character, const QPoint &globalPos);
     void hoverCanceled();
+    void definitionRequested();
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -59,6 +60,7 @@ protected:
     void leaveEvent(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:

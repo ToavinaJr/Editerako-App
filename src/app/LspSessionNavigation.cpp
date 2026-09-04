@@ -66,14 +66,29 @@ void applyRangeText(QPlainTextEdit *editor, const LspRange &range, const QString
 
 void LspSession::goToDefinition()
 {
-    auto *doc = m_editors ? m_editors->currentDocument() : nullptr;
-    if (!doc || !ensureClangd(doc)) {
-        return;
-    }
     QString uri;
     int line = 0;
     int character = 0;
     if (!currentPosition(&uri, &line, &character)) {
+        return;
+    }
+    requestDefinition(line, character);
+}
+
+void LspSession::requestDefinition(int line, int character)
+{
+    auto *doc = m_editors ? m_editors->currentDocument() : nullptr;
+    if (!doc || !ensureClangd(doc)) {
+        return;
+    }
+    flushPendingChange();
+    if (m_editors) {
+        openOnServer(m_editors->currentEditor());
+    }
+    QString uri;
+    int curLine = 0;
+    int curChar = 0;
+    if (!currentPosition(&uri, &curLine, &curChar)) {
         return;
     }
     auto *nav = m_manager->navigationForLanguage(languageKey(doc));

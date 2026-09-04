@@ -2,12 +2,12 @@
 
 add_subdirectory(core)
 add_subdirectory(syntax)
+add_subdirectory(lsp)
 add_subdirectory(editor)
 add_subdirectory(project)
 add_subdirectory(terminal)
 add_subdirectory(viewers)
 add_subdirectory(ai)
-add_subdirectory(lsp)
 add_subdirectory(scm)
 
 set(editerako_app_sources

@@ -74,7 +74,7 @@ void MultiCursorController::setExtras(const QList<QTextCursor> &cursors)
 
 bool MultiCursorController::handleMousePress(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ControlModifier)) {
+    if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::AltModifier)) {
         toggleAt(m_editor->cursorForPosition(event->pos()));
         return true;
     }
