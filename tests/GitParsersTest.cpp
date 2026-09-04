@@ -1,6 +1,7 @@
 #include "scm/GitParsers.h"
 
 #include <QDir>
+#include <QHash>
 #include <QtTest>
 
 class GitParsersTest : public QObject
@@ -11,6 +12,7 @@ private slots:
     void parsesRenameAndUtf8();
     void parsesStagedAndUnstagedSameFile();
     void makesRelativePathsAbsolute();
+    void explorerBadgesAndBranch();
 };
 
 void GitParsersTest::parsesBranchAndChanges()
@@ -62,6 +64,24 @@ void GitParsersTest::makesRelativePathsAbsolute()
     GitParsers::makePathsAbsolute(status, QStringLiteral("C:/repo"));
     QCOMPARE(status.repositoryRoot, QStringLiteral("C:/repo"));
     QCOMPARE(status.changes.first().path, QDir::cleanPath(QStringLiteral("C:/repo/src/main.cpp")));
+}
+
+void GitParsersTest::explorerBadgesAndBranch()
+{
+    ScmStatus status;
+    status.isRepository = true;
+    status.branch = QStringLiteral("main");
+    ScmChange modified;
+    modified.path = QStringLiteral("C:/repo/a.cpp");
+    modified.state = ScmFileState::Modified;
+    status.changes.append(modified);
+    const QHash<QString, QString> badges = GitParsers::explorerBadges(status);
+    QCOMPARE(badges.value(QDir::cleanPath(QStringLiteral("C:/repo/a.cpp"))), QStringLiteral("M"));
+    QCOMPARE(GitParsers::branchName(status), QStringLiteral("main"));
+
+    ScmStatus empty;
+    QVERIFY(GitParsers::branchName(empty).isEmpty());
+    QVERIFY(GitParsers::explorerBadges(empty).isEmpty());
 }
 
 QTEST_GUILESS_MAIN(GitParsersTest)

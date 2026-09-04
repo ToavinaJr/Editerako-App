@@ -10,6 +10,11 @@ editerako_add_test(test_Workspace
     LIBS EditerakoProject
 )
 
+editerako_add_test(test_FileExplorerDecorations
+    SOURCES FileExplorerDecorationsTest.cpp
+    LIBS EditerakoProject
+)
+
 editerako_add_test(test_WorkspaceController
     SOURCES WorkspaceControllerTest.cpp
     LIBS EditerakoProject
@@ -208,6 +213,11 @@ editerako_add_test(test_LspMessageFramer
 
 editerako_add_test(test_LspTypes
     SOURCES LspTypesTest.cpp
+    LIBS EditerakoLsp
+)
+
+editerako_add_test(test_LspPickerItems
+    SOURCES LspPickerItemsTest.cpp
     LIBS EditerakoLsp
 )
 

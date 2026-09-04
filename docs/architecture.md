@@ -44,7 +44,9 @@ Graphe autorisé : **Core** n’a aucune dépendance vers Editor / Project / App
 | `lsp/` | `EditerakoLsp` | JSON-RPC, client LSP, document sync, providers (pas d’UI). [adr/0010-lsp-infrastructure.md](adr/0010-lsp-infrastructure.md) |
 | `scm/` | `EditerakoScm` | Provider Git CLI async, parsers porcelain, `TextDiff` (pas d’UI). [adr/0013-git-scm-diff.md](adr/0013-git-scm-diff.md) |
 
-`LspSession` (`src/app/`) démarre clangd pour C/C++, synchronise les buffers, et pilote completion / hover / diagnostics / navigation. [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
+`LspSession` (`src/app/`) démarre clangd pour C/C++ et alimente l’UI. Même classe, unités de compilation séparées : `LspSession.cpp` (cycle de vie, sync, diagnostics), `LspSessionFeatures.cpp` (completion / hover / signature), `LspSessionNavigation.cpp` (définition, références, rename, symboles). Les lignes des pickers sont formatées par `lspLocationRows` / `lspSymbolRows` (`EditerakoLsp`). [adr/0011-clangd-editor-lsp.md](adr/0011-clangd-editor-lsp.md).
+
+`MainWindow` reste le composition root, découpé par responsabilité (même classe) : `MainWindow.cpp` (cycle de vie / session), `MainWindowCommands.cpp` (menus), `MainWindowSetup.cpp` (câblage), `MainWindowWorkspace.cpp` (fichiers / disque / D&D), `MainWindowDialogs.cpp` (palettes). L’explorateur : menu dans `FileExplorerMenu.cpp`, icônes / badges dans `FileExplorerDecorations`.
 
 Tree-sitter (runtime + grammaires réelles) est vendored dans `tree-sitter/` et compilé via `cmake/TreeSitter.cmake` (une OBJECT lib par grammaire). Seul `tree_sitter/api.h` est PUBLIC. Metadata : `LanguageDefinition` dans `LanguageRegistry`. Détail : [adr/0009-tree-sitter-multilang.md](adr/0009-tree-sitter-multilang.md).
 

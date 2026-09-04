@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QHash>
 
 namespace {
 
@@ -111,5 +112,25 @@ QString GitParsers::badgeFor(ScmFileState state)
         return QStringLiteral("?");
     }
     return QStringLiteral("?");
+}
+
+QHash<QString, QString> GitParsers::explorerBadges(const ScmStatus &status)
+{
+    QHash<QString, QString> badges;
+    for (const ScmChange &change : status.changes) {
+        if (change.path.isEmpty()) {
+            continue;
+        }
+        badges.insert(QDir::cleanPath(change.path), badgeFor(change.state));
+    }
+    return badges;
+}
+
+QString GitParsers::branchName(const ScmStatus &status)
+{
+    if (!status.isRepository) {
+        return {};
+    }
+    return status.branch;
 }
 

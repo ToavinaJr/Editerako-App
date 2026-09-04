@@ -20,6 +20,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 |---|---|---|
 | `test_LanguageRegistry` | `EditerakoSyntax` | extensions, `LanguageDefinition`, pointeurs Tree-sitter pour chaque langage |
 | `test_Workspace` | `EditerakoProject` | racine, `containsPath`, exclusions, création fichier/dossier |
+| `test_FileExplorerDecorations` | `EditerakoProject` | icônes d’extension, couleurs de badges SCM, libellé d’item |
 | `test_WorkspaceController` | `EditerakoProject` | `setRootPath`, create file/folder (`QT_QPA_PLATFORM=offscreen`) |
 | `test_SessionController` | `EditerakoCore` | restore guard, fichiers existants, workspace restorable |
 | `test_DiskChangePolicy` | `EditerakoCore` | deleted/dirty → action |
@@ -53,6 +54,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
 | `test_LspMessageFramer` | `EditerakoLsp` | `Content-Length`, messages partiels |
 | `test_LspTypes` | `EditerakoLsp` | Position, diagnostics, hover, completion, URI |
+| `test_LspPickerItems` | `EditerakoLsp` | labels / hints / fallback path des pickers définition & symboles |
 | `test_LspClient` | `EditerakoLsp` | initialize mock, didOpen, diagnostics, providers |
 | `test_LspServerProcess` | `EditerakoLsp` | commande vide, binaire absent, spec inconnue |
 | `test_CompletionModel` | `EditerakoEditor` | filtre, sortText, insert / textEdit (`offscreen`) |

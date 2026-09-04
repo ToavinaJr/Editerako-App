@@ -4,6 +4,10 @@ editerako_add_module(EditerakoProject
         Workspace.h
         FileExplorer.cpp
         FileExplorer.h
+        FileExplorerDecorations.cpp
+        FileExplorerDecorations.h
+        FileExplorerMenu.cpp
+        FileExplorerRoles.h
         FileWatcher.cpp
         FileWatcher.h
         WorkspaceController.cpp
