@@ -37,4 +37,5 @@ Le [README](../README.MD) suffit pour compiler et lancer. Ici : comment le code 
 | [adr/0024-i18n.md](adr/0024-i18n.md) | Internationalisation Linguist |
 | [adr/0025-recent-workspaces.md](adr/0025-recent-workspaces.md) | Open Recent et welcome |
 | [adr/0026-editor-tabs.md](adr/0026-editor-tabs.md) | Pin, preview, menu d’onglets |
+| [adr/0027-status-bar.md](adr/0027-status-bar.md) | Status bar modulaire |
 | [refactoring-baseline.md](refactoring-baseline.md) | Audit Phase 0 : architecture, features, dette, plan de migration |

@@ -68,6 +68,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
 | `test_EditorArea` | `EditerakoEditor` | split horizontal / vertical, unwrap (`offscreen`) |
 | `test_TabOps` | `EditerakoEditor` | Close to Right / Close Saved / Close Others (skip pinned) |
+| `test_StatusBarText` | `EditerakoEditor` | Ln/Col, Spaces/Tabs, Tab Size, Problems |
 | `test_EditorGroup` | `EditerakoEditor` | pin à gauche, preview exclusif, clic du milieu (`offscreen`) |
 | `test_LspMessageFramer` | `EditerakoLsp` | `Content-Length`, messages partiels |
 | `test_LspTypes` | `EditerakoLsp` | Position, diagnostics, hover, completion, URI |

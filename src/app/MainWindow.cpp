@@ -116,6 +116,9 @@ void MainWindow::applyPreferences()
     if (m_editorManager) {
         m_editorManager->applySettings();
     }
+    if (m_editorStatus) {
+        m_editorStatus->applySettings();
+    }
     if (m_workspaceController) {
         m_workspaceController->reloadExplorer();
     }

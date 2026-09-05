@@ -279,6 +279,11 @@ editerako_add_test(test_TabOps
     LIBS EditerakoEditor
 )
 
+editerako_add_test(test_StatusBarText
+    SOURCES StatusBarTextTest.cpp
+    LIBS EditerakoEditor
+)
+
 editerako_add_test(test_EditorGroup
     SOURCES EditorGroupTest.cpp
     LIBS EditerakoEditor

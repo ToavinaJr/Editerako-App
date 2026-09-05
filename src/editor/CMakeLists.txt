@@ -16,6 +16,8 @@ editerako_add_module(EditerakoEditor
         TabOps.h
         EditorStatusWidget.cpp
         EditorStatusWidget.h
+        StatusBarText.cpp
+        StatusBarText.h
         EditorStyle.cpp
         EditorStyle.h
         FindReplaceDialog.cpp

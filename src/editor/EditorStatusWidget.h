@@ -15,6 +15,7 @@ public:
     explicit EditorStatusWidget(QWidget *parent = nullptr);
 
     void setEditor(CodeEditor *editor);
+    void applySettings();
     void setLspStatus(const QString &text);
     void setGitBranch(const QString &text);
     void setDebugStatus(const QString &text);
@@ -25,9 +26,12 @@ signals:
 
 private:
     void refresh();
+    static void setSegmentText(QLabel *label, const QString &text);
 
     CodeEditor *m_editor = nullptr;
     QLabel *m_position = nullptr;
+    QLabel *m_indentMode = nullptr;
+    QLabel *m_tabSize = nullptr;
     QLabel *m_encoding = nullptr;
     QLabel *m_eol = nullptr;
     QLabel *m_language = nullptr;
