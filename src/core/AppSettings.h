@@ -41,6 +41,8 @@ public:
     void setEditorWordWrap(bool wrap);
     [[nodiscard]] bool editorLineNumbers() const;
     void setEditorLineNumbers(bool visible);
+    [[nodiscard]] bool editorPreviewTabs() const;
+    void setEditorPreviewTabs(bool enabled);
 
     [[nodiscard]] bool autoSave() const;
     void setAutoSave(bool enabled);

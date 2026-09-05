@@ -191,6 +191,41 @@ void MainWindow::closeOtherTabs()
     }
 }
 
+void MainWindow::closeTabsToRight()
+{
+    if (m_editorManager) {
+        m_editorManager->closeToRight();
+    }
+}
+
+void MainWindow::closeSavedTabs()
+{
+    if (m_editorManager) {
+        m_editorManager->closeSaved();
+    }
+}
+
+void MainWindow::togglePinCurrentTab()
+{
+    if (m_editorManager) {
+        m_editorManager->togglePinCurrentTab();
+    }
+}
+
+void MainWindow::copyCurrentPath()
+{
+    if (m_editorManager) {
+        m_editorManager->copyCurrentPath();
+    }
+}
+
+void MainWindow::revealCurrentInOs()
+{
+    if (m_editorManager) {
+        m_editorManager->revealCurrentInOs();
+    }
+}
+
 void MainWindow::closeAllTabs()
 {
     if (m_editorManager) {

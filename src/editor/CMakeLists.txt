@@ -12,6 +12,8 @@ editerako_add_module(EditerakoEditor
         EditorArea.h
         EditorManager.cpp
         EditorManager.h
+        TabOps.cpp
+        TabOps.h
         EditorStatusWidget.cpp
         EditorStatusWidget.h
         EditorStyle.cpp

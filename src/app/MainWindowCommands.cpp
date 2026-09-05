@@ -52,7 +52,29 @@ void MainWindow::connectActions()
     bind(QStringLiteral("file.saveAll"), ui->actionSave_All, &MainWindow::saveAllDocuments);
     bind(QStringLiteral("file.close"), ui->actionClose, &MainWindow::closeCurrentTab);
     bind(QStringLiteral("file.closeOthers"), ui->actionClose_Others, &MainWindow::closeOtherTabs);
+    QAction *closeToRight =
+        m_commands->create(QStringLiteral("file.closeToRight"), tr("Close to the Right"));
+    connect(closeToRight, &QAction::triggered, this, &MainWindow::closeTabsToRight);
+    QAction *closeSaved = m_commands->create(QStringLiteral("file.closeSaved"), tr("Close Saved"));
+    connect(closeSaved, &QAction::triggered, this, &MainWindow::closeSavedTabs);
+    ui->menuFile->insertAction(ui->actionClose_All, closeToRight);
+    ui->menuFile->insertAction(ui->actionClose_All, closeSaved);
     bind(QStringLiteral("file.closeAll"), ui->actionClose_All, &MainWindow::closeAllTabs);
+    QAction *pinTab = m_commands->create(QStringLiteral("file.pinTab"), tr("Pin / Unpin Tab"));
+    connect(pinTab, &QAction::triggered, this, &MainWindow::togglePinCurrentTab);
+    QAction *copyPath = m_commands->create(QStringLiteral("file.copyPath"), tr("Copy Path"));
+    connect(copyPath, &QAction::triggered, this, &MainWindow::copyCurrentPath);
+    QAction *reveal = m_commands->create(QStringLiteral("file.reveal"), tr("Reveal"));
+    connect(reveal, &QAction::triggered, this, &MainWindow::revealCurrentInOs);
+    const QList<QAction *> fileMenuActions = ui->menuFile->actions();
+    const int closeAllIndex = fileMenuActions.indexOf(ui->actionClose_All);
+    QAction *afterCloseAll = nullptr;
+    if (closeAllIndex >= 0 && closeAllIndex + 1 < fileMenuActions.size()) {
+        afterCloseAll = fileMenuActions.at(closeAllIndex + 1);
+    }
+    ui->menuFile->insertAction(afterCloseAll, pinTab);
+    ui->menuFile->insertAction(afterCloseAll, copyPath);
+    ui->menuFile->insertAction(afterCloseAll, reveal);
     bind(QStringLiteral("edit.find"), ui->actionFindReplace, &MainWindow::onActionFindReplace);
     bind(QStringLiteral("edit.gotoLine"), ui->actionGoToLine, &MainWindow::onActionGoToLine);
 
@@ -490,7 +512,16 @@ void MainWindow::updateCommandStates()
         isMarkdownPath(m_editorManager ? m_editorManager->currentFilePath() : QString()));
     m_commands->setEnabled(QStringLiteral("file.close"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeOthers"), tabCount > 1);
+    QTabWidget *tabs = m_editorManager ? m_editorManager->tabWidget() : nullptr;
+    const bool hasTabsToRight =
+        tabs && tabs->currentIndex() >= 0 && tabs->currentIndex() + 1 < tabCount;
+    m_commands->setEnabled(QStringLiteral("file.closeToRight"), hasTabsToRight);
+    m_commands->setEnabled(QStringLiteral("file.closeSaved"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("file.closeAll"), totalTabs > 0);
+    m_commands->setEnabled(QStringLiteral("file.pinTab"), tabCount > 0);
+    const bool hasPath = m_editorManager && !m_editorManager->currentFilePath().isEmpty();
+    m_commands->setEnabled(QStringLiteral("file.copyPath"), hasPath);
+    m_commands->setEnabled(QStringLiteral("file.reveal"), hasPath);
     m_commands->setEnabled(QStringLiteral("workbench.splitEditorRight"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("workbench.splitEditorDown"), tabCount > 0);
     m_commands->setEnabled(QStringLiteral("workbench.moveEditor"), tabCount > 0);

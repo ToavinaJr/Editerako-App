@@ -107,13 +107,13 @@ void MainWindow::onCloseExplorerClicked()
     }
 }
 
-void MainWindow::openFileInEditor(const QString &filePath)
+void MainWindow::openFileInEditor(const QString &filePath, bool preview)
 {
     if (!m_viewerManager) {
         return;
     }
 
-    const ViewerManager::OpenResult result = m_viewerManager->open(filePath);
+    const ViewerManager::OpenResult result = m_viewerManager->open(filePath, preview);
     if (result == ViewerManager::OpenResult::Opened) {
         ui->centralStack->setCurrentIndex(CodeViewer);
         if (ViewerManager::kindForPath(filePath) != ViewerManager::FileKind::Text) {

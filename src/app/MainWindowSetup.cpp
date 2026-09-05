@@ -132,6 +132,9 @@ void MainWindow::setupFileTree()
         if (statusBar()) {
             statusBar()->showMessage(tr("Selected: %1").arg(QFileInfo(path).fileName()), 2000);
         }
+        if (AppSettings().editorPreviewTabs()) {
+            openFileInEditor(path, true);
+        }
     });
     connect(m_workspaceController->explorer(), &FileExplorer::newFileRequested,
             this, &MainWindow::newFile);

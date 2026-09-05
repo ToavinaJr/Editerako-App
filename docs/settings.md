@@ -20,7 +20,8 @@ L’UI **Préférences** (View → Preferences, `Ctrl+,`) écrit le profil user.
     "tabSize": 4,
     "insertSpaces": false,
     "wordWrap": false,
-    "lineNumbers": true
+    "lineNumbers": true,
+    "previewTabs": true
   },
   "files": {
     "autoSave": false,
@@ -49,6 +50,8 @@ Les clés API ne vont **pas** dans ce fichier. Le chat par défaut est un **sign
 `ui/language` (vide = locale système, `en`, `fr`) : catalogues Linguist. Un changement dans Préférences → Apparence s’applique au prochain lancement. [adr/0024-i18n.md](adr/0024-i18n.md).
 
 Workspaces récents : clé QSettings user `recent/workspaces` (max 10), pas dans l’overlay workspace. [adr/0025-recent-workspaces.md](adr/0025-recent-workspaces.md).
+
+`editor/previewTabs` (défaut true) : un clic dans l’explorateur ouvre un onglet preview ; double-clic, Open File et D&D restent permanents. [adr/0026-editor-tabs.md](adr/0026-editor-tabs.md).
 
 `files/hotExit` (défaut true) : quitter sans dialogue Save All ; les unsaved (hors secrets) sont restaurés au prochain lancement. Les backups vivent sous AppData (`backups/`), pas dans le workspace. [adr/0017-recovery-hot-exit.md](adr/0017-recovery-hot-exit.md).
 

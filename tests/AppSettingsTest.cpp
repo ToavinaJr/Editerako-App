@@ -72,6 +72,7 @@ void AppSettingsTest::hotExitDefaultsOn()
     QSettings store(dir.filePath(QStringLiteral("user.ini")), QSettings::IniFormat);
     AppSettings settings(store);
     QVERIFY(settings.hotExit());
+    QVERIFY(settings.editorPreviewTabs());
 }
 
 void AppSettingsTest::uiLanguageRoundtrip()

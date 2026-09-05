@@ -95,12 +95,14 @@ SettingsDialog::SettingsDialog(KeybindingManager *keybindings,
         m_insertSpaces = new QCheckBox(tr("Insert spaces instead of tabs"), this);
         m_wordWrap = new QCheckBox(tr("Word wrap"), this);
         m_lineNumbers = new QCheckBox(tr("Line numbers"), this);
+        m_previewTabs = new QCheckBox(tr("Preview tabs (single-click in explorer)"), this);
         form->addRow(tr("Font"), m_fontFamily);
         form->addRow(tr("Font size"), m_fontSize);
         form->addRow(tr("Tab size"), m_tabSize);
         form->addRow(m_insertSpaces);
         form->addRow(m_wordWrap);
         form->addRow(m_lineNumbers);
+        form->addRow(m_previewTabs);
         addPage(tr("Editor"), wrapForm(form));
     }
 
@@ -265,6 +267,7 @@ void SettingsDialog::load()
     m_insertSpaces->setChecked(settings.editorInsertSpaces());
     m_wordWrap->setChecked(settings.editorWordWrap());
     m_lineNumbers->setChecked(settings.editorLineNumbers());
+    m_previewTabs->setChecked(settings.editorPreviewTabs());
     m_warnMb->setValue(bytesToMb(settings.largeFileWarnBytes()));
     m_syntaxMb->setValue(bytesToMb(settings.largeFileDisableSyntaxBytes()));
     m_hotExit->setChecked(settings.hotExit());
@@ -336,6 +339,7 @@ void SettingsDialog::save()
     settings.setEditorInsertSpaces(m_insertSpaces->isChecked());
     settings.setEditorWordWrap(m_wordWrap->isChecked());
     settings.setEditorLineNumbers(m_lineNumbers->isChecked());
+    settings.setEditorPreviewTabs(m_previewTabs->isChecked());
     settings.setLargeFileWarnBytes(mbToBytes(m_warnMb->value()));
     settings.setLargeFileDisableSyntaxBytes(mbToBytes(m_syntaxMb->value()));
     settings.setHotExit(m_hotExit->isChecked());

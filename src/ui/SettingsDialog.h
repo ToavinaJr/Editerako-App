@@ -45,6 +45,7 @@ private:
     QCheckBox *m_insertSpaces = nullptr;
     QCheckBox *m_wordWrap = nullptr;
     QCheckBox *m_lineNumbers = nullptr;
+    QCheckBox *m_previewTabs = nullptr;
     QSpinBox *m_warnMb = nullptr;
     QSpinBox *m_syntaxMb = nullptr;
     QCheckBox *m_hotExit = nullptr;

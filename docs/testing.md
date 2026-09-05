@@ -66,6 +66,9 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_LineEditCommands` | `EditerakoEditor` | duplicate/delete/join/sort, occurrence (`offscreen`) |
 | `test_MultiCursorController` | `EditerakoEditor` | toggle, insert multi, doublon du curseur primaire (`QT_QPA_PLATFORM=offscreen`) |
 | `test_EditorDocument` | `EditerakoEditor` | format par défaut, language, version, caret (`QT_QPA_PLATFORM=offscreen`) |
+| `test_EditorArea` | `EditerakoEditor` | split horizontal / vertical, unwrap (`offscreen`) |
+| `test_TabOps` | `EditerakoEditor` | Close to Right / Close Saved / Close Others (skip pinned) |
+| `test_EditorGroup` | `EditerakoEditor` | pin à gauche, preview exclusif, clic du milieu (`offscreen`) |
 | `test_LspMessageFramer` | `EditerakoLsp` | `Content-Length`, messages partiels |
 | `test_LspTypes` | `EditerakoLsp` | Position, diagnostics, hover, completion, URI |
 | `test_LspPickerItems` | `EditerakoLsp` | labels / hints / fallback path des pickers définition & symboles |

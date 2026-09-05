@@ -67,7 +67,12 @@ private slots:
     void saveAllDocuments();
     void closeCurrentTab();
     void closeOtherTabs();
+    void closeTabsToRight();
+    void closeSavedTabs();
     void closeAllTabs();
+    void togglePinCurrentTab();
+    void copyCurrentPath();
+    void revealCurrentInOs();
     void splitEditorRight();
     void splitEditorDown();
     void moveEditor();
@@ -138,7 +143,7 @@ private:
     void installChatWidget();
     void setupPlugins();
     void focusMainWindowAndEditor();
-    void openFileInEditor(const QString &filePath);
+    void openFileInEditor(const QString &filePath, bool preview = false);
     void promptOpenFolderOrFile();
     void setProjectDirectory(const QString &path, bool remember = true);
     void rebuildRecentMenu();

@@ -274,6 +274,18 @@ editerako_add_test(test_EditorArea
 
 editerako_test_offscreen(test_EditorArea)
 
+editerako_add_test(test_TabOps
+    SOURCES TabOpsTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_add_test(test_EditorGroup
+    SOURCES EditorGroupTest.cpp
+    LIBS EditerakoEditor
+)
+
+editerako_test_offscreen(test_EditorGroup)
+
 editerako_add_test(test_LspMessageFramer
     SOURCES LspMessageFramerTest.cpp
     LIBS EditerakoLsp

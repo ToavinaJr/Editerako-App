@@ -27,20 +27,23 @@ ViewerManager::FileKind ViewerManager::kindForPath(const QString &path)
     return fileKindForPath(path);
 }
 
-ViewerManager::OpenResult ViewerManager::open(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::open(const QString &filePath, bool preview)
 {
     if (!m_editors || filePath.isEmpty()) {
         return OpenResult::Failed;
     }
 
     if (m_editors->activateExisting(filePath)) {
+        if (!preview) {
+            m_editors->promoteCurrentTab();
+        }
         return OpenResult::Opened;
     }
 
-    return openNew(filePath);
+    return openNew(filePath, preview);
 }
 
-ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath, bool preview)
 {
     if (!m_editors || filePath.isEmpty()) {
         return OpenResult::Failed;
@@ -48,7 +51,7 @@ ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
 
     for (IFileViewerProvider *provider : m_providers) {
         if (provider && provider->canOpen(filePath)) {
-            const OpenResult result = openWithProvider(provider, filePath);
+            const OpenResult result = openWithProvider(provider, filePath, preview);
             if (result != OpenResult::Unsupported) {
                 return result;
             }
@@ -57,15 +60,15 @@ ViewerManager::OpenResult ViewerManager::openNew(const QString &filePath)
 
     switch (kindForPath(filePath)) {
     case FileKind::Text:
-        return m_editors->openTextFile(filePath) ? OpenResult::Opened : OpenResult::Failed;
+        return m_editors->openTextFile(filePath, preview) ? OpenResult::Opened : OpenResult::Failed;
     case FileKind::Pdf:
-        return openPdf(filePath);
+        return openPdf(filePath, preview);
     case FileKind::Image:
-        return openImage(filePath);
+        return openImage(filePath, preview);
     case FileKind::Svg:
-        return openSvg(filePath);
+        return openSvg(filePath, preview);
     case FileKind::Csv:
-        return openCsv(filePath);
+        return openCsv(filePath, preview);
     case FileKind::Unsupported:
         qCInfo(lcViewer) << "Unsupported file type" << filePath;
         return OpenResult::Unsupported;
@@ -98,12 +101,12 @@ ViewerManager::OpenResult ViewerManager::openMarkdownPreview(const QString &file
         return OpenResult::Failed;
     }
 
-    m_editors->addViewerTab(viewer, filePath);
+    m_editors->addViewerTab(viewer, filePath, false);
     qCInfo(lcViewer) << "Opened Markdown preview" << filePath;
     return OpenResult::Opened;
 }
 
-ViewerManager::OpenResult ViewerManager::openPdf(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::openPdf(const QString &filePath, bool preview)
 {
     if (!QFileInfo::exists(filePath)) {
         QMessageBox::warning(qobject_cast<QWidget *>(parent()),
@@ -113,13 +116,13 @@ ViewerManager::OpenResult ViewerManager::openPdf(const QString &filePath)
     }
 
     auto *viewer = new PdfViewer(m_editors->tabWidget());
-    m_editors->addViewerTab(viewer, filePath);
+    m_editors->addViewerTab(viewer, filePath, preview);
     viewer->load(filePath);
     qCInfo(lcViewer) << "Opened PDF" << filePath;
     return OpenResult::Opened;
 }
 
-ViewerManager::OpenResult ViewerManager::openImage(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::openImage(const QString &filePath, bool preview)
 {
     auto *viewer = new ImageViewer(m_editors->tabWidget());
     if (!viewer->load(filePath)) {
@@ -130,12 +133,12 @@ ViewerManager::OpenResult ViewerManager::openImage(const QString &filePath)
         return OpenResult::Failed;
     }
 
-    m_editors->addViewerTab(viewer, filePath);
+    m_editors->addViewerTab(viewer, filePath, preview);
     qCInfo(lcViewer) << "Opened image" << filePath;
     return OpenResult::Opened;
 }
 
-ViewerManager::OpenResult ViewerManager::openSvg(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::openSvg(const QString &filePath, bool preview)
 {
     auto *viewer = new SvgViewer(m_editors->tabWidget());
     if (!viewer->load(filePath)) {
@@ -146,12 +149,12 @@ ViewerManager::OpenResult ViewerManager::openSvg(const QString &filePath)
         return OpenResult::Failed;
     }
 
-    m_editors->addViewerTab(viewer, filePath);
+    m_editors->addViewerTab(viewer, filePath, preview);
     qCInfo(lcViewer) << "Opened SVG" << filePath;
     return OpenResult::Opened;
 }
 
-ViewerManager::OpenResult ViewerManager::openCsv(const QString &filePath)
+ViewerManager::OpenResult ViewerManager::openCsv(const QString &filePath, bool preview)
 {
     auto *viewer = new CsvViewer(m_editors->tabWidget());
     if (!viewer->load(filePath)) {
@@ -162,7 +165,7 @@ ViewerManager::OpenResult ViewerManager::openCsv(const QString &filePath)
         return OpenResult::Failed;
     }
 
-    m_editors->addViewerTab(viewer, filePath);
+    m_editors->addViewerTab(viewer, filePath, preview);
     qCInfo(lcViewer) << "Opened CSV" << filePath;
     return OpenResult::Opened;
 }
@@ -180,7 +183,8 @@ void ViewerManager::removeProvider(IFileViewerProvider *provider)
 }
 
 ViewerManager::OpenResult ViewerManager::openWithProvider(IFileViewerProvider *provider,
-                                                          const QString &filePath)
+                                                          const QString &filePath,
+                                                          bool preview)
 {
     QString error;
     QWidget *widget = provider->create(filePath, m_editors->tabWidget(), &error);
@@ -190,7 +194,7 @@ ViewerManager::OpenResult ViewerManager::openWithProvider(IFileViewerProvider *p
         }
         return OpenResult::Failed;
     }
-    m_editors->addViewerTab(widget, filePath);
+    m_editors->addViewerTab(widget, filePath, preview);
     qCInfo(lcViewer) << "Opened with plugin viewer" << provider->id() << filePath;
     return OpenResult::Opened;
 }

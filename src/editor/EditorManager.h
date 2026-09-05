@@ -42,10 +42,14 @@ public:
     [[nodiscard]] QString workingDirectory() const { return m_workingDirectory; }
 
     CodeEditor *openUntitled();
-    bool openTextFile(const QString &filePath);
+    bool openTextFile(const QString &filePath, bool preview = false);
     bool activateExisting(const QString &filePath);
     bool activateWidget(QWidget *widget);
-    void addViewerTab(QWidget *widget, const QString &filePath);
+    void addViewerTab(QWidget *widget, const QString &filePath, bool preview = false);
+    void promoteCurrentTab();
+    void togglePinCurrentTab();
+    void copyCurrentPath();
+    void revealCurrentInOs();
     [[nodiscard]] QList<QWidget *> tabWidgets() const;
 
     [[nodiscard]] QStringList openFilePaths() const;
@@ -64,6 +68,8 @@ public:
     CloseResult closeWidget(QWidget *widget);
     CloseResult closeCurrent();
     CloseResult closeOthers();
+    CloseResult closeToRight();
+    CloseResult closeSaved();
     CloseResult closeAll();
 
     void splitRight();
@@ -102,6 +108,9 @@ private:
     void bindDocument(CodeEditor *editor, EditorDocument *doc);
     void updateTabLabel(CodeEditor *editor);
     void updateTabLabelsFor(EditorDocument *doc);
+    void refreshTab(EditorGroup *group, int index);
+    void refreshWidgetTab(QWidget *widget);
+    void refreshGroupTabs(EditorGroup *group);
     void showTabContextMenu(EditorGroup *group, int index, const QPoint &globalPos);
     void split(Qt::Orientation orientation);
     void moveCurrentToGroup(EditorGroup *target);
@@ -113,6 +122,9 @@ private:
     bool confirmClose(CodeEditor *editor);
     bool writeToDisk(CodeEditor *editor, const QString &path);
     CloseResult closeInGroup(EditorGroup *group, int index);
+    CloseResult closeWidgets(const QList<QWidget *> &widgets);
+    void replacePreviewIfNeeded(bool preview);
+    void applyTabMode(int index, bool preview);
 
     QWidget *m_dialogParent = nullptr;
     EditorArea *m_area = nullptr;

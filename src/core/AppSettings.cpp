@@ -21,6 +21,7 @@ constexpr auto kEditorTabSize = "editor/tabSize";
 constexpr auto kEditorInsertSpaces = "editor/insertSpaces";
 constexpr auto kEditorWordWrap = "editor/wordWrap";
 constexpr auto kEditorLineNumbers = "editor/lineNumbers";
+constexpr auto kEditorPreviewTabs = "editor/previewTabs";
 constexpr auto kAutoSave = "files/autoSave";
 constexpr auto kAutoSaveDelayMs = "files/autoSaveDelayMs";
 constexpr auto kHotExit = "files/hotExit";
@@ -259,6 +260,16 @@ bool AppSettings::editorLineNumbers() const
 void AppSettings::setEditorLineNumbers(bool visible)
 {
     setValue(kEditorLineNumbers, visible);
+}
+
+bool AppSettings::editorPreviewTabs() const
+{
+    return value(kEditorPreviewTabs, true).toBool();
+}
+
+void AppSettings::setEditorPreviewTabs(bool enabled)
+{
+    setValue(kEditorPreviewTabs, enabled);
 }
 
 bool AppSettings::autoSave() const

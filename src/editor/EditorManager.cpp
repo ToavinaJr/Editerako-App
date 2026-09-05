@@ -9,8 +9,12 @@
 #include "editor/EditorIo.h"
 #include "editor/EditorStyle.h"
 #include "editor/HighlighterSync.h"
+#include "editor/TabOps.h"
 
 #include <QApplication>
+#include <QClipboard>
+#include <QDesktopServices>
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMenu>
@@ -19,7 +23,49 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QUrl>
 #include <QtGlobal>
+
+namespace {
+
+constexpr auto kTabBaseLabel = "tabBaseLabel";
+
+QString decoratedTabLabel(const QString &base, bool modified, bool preview, bool pinned)
+{
+    QString label = base;
+    if (modified) {
+        label += QLatin1Char('*');
+    }
+    if (preview) {
+        label = QLatin1Char('(') + label + QLatin1Char(')');
+    }
+    if (pinned) {
+        label.prepend(QStringLiteral("📌 "));
+    }
+    return label;
+}
+
+QList<TabCloseFlags> flagsForGroup(EditorGroup *group)
+{
+    QList<TabCloseFlags> flags;
+    if (!group) {
+        return flags;
+    }
+    QTabWidget *tabs = group->tabWidget();
+    for (int i = 0; i < tabs->count(); ++i) {
+        TabCloseFlags flag;
+        flag.pinned = group->isPinned(i);
+        if (auto *editor = qobject_cast<CodeEditor *>(tabs->widget(i))) {
+            if (auto *doc = EditorDocument::fromEditor(editor)) {
+                flag.modified = doc->isModified();
+            }
+        }
+        flags.append(flag);
+    }
+    return flags;
+}
+
+} // namespace
 
 EditorManager::EditorManager(QWidget *dialogParent)
     : QObject(dialogParent)
@@ -147,7 +193,20 @@ CodeEditor *EditorManager::createEditor()
 void EditorManager::bindDocument(CodeEditor *editor, EditorDocument *doc)
 {
     Q_UNUSED(editor);
-    connect(doc, &EditorDocument::modificationChanged, this, [this, doc](bool) {
+    connect(doc, &EditorDocument::modificationChanged, this, [this, doc](bool modified) {
+        if (modified) {
+            for (CodeEditor *editor : editors()) {
+                if (EditorDocument::fromEditor(editor) != doc) {
+                    continue;
+                }
+                if (EditorGroup *group = groupForWidget(editor)) {
+                    const int index = group->tabWidget()->indexOf(editor);
+                    if (group->isPreview(index)) {
+                        group->promote(index);
+                    }
+                }
+            }
+        }
         updateTabLabelsFor(doc);
         emit modificationChanged();
     });
@@ -173,22 +232,68 @@ CodeEditor *EditorManager::cloneEditorView(CodeEditor *source)
 
 void EditorManager::updateTabLabel(CodeEditor *editor)
 {
-    if (!editor || !m_area) {
+    if (!editor) {
         return;
     }
-    for (EditorGroup *group : m_area->groups()) {
-        const int idx = group->tabWidget()->indexOf(editor);
-        if (idx < 0) {
-            continue;
-        }
-        auto *doc = EditorDocument::fromEditor(editor);
-        QString label = doc ? doc->displayName() : tr("untitled");
-        if (doc && doc->isModified()) {
-            label += QLatin1Char('*');
-        }
-        group->tabWidget()->setTabText(idx, label);
-        group->tabWidget()->setTabToolTip(idx, doc ? doc->filePath() : QString());
+    if (auto *doc = EditorDocument::fromEditor(editor)) {
+        editor->setProperty(kTabBaseLabel, doc->displayName());
+    }
+    refreshWidgetTab(editor);
+}
+
+void EditorManager::refreshWidgetTab(QWidget *widget)
+{
+    EditorGroup *group = groupForWidget(widget);
+    if (!group) {
         return;
+    }
+    refreshTab(group, group->tabWidget()->indexOf(widget));
+}
+
+void EditorManager::refreshGroupTabs(EditorGroup *group)
+{
+    if (!group) {
+        return;
+    }
+    for (int i = 0; i < group->tabWidget()->count(); ++i) {
+        refreshTab(group, i);
+    }
+}
+
+void EditorManager::refreshTab(EditorGroup *group, int index)
+{
+    if (!group || index < 0 || index >= group->tabWidget()->count()) {
+        return;
+    }
+    QWidget *widget = group->tabWidget()->widget(index);
+    if (!widget) {
+        return;
+    }
+
+    QString base = widget->property(kTabBaseLabel).toString();
+    bool modified = false;
+    if (auto *editor = qobject_cast<CodeEditor *>(widget)) {
+        auto *doc = EditorDocument::fromEditor(editor);
+        if (base.isEmpty()) {
+            base = doc ? doc->displayName() : tr("untitled");
+        }
+        modified = doc && doc->isModified();
+    } else if (base.isEmpty()) {
+        base = widget->windowTitle();
+        if (base.isEmpty()) {
+            base = QFileInfo(pathForWidget(widget)).fileName();
+        }
+    }
+
+    const bool preview = group->isPreview(index);
+    const bool pinned = group->isPinned(index);
+    group->tabWidget()->setTabText(index, decoratedTabLabel(base, modified, preview, pinned));
+
+    const QString path = pathForWidget(widget);
+    if (preview && !path.isEmpty()) {
+        group->tabWidget()->setTabToolTip(index, tr("Preview — %1").arg(path));
+    } else {
+        group->tabWidget()->setTabToolTip(index, path);
     }
 }
 
@@ -456,13 +561,16 @@ QList<QWidget *> EditorManager::tabWidgets() const
     return widgets;
 }
 
-bool EditorManager::openTextFile(const QString &filePath)
+bool EditorManager::openTextFile(const QString &filePath, bool preview)
 {
     if (filePath.isEmpty()) {
         return false;
     }
 
     if (activateExisting(filePath)) {
+        if (!preview) {
+            promoteCurrentTab();
+        }
         if (auto *editor = currentEditor()) {
             editor->setFocus();
         }
@@ -511,11 +619,13 @@ bool EditorManager::openTextFile(const QString &filePath)
         doc->resetVersion();
     }
     editor->document()->setModified(false);
+    const QString name = doc ? doc->displayName() : tr("untitled");
+    editor->setProperty(kTabBaseLabel, name);
 
-    const int idx = tabWidget()->addTab(editor, doc->displayName());
-    tabWidget()->setTabToolTip(idx, doc->filePath());
+    replacePreviewIfNeeded(preview);
+    const int idx = tabWidget()->addTab(editor, name);
     tabWidget()->setCurrentWidget(editor);
-    updateTabLabel(editor);
+    applyTabMode(idx, preview);
     editor->setFocus();
 
     qCInfo(lcEditor) << "Opened" << doc->filePath();
@@ -523,7 +633,7 @@ bool EditorManager::openTextFile(const QString &filePath)
     return true;
 }
 
-void EditorManager::addViewerTab(QWidget *widget, const QString &filePath)
+void EditorManager::addViewerTab(QWidget *widget, const QString &filePath, bool preview)
 {
     if (!widget || !tabWidget()) {
         return;
@@ -534,9 +644,86 @@ void EditorManager::addViewerTab(QWidget *widget, const QString &filePath)
     if (label.isEmpty()) {
         label = QFileInfo(filePath).fileName();
     }
+    widget->setProperty(kTabBaseLabel, label);
+    replacePreviewIfNeeded(preview);
     const int idx = tabWidget()->addTab(widget, label);
-    tabWidget()->setTabToolTip(idx, normalized);
     tabWidget()->setCurrentIndex(idx);
+    applyTabMode(idx, preview);
+}
+
+void EditorManager::promoteCurrentTab()
+{
+    if (!m_active || !tabWidget()) {
+        return;
+    }
+    const int index = tabWidget()->currentIndex();
+    if (index < 0) {
+        return;
+    }
+    m_active->promote(index);
+    refreshGroupTabs(m_active);
+}
+
+void EditorManager::togglePinCurrentTab()
+{
+    if (!m_active || !tabWidget()) {
+        return;
+    }
+    const int index = tabWidget()->currentIndex();
+    if (index < 0) {
+        return;
+    }
+    m_active->setPinned(index, !m_active->isPinned(index));
+    refreshGroupTabs(m_active);
+}
+
+void EditorManager::copyCurrentPath()
+{
+    const QString path = currentFilePath();
+    if (path.isEmpty() || !qApp) {
+        return;
+    }
+    qApp->clipboard()->setText(QDir::toNativeSeparators(path));
+}
+
+void EditorManager::revealCurrentInOs()
+{
+    const QString path = currentFilePath();
+    if (path.isEmpty()) {
+        return;
+    }
+    const QFileInfo info(path);
+    const QString target = info.isDir() ? info.absoluteFilePath() : info.absolutePath();
+    QDesktopServices::openUrl(QUrl::fromLocalFile(target));
+}
+
+void EditorManager::replacePreviewIfNeeded(bool preview)
+{
+    if (!preview || !m_active) {
+        return;
+    }
+    const int existing = m_active->previewIndex();
+    if (existing < 0) {
+        return;
+    }
+    QWidget *widget = m_active->tabWidget()->widget(existing);
+    if (auto *editor = qobject_cast<CodeEditor *>(widget)) {
+        if (auto *doc = EditorDocument::fromEditor(editor); doc && doc->isModified()) {
+            m_active->promote(existing);
+            refreshGroupTabs(m_active);
+            return;
+        }
+    }
+    closeInGroup(m_active, existing);
+}
+
+void EditorManager::applyTabMode(int index, bool preview)
+{
+    if (!m_active) {
+        return;
+    }
+    m_active->setPreview(index, preview);
+    refreshGroupTabs(m_active);
 }
 
 QStringList EditorManager::openFilePaths() const
@@ -856,26 +1043,55 @@ EditorManager::CloseResult EditorManager::closeCurrent()
     return tabWidget() ? closeTab(tabWidget()->currentIndex()) : CloseResult::Closed;
 }
 
-EditorManager::CloseResult EditorManager::closeOthers()
+EditorManager::CloseResult EditorManager::closeWidgets(const QList<QWidget *> &widgets)
 {
-    QWidget *keep = currentWidget();
-    if (!keep || !m_active) {
-        return CloseResult::Closed;
-    }
-
-    QList<QWidget *> toClose;
-    for (int i = 0; i < m_active->tabWidget()->count(); ++i) {
-        if (m_active->tabWidget()->widget(i) != keep) {
-            toClose.append(m_active->tabWidget()->widget(i));
-        }
-    }
-
-    for (QWidget *widget : toClose) {
+    for (QWidget *widget : widgets) {
         if (closeWidget(widget) == CloseResult::Cancelled) {
             return CloseResult::Cancelled;
         }
     }
     return CloseResult::Closed;
+}
+
+EditorManager::CloseResult EditorManager::closeOthers()
+{
+    if (!m_active || !tabWidget()) {
+        return CloseResult::Closed;
+    }
+    const QList<int> indices =
+        tabIndicesCloseOthers(tabWidget()->currentIndex(), flagsForGroup(m_active));
+    QList<QWidget *> toClose;
+    for (int index : indices) {
+        toClose.append(m_active->tabWidget()->widget(index));
+    }
+    return closeWidgets(toClose);
+}
+
+EditorManager::CloseResult EditorManager::closeToRight()
+{
+    if (!m_active || !tabWidget()) {
+        return CloseResult::Closed;
+    }
+    const QList<int> indices =
+        tabIndicesCloseToRight(tabWidget()->currentIndex(), flagsForGroup(m_active));
+    QList<QWidget *> toClose;
+    for (int index : indices) {
+        toClose.append(m_active->tabWidget()->widget(index));
+    }
+    return closeWidgets(toClose);
+}
+
+EditorManager::CloseResult EditorManager::closeSaved()
+{
+    if (!m_active) {
+        return CloseResult::Closed;
+    }
+    const QList<int> indices = tabIndicesCloseSaved(flagsForGroup(m_active));
+    QList<QWidget *> toClose;
+    for (int index : indices) {
+        toClose.append(m_active->tabWidget()->widget(index));
+    }
+    return closeWidgets(toClose);
 }
 
 EditorManager::CloseResult EditorManager::closeAll()
@@ -966,6 +1182,11 @@ void EditorManager::moveCurrentToGroup(EditorGroup *target)
     const int dest = target->tabWidget()->addTab(widget, text);
     target->tabWidget()->setTabToolTip(dest, tip);
     target->tabWidget()->setCurrentIndex(dest);
+    if (target->isPreview(dest)) {
+        target->setPreview(dest, true);
+    }
+    target->enforcePinOrder();
+    refreshGroupTabs(target);
     pruneEmptyGroup(m_active);
     setActiveGroup(target);
     widget->setFocus();
@@ -989,6 +1210,11 @@ void EditorManager::moveEditor()
         const int dest = newGroup->tabWidget()->addTab(widget, text);
         newGroup->tabWidget()->setTabToolTip(dest, tip);
         newGroup->tabWidget()->setCurrentIndex(dest);
+        if (newGroup->isPreview(dest)) {
+            newGroup->setPreview(dest, true);
+        }
+        newGroup->enforcePinOrder();
+        refreshGroupTabs(newGroup);
         pruneEmptyGroup(source);
         setActiveGroup(newGroup);
         widget->setFocus();
@@ -1029,8 +1255,21 @@ void EditorManager::showTabContextMenu(EditorGroup *group, int index, const QPoi
     }
 
     QMenu menu(m_dialogParent);
+    const bool pinned = index >= 0 && group->isPinned(index);
+    QAction *pinAct = menu.addAction(pinned ? tr("Unpin") : tr("Pin"));
+    pinAct->setEnabled(index >= 0);
+    menu.addSeparator();
     QAction *closeAct = menu.addAction(tr("Close"));
     QAction *closeOthersAct = menu.addAction(tr("Close Others"));
+    QAction *closeToRightAct = menu.addAction(tr("Close to the Right"));
+    QAction *closeSavedAct = menu.addAction(tr("Close Saved"));
+    QAction *closeAllAct = menu.addAction(tr("Close All"));
+    menu.addSeparator();
+    QAction *copyPathAct = menu.addAction(tr("Copy Path"));
+    QAction *revealAct = menu.addAction(tr("Reveal"));
+    const bool hasPath = !currentFilePath().isEmpty();
+    copyPathAct->setEnabled(hasPath);
+    revealAct->setEnabled(hasPath);
     menu.addSeparator();
     QAction *splitRightAct = menu.addAction(tr("Split Right"));
     QAction *splitDownAct = menu.addAction(tr("Split Down"));
@@ -1039,10 +1278,22 @@ void EditorManager::showTabContextMenu(EditorGroup *group, int index, const QPoi
     closeGroupAct->setEnabled(groupCount() > 1);
 
     QAction *chosen = menu.exec(globalPos);
-    if (chosen == closeAct) {
+    if (chosen == pinAct) {
+        togglePinCurrentTab();
+    } else if (chosen == closeAct) {
         closeCurrent();
     } else if (chosen == closeOthersAct) {
         closeOthers();
+    } else if (chosen == closeToRightAct) {
+        closeToRight();
+    } else if (chosen == closeSavedAct) {
+        closeSaved();
+    } else if (chosen == closeAllAct) {
+        closeAll();
+    } else if (chosen == copyPathAct) {
+        copyCurrentPath();
+    } else if (chosen == revealAct) {
+        revealCurrentInOs();
     } else if (chosen == splitRightAct) {
         splitRight();
     } else if (chosen == splitDownAct) {
