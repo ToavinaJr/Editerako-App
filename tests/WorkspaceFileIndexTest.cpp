@@ -13,6 +13,7 @@ class WorkspaceFileIndexTest : public QObject
 
 private slots:
     void collectRespectsExclusions();
+    void destroyWhileIndexingDoesNotHang();
     void rebuildEmitsIndexUpdated();
 };
 
@@ -37,6 +38,21 @@ void WorkspaceFileIndexTest::collectRespectsExclusions()
     const QString skipAbs = QDir::cleanPath(QFileInfo(skip).absoluteFilePath());
     QVERIFY(files.contains(keepAbs));
     QVERIFY(!files.contains(skipAbs));
+}
+
+void WorkspaceFileIndexTest::destroyWhileIndexingDoesNotHang()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString keep = QDir(temp.path()).filePath(QStringLiteral("hello.txt"));
+    QVERIFY(QFile(keep).open(QIODevice::WriteOnly));
+
+    {
+        WorkspaceFileIndex index;
+        index.setRootPath(temp.path());
+        index.rebuild();
+    }
+    QVERIFY(true);
 }
 
 void WorkspaceFileIndexTest::rebuildEmitsIndexUpdated()

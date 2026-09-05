@@ -221,9 +221,11 @@ WorkspaceSearch::~WorkspaceSearch()
     m_destroying = true;
     m_queued = false;
     m_cancel.storeRelease(1);
-    if (m_watcher.isRunning()) {
+    m_watcher.disconnect();
+    if (m_watcher.future().isValid()) {
         m_watcher.waitForFinished();
     }
+    m_watcher.setFuture({});
 }
 
 void WorkspaceSearch::start(const QString &root,

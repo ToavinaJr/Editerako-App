@@ -1,13 +1,16 @@
 # ThreadSanitizer: Qt is not TSan-instrumented. Ignore races that only
 # originate inside Qt libraries so reports stay focused on Editerako.
+# Suffixe .so : `libQt6Pdf` matcherait aussi libQt6PdfWidgets (TSan abort).
 called_from_lib:libQt6Core
 called_from_lib:libQt6Gui
 called_from_lib:libQt6Widgets
 called_from_lib:libQt6Network
 called_from_lib:libQt6Sql
 called_from_lib:libQt6Test
-called_from_lib:libQt6Pdf
-called_from_lib:libQt6PdfWidgets
+called_from_lib:libQt6Pdf.so
+called_from_lib:libQt6PdfWidgets.so
+called_from_lib:libQt6Svg.so
+called_from_lib:libQt6SvgWidgets.so
 called_from_lib:libQt6Concurrent
 # glibc 2.39 (Ubuntu 24.04) + libstdc++ non instrumenté : TSan prend les
 # internals de condition_variable pour un unlock de mutex. Faux positif au

@@ -21,5 +21,5 @@ Hors CI pour l’instant : MSan, Valgrind/Helgrind/DRD, CodeQL, `-Wconversion`.
 ## Conséquences
 
 - Les sanitizers se lancent sur Linux/macOS : `./scripts/test.sh asan` / `tsan`.
-- Les fuites Qt connues sont filtrées (`cmake/sanitizer-suppressions/`). TSan ignore `called_from_lib:libQt6*` et les faux positifs `condition_variable` de glibc 2.39. UBSan `-fsanitize=function` est coupé sur le runtime Tree-sitter (`foo()` C vs `void *(*)(void)`).
+- Les fuites Qt connues sont filtrées (`cmake/sanitizer-suppressions/`). TSan ignore `called_from_lib:libQt6*` (Pdf/Svg avec suffixe `.so`, sinon `libQt6Pdf` matche aussi PdfWidgets) et les faux positifs `condition_variable` de glibc 2.39. UBSan `-fsanitize=function` est coupé sur le runtime Tree-sitter (`foo()` C vs `void *(*)(void)`).
 - Les artefacts d’installers sont publiés hors pull request (push `master` / `workflow_dispatch`).

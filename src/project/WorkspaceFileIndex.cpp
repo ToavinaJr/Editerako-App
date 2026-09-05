@@ -4,6 +4,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QThreadPool>
 #include <QtConcurrent/QtConcurrent>
 #include <algorithm>
 
@@ -70,9 +71,12 @@ WorkspaceFileIndex::~WorkspaceFileIndex()
 {
     m_destroying = true;
     m_rebuildQueued = false;
-    if (m_watcher.isRunning()) {
+    m_watcher.disconnect();
+    if (m_watcher.future().isValid()) {
         m_watcher.waitForFinished();
     }
+    QThreadPool::globalInstance()->waitForDone();
+    m_watcher.setFuture({});
 }
 
 void WorkspaceFileIndex::setRootPath(const QString &path)

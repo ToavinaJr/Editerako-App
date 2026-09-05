@@ -42,7 +42,7 @@ Les tests **lient** la bibliothèque du module (`EditerakoCore`, …). Ils ne re
 | `test_TranslationLoader` | `EditerakoCore` | locale, catalogues, `.ts` français (`EDITERAKO_TRANSLATIONS_DIR`) |
 | `test_KeybindingModel` | `EditerakoCore` | défauts, override, conflits, apply sur `CommandRegistry` (`QT_QPA_PLATFORM=offscreen`) |
 | `test_FuzzyMatcher` | `EditerakoCore` | sous-séquence, score, `fichier:ligne` |
-| `test_WorkspaceFileIndex` | `EditerakoProject` | exclusions, rebuild async (`indexUpdated`) |
+| `test_WorkspaceFileIndex` | `EditerakoProject` | exclusions, rebuild async (`indexUpdated`), destruction pendant l’index |
 | `test_WorkspacePath` | `EditerakoProject` | `..`, chemins absolus, `nested/dir` |
 | `test_GitIgnore` | `EditerakoProject` | globs, `*.log`, négation, `/` ancré, `.git` |
 | `test_WorkspaceSearch` | `EditerakoProject` | texte / regex / whole word / replace |

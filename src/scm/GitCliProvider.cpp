@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
+#include <QThreadPool>
 #include <QtConcurrent/QtConcurrent>
 
 namespace {
@@ -69,6 +70,12 @@ GitCliProvider::~GitCliProvider()
 {
     ++m_generation;
     m_queue.clear();
+    const auto watchers = findChildren<QFutureWatcherBase *>();
+    for (QFutureWatcherBase *watcher : watchers) {
+        watcher->disconnect();
+        watcher->waitForFinished();
+    }
+    QThreadPool::globalInstance()->waitForDone();
 }
 
 void GitCliProvider::setWorkspace(const QString &path)

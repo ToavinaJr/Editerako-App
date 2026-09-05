@@ -124,8 +124,8 @@ void MainWindow::setupFileTree()
 {
     m_workspaceController = new WorkspaceController(ui->fileTreeWidget, this);
 
-    connect(m_workspaceController, &WorkspaceController::fileActivated,
-            this, &MainWindow::openFileInEditor);
+    connect(m_workspaceController, &WorkspaceController::fileActivated, this,
+            [this](const QString &path) { openFileInEditor(path); });
     connect(m_workspaceController, &WorkspaceController::fileChangedOnDisk,
             this, &MainWindow::onFileChangedOnDisk);
     connect(m_workspaceController, &WorkspaceController::fileSelected, this, [this](const QString &path) {
