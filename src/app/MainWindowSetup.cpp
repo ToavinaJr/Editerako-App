@@ -210,7 +210,10 @@ void MainWindow::setupBottomPanel()
             if (branch.isEmpty()) {
                 m_editorStatus->setGitBranch(status.isRepository ? tr("Git: detached") : QString());
             } else {
-                m_editorStatus->setGitBranch(tr("Git: %1").arg(branch));
+                const QString tracking = GitParsers::aheadBehindLabel(status);
+                m_editorStatus->setGitBranch(tracking.isEmpty()
+                                                 ? tr("Git: %1").arg(branch)
+                                                 : tr("Git: %1 %2").arg(branch, tracking));
             }
         });
     }

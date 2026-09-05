@@ -14,6 +14,7 @@ void makePathsAbsolute(ScmStatus &status, const QString &repositoryRoot);
 [[nodiscard]] QString badgeFor(ScmFileState state);
 [[nodiscard]] QHash<QString, QString> explorerBadges(const ScmStatus &status);
 [[nodiscard]] QString branchName(const ScmStatus &status);
+[[nodiscard]] QString aheadBehindLabel(const ScmStatus &status);
 }
 
 #endif

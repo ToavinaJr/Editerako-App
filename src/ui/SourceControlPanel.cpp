@@ -1,6 +1,7 @@
 #include "ui/SourceControlPanel.h"
 
 #include "scm/GitCliProvider.h"
+#include "scm/GitParsers.h"
 
 #include <QDir>
 #include <QHBoxLayout>
@@ -73,7 +74,16 @@ void SourceControlPanel::setWorkspace(const QString &path) { m_provider->setWork
 void SourceControlPanel::rebuild(const ScmStatus &status)
 {
     m_tree->clear();
-    m_header->setText(status.isRepository ? tr("Branch: %1").arg(status.branch.isEmpty() ? tr("detached") : status.branch) : tr("No Git repository"));
+    if (!status.isRepository) {
+        m_header->setText(tr("No Git repository"));
+    } else {
+        QString name = status.branch.isEmpty() ? tr("detached") : status.branch;
+        const QString tracking = GitParsers::aheadBehindLabel(status);
+        if (!tracking.isEmpty()) {
+            name += QLatin1Char(' ') + tracking;
+        }
+        m_header->setText(tr("Branch: %1").arg(name));
+    }
     if (!status.isRepository) { updateActions(); return; }
     auto *staged = new QTreeWidgetItem(m_tree, {tr("Staged Changes")});
     auto *changes = new QTreeWidgetItem(m_tree, {tr("Changes")});

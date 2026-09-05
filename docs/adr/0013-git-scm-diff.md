@@ -12,7 +12,7 @@ Le cahier des charges demande un SCM (`src/scm/`), un premier provider Git, un p
 
 - `ISourceControlProvider` : `refresh`, `stage`, `unstage`, `discard`, `commit`, `requestDiff`.
 - `GitCliProvider` exécute `git` via `QProcess` **hors thread UI** (`QtConcurrent` + `GitProcess::run`). File d’attente + jeton de génération pour ignorer les résultats périmés.
-- Parser `git status --porcelain=v1 -z` (`GitParsers`) ; chemins rendus absolus via `rev-parse --show-toplevel`.
+- Parser `git status --porcelain=v1 -z` (`GitParsers`) ; chemins rendus absolus via `rev-parse --show-toplevel`. Branche : detached (`HEAD (no branch)`), dépôt vide (`No commits yet on`), ahead/behind (`[ahead N, behind M]`) affichés dans le panneau et la status bar.
 - UI dans le `BottomPanel` : onglets **Source Control** et **Diff** (unified, coloré). Compare-with-disk utilise `TextDiff`.
 - Décorations explorateur : badges `M`/`A`/`D`/`U`/… via `FileExplorer::setPathBadges` (pas de types SCM dans `project/`).
 - Git absent ou dossier hors dépôt : statut vide, pas de crash.

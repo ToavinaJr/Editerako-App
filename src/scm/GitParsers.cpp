@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QHash>
+#include <QRegularExpression>
 
 namespace {
 
@@ -17,6 +18,43 @@ ScmFileState stateFor(char code)
     case '?': return ScmFileState::Untracked;
     case 'U': return ScmFileState::Conflicted;
     default: return ScmFileState::Unknown;
+    }
+}
+
+void parseAheadBehind(ScmStatus &status, const QString &tracking)
+{
+    static const QRegularExpression aheadRe(QStringLiteral("ahead (\\d+)"));
+    static const QRegularExpression behindRe(QStringLiteral("behind (\\d+)"));
+    const auto ahead = aheadRe.match(tracking);
+    if (ahead.hasMatch()) {
+        status.ahead = ahead.captured(1).toInt();
+    }
+    const auto behind = behindRe.match(tracking);
+    if (behind.hasMatch()) {
+        status.behind = behind.captured(1).toInt();
+    }
+}
+
+void parseBranchRecord(ScmStatus &status, QByteArray record)
+{
+    QByteArray rest = record.mid(3);
+    if (rest.startsWith("HEAD (no branch)")) {
+        status.branch.clear();
+        return;
+    }
+    const QByteArray noCommits = QByteArrayLiteral("No commits yet on ");
+    if (rest.startsWith(noCommits)) {
+        rest = rest.mid(noCommits.size());
+    }
+    const qsizetype dots = rest.indexOf("...");
+    QByteArray name = dots >= 0 ? rest.left(dots) : rest;
+    const qsizetype nameBracket = name.indexOf(" [");
+    if (nameBracket >= 0) {
+        name.truncate(nameBracket);
+    }
+    status.branch = QString::fromUtf8(name).trimmed();
+    if (dots >= 0) {
+        parseAheadBehind(status, QString::fromUtf8(rest.mid(dots)));
     }
 }
 
@@ -44,10 +82,7 @@ ScmStatus GitParsers::parseStatus(const QByteArray &output)
     for (qsizetype i = 0; i < records.size(); ++i) {
         const QByteArray &record = records.at(i);
         if (record.startsWith("## ")) {
-            QByteArray branch = record.mid(3);
-            const qsizetype separator = branch.indexOf("...");
-            if (separator >= 0) branch.truncate(separator);
-            status.branch = QString::fromUtf8(branch);
+            parseBranchRecord(status, record);
             continue;
         }
         if (record.size() < 4 || record.at(2) != ' ') continue;
@@ -132,5 +167,19 @@ QString GitParsers::branchName(const ScmStatus &status)
         return {};
     }
     return status.branch;
+}
+
+QString GitParsers::aheadBehindLabel(const ScmStatus &status)
+{
+    if (status.ahead <= 0 && status.behind <= 0) {
+        return {};
+    }
+    if (status.ahead > 0 && status.behind > 0) {
+        return QStringLiteral("+%1 -%2").arg(status.ahead).arg(status.behind);
+    }
+    if (status.ahead > 0) {
+        return QStringLiteral("+%1").arg(status.ahead);
+    }
+    return QStringLiteral("-%1").arg(status.behind);
 }
 

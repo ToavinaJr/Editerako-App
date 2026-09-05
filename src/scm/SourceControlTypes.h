@@ -27,6 +27,8 @@ struct ScmStatus {
     bool isRepository = false;
     QString repositoryRoot;
     QString branch;
+    int ahead = 0;
+    int behind = 0;
     QVector<ScmChange> changes;
 };
 

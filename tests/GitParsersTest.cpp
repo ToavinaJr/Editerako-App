@@ -13,6 +13,8 @@ private slots:
     void parsesStagedAndUnstagedSameFile();
     void makesRelativePathsAbsolute();
     void explorerBadgesAndBranch();
+    void parsesDetachedAndEmptyRepo();
+    void parsesAheadBehind();
 };
 
 void GitParsersTest::parsesBranchAndChanges()
@@ -82,6 +84,39 @@ void GitParsersTest::explorerBadgesAndBranch()
     ScmStatus empty;
     QVERIFY(GitParsers::branchName(empty).isEmpty());
     QVERIFY(GitParsers::explorerBadges(empty).isEmpty());
+}
+
+void GitParsersTest::parsesDetachedAndEmptyRepo()
+{
+    QByteArray detached("## HEAD (no branch)");
+    detached.append('\0');
+    const ScmStatus head = GitParsers::parseStatus(detached);
+    QVERIFY(head.isRepository);
+    QVERIFY(head.branch.isEmpty());
+    QCOMPARE(head.ahead, 0);
+
+    QByteArray emptyRepo("## No commits yet on main");
+    emptyRepo.append('\0');
+    const ScmStatus fresh = GitParsers::parseStatus(emptyRepo);
+    QCOMPARE(fresh.branch, QStringLiteral("main"));
+}
+
+void GitParsersTest::parsesAheadBehind()
+{
+    QByteArray input("## main...origin/main [ahead 2, behind 1]");
+    input.append('\0');
+    const ScmStatus status = GitParsers::parseStatus(input);
+    QCOMPARE(status.branch, QStringLiteral("main"));
+    QCOMPARE(status.ahead, 2);
+    QCOMPARE(status.behind, 1);
+    QCOMPARE(GitParsers::aheadBehindLabel(status), QStringLiteral("+2 -1"));
+
+    QByteArray aheadOnly("## feature...origin/feature [ahead 3]");
+    aheadOnly.append('\0');
+    const ScmStatus up = GitParsers::parseStatus(aheadOnly);
+    QCOMPARE(up.ahead, 3);
+    QCOMPARE(up.behind, 0);
+    QCOMPARE(GitParsers::aheadBehindLabel(up), QStringLiteral("+3"));
 }
 
 QTEST_GUILESS_MAIN(GitParsersTest)
