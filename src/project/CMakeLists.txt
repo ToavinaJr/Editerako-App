@@ -25,5 +25,5 @@ editerako_add_module(EditerakoProject
     LIBS
         EditerakoCore
         Qt6::Widgets
-        Qt6::Concurrent
+        Threads::Threads
 )

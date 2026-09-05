@@ -2,13 +2,14 @@
 #define EDITERAKO_WORKSPACESEARCH_H
 
 #include <QAtomicInt>
-#include <QFutureWatcher>
 #include <QHash>
 #include <QList>
 #include <QObject>
 #include <QRegularExpression>
 #include <QString>
 #include <QStringList>
+#include <mutex>
+#include <thread>
 
 struct SearchOptions {
     QString query;
@@ -73,6 +74,8 @@ signals:
 
 private:
     void startJob();
+    void joinWorker();
+    void applyResult(quint64 generation);
 
     struct Request {
         QString root;
@@ -82,8 +85,12 @@ private:
     };
 
     Request m_request;
-    QFutureWatcher<SearchJobResult> m_watcher;
+    SearchJobResult m_handoff;
+    std::mutex m_mutex;
+    std::thread m_thread;
     QAtomicInt m_cancel;
+    quint64 m_generation = 0;
+    bool m_running = false;
     bool m_queued = false;
     bool m_destroying = false;
 };

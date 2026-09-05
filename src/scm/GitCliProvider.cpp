@@ -8,9 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QFutureWatcher>
-#include <QThreadPool>
-#include <QtConcurrent/QtConcurrent>
+#include <QMetaObject>
 
 namespace {
 
@@ -70,12 +68,14 @@ GitCliProvider::~GitCliProvider()
 {
     ++m_generation;
     m_queue.clear();
-    const auto watchers = findChildren<QFutureWatcherBase *>();
-    for (QFutureWatcherBase *watcher : watchers) {
-        watcher->disconnect();
-        watcher->waitForFinished();
+    joinWorker();
+}
+
+void GitCliProvider::joinWorker()
+{
+    if (m_worker.joinable()) {
+        m_worker.join();
     }
-    QThreadPool::globalInstance()->waitForDone();
 }
 
 void GitCliProvider::setWorkspace(const QString &path)
@@ -185,6 +185,7 @@ void GitCliProvider::startNext()
         return;
     }
 
+    joinWorker();
     m_current = m_queue.dequeue();
     m_running = true;
     emit busyChanged(true);
@@ -192,60 +193,74 @@ void GitCliProvider::startNext()
     const quint64 generation = m_generation;
     const QString cwd = m_workspace;
     const Command job = m_current;
-
-    auto *watcher = new QFutureWatcher<GitJobResult>(this);
-    connect(watcher, &QFutureWatcher<GitJobResult>::finished, this, [this, watcher, generation]() {
-        watcher->deleteLater();
-        if (generation != m_generation) {
-            m_running = false;
-            emit busyChanged(!m_queue.isEmpty());
-            startNext();
-            return;
+    m_worker = std::thread([this, cwd, job, generation]() {
+        GitJobResult result =
+            runJob(cwd, job.arguments, job.kind == Kind::Refresh, job.untrackedDiff, job.diffPath);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_handoffPrimary = std::move(result.primary);
+            m_handoffRoot = std::move(result.repositoryRoot);
+            m_handoffDiff = std::move(result.synthesizedDiff);
         }
-        const GitJobResult result = watcher->result();
+        QMetaObject::invokeMethod(this, [this, generation]() { deliverResult(generation); },
+                                  Qt::QueuedConnection);
+    });
+}
+
+void GitCliProvider::deliverResult(quint64 generation)
+{
+    GitRunResult primary;
+    QString repositoryRoot;
+    QString synthesizedDiff;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        primary = std::move(m_handoffPrimary);
+        repositoryRoot = std::move(m_handoffRoot);
+        synthesizedDiff = std::move(m_handoffDiff);
+    }
+    if (generation != m_generation) {
         m_running = false;
-
-        if (result.primary.error == QLatin1String("git-not-found")) {
-            qCWarning(lcScm) << "Git executable not found";
-            m_status = {};
-            emit statusChanged(m_status);
-            emit operationFailed({tr("Git was not found on PATH."), -1});
-            m_queue.clear();
-            emit busyChanged(false);
-            return;
-        }
-
-        if (m_current.kind == Kind::Refresh) {
-            if (!result.primary.ok()) {
-                m_status = {};
-                emit statusChanged(m_status);
-            } else {
-                m_status = GitParsers::parseStatus(result.primary.standardOutput);
-                GitParsers::makePathsAbsolute(
-                    m_status, result.repositoryRoot.isEmpty() ? m_workspace : result.repositoryRoot);
-                emit statusChanged(m_status);
-            }
-        } else if (m_current.kind == Kind::Diff) {
-            const QString text = result.synthesizedDiff.isEmpty()
-                ? QString::fromUtf8(result.primary.standardOutput)
-                : result.synthesizedDiff;
-            emit diffReady(m_current.diffPath, text);
-        } else if (!result.primary.ok()) {
-            emit operationFailed({result.primary.stderrText().isEmpty() ? tr("Git command failed.")
-                                                                       : result.primary.stderrText(),
-                                 result.primary.exitCode});
-        }
-
-        if (result.primary.ok() && m_current.refreshAfter) {
-            m_queue.prepend({Kind::Refresh, statusArgs(), {}, false, false});
-        }
         emit busyChanged(!m_queue.isEmpty());
         startNext();
-    });
+        return;
+    }
+    m_running = false;
 
-    watcher->setFuture(QtConcurrent::run([cwd, job]() {
-        return runJob(cwd, job.arguments, job.kind == Kind::Refresh, job.untrackedDiff, job.diffPath);
-    }));
+    if (primary.error == QLatin1String("git-not-found")) {
+        qCWarning(lcScm) << "Git executable not found";
+        m_status = {};
+        emit statusChanged(m_status);
+        emit operationFailed({tr("Git was not found on PATH."), -1});
+        m_queue.clear();
+        emit busyChanged(false);
+        return;
+    }
+
+    if (m_current.kind == Kind::Refresh) {
+        if (!primary.ok()) {
+            m_status = {};
+            emit statusChanged(m_status);
+        } else {
+            m_status = GitParsers::parseStatus(primary.standardOutput);
+            GitParsers::makePathsAbsolute(m_status,
+                                          repositoryRoot.isEmpty() ? m_workspace : repositoryRoot);
+            emit statusChanged(m_status);
+        }
+    } else if (m_current.kind == Kind::Diff) {
+        const QString text =
+            synthesizedDiff.isEmpty() ? QString::fromUtf8(primary.standardOutput) : synthesizedDiff;
+        emit diffReady(m_current.diffPath, text);
+    } else if (!primary.ok()) {
+        emit operationFailed({primary.stderrText().isEmpty() ? tr("Git command failed.")
+                                                            : primary.stderrText(),
+                             primary.exitCode});
+    }
+
+    if (primary.ok() && m_current.refreshAfter) {
+        m_queue.prepend({Kind::Refresh, statusArgs(), {}, false, false});
+    }
+    emit busyChanged(!m_queue.isEmpty());
+    startNext();
 }
 
 bool GitCliProvider::isUntracked(const QString &path) const

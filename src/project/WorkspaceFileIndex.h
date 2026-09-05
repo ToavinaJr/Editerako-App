@@ -1,10 +1,11 @@
 #ifndef EDITERAKO_WORKSPACEFILEINDEX_H
 #define EDITERAKO_WORKSPACEFILEINDEX_H
 
-#include <QFutureWatcher>
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <mutex>
+#include <thread>
 
 class WorkspaceFileIndex : public QObject
 {
@@ -27,11 +28,16 @@ signals:
 
 private:
     void startJob();
+    void joinWorker();
+    void applyResult(quint64 generation);
 
     QString m_rootPath;
     QStringList m_excludedNames;
     QStringList m_files;
-    QFutureWatcher<QStringList> m_watcher;
+    QStringList m_handoff;
+    std::mutex m_mutex;
+    std::thread m_thread;
+    quint64 m_generation = 0;
     bool m_rebuildQueued = false;
     bool m_destroying = false;
     int m_pending = 0;

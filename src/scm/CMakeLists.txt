@@ -13,5 +13,5 @@ editerako_add_module(EditerakoScm
     LIBS
         EditerakoCore
         Qt6::Core
-        Qt6::Concurrent
+        Threads::Threads
 )

@@ -4,8 +4,7 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <QThreadPool>
-#include <QtConcurrent/QtConcurrent>
+#include <QMetaObject>
 #include <algorithm>
 
 namespace {
@@ -52,31 +51,21 @@ QStringList collectWorkspaceFiles(const QString &root, const QStringList &exclud
 WorkspaceFileIndex::WorkspaceFileIndex(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_watcher, &QFutureWatcher<QStringList>::finished, this, [this]() {
-        if (m_destroying) {
-            return;
-        }
-        if (m_rebuildQueued) {
-            startJob();
-            return;
-        }
-        m_files = m_watcher.result();
-        m_pending = 0;
-        qCInfo(lcProject) << "Indexed" << m_files.size() << "files under" << m_rootPath;
-        emit indexUpdated();
-    });
 }
 
 WorkspaceFileIndex::~WorkspaceFileIndex()
 {
     m_destroying = true;
     m_rebuildQueued = false;
-    m_watcher.disconnect();
-    if (m_watcher.future().isValid()) {
-        m_watcher.waitForFinished();
+    ++m_generation;
+    joinWorker();
+}
+
+void WorkspaceFileIndex::joinWorker()
+{
+    if (m_thread.joinable()) {
+        m_thread.join();
     }
-    QThreadPool::globalInstance()->waitForDone();
-    m_watcher.setFuture({});
 }
 
 void WorkspaceFileIndex::setRootPath(const QString &path)
@@ -91,7 +80,7 @@ void WorkspaceFileIndex::setExcludedNames(const QStringList &names)
 
 void WorkspaceFileIndex::rebuild()
 {
-    if (m_watcher.isRunning()) {
+    if (m_pending > 0) {
         m_rebuildQueued = true;
         return;
     }
@@ -100,13 +89,40 @@ void WorkspaceFileIndex::rebuild()
 
 void WorkspaceFileIndex::startJob()
 {
+    joinWorker();
     m_rebuildQueued = false;
     m_pending = 1;
+    const quint64 generation = ++m_generation;
     const QString root = m_rootPath;
     const QStringList excluded = m_excludedNames;
-    m_watcher.setFuture(QtConcurrent::run([root, excluded]() {
-        return collectWorkspaceFiles(root, excluded);
-    }));
+    m_thread = std::thread([this, generation, root, excluded]() {
+        QStringList files = collectWorkspaceFiles(root, excluded);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_handoff = std::move(files);
+        }
+        QMetaObject::invokeMethod(this, [this, generation]() { applyResult(generation); },
+                                  Qt::QueuedConnection);
+    });
+}
+
+void WorkspaceFileIndex::applyResult(quint64 generation)
+{
+    if (m_destroying || generation != m_generation) {
+        return;
+    }
+    if (m_rebuildQueued) {
+        startJob();
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_files.swap(m_handoff);
+        m_handoff.clear();
+    }
+    m_pending = 0;
+    qCInfo(lcProject) << "Indexed" << m_files.size() << "files under" << m_rootPath;
+    emit indexUpdated();
 }
 
 QStringList WorkspaceFileIndex::files() const

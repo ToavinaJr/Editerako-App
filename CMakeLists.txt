@@ -25,6 +25,9 @@ find_package(Qt6 REQUIRED COMPONENTS
     LinguistTools
 )
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 editerako_strip_agl_from_qt()
 
 qt_standard_project_setup()

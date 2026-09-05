@@ -1,10 +1,13 @@
 #ifndef EDITERAKO_GITCLIPROVIDER_H
 #define EDITERAKO_GITCLIPROVIDER_H
 
+#include "scm/GitProcess.h"
 #include "scm/ISourceControlProvider.h"
 
 #include <QQueue>
 #include <QStringList>
+#include <mutex>
+#include <thread>
 
 class GitCliProvider final : public ISourceControlProvider
 {
@@ -41,12 +44,19 @@ private:
 
     void enqueue(Command command);
     void startNext();
+    void joinWorker();
+    void deliverResult(quint64 generation);
     [[nodiscard]] bool isUntracked(const QString &path) const;
 
     QString m_workspace;
     ScmStatus m_status;
     QQueue<Command> m_queue;
     Command m_current;
+    GitRunResult m_handoffPrimary;
+    QString m_handoffRoot;
+    QString m_handoffDiff;
+    std::mutex m_mutex;
+    std::thread m_worker;
     quint64 m_generation = 0;
     bool m_running = false;
 };

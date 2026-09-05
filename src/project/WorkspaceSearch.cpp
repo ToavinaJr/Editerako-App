@@ -9,8 +9,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QFutureWatcher>
-#include <QtConcurrent/QtConcurrent>
+#include <QMetaObject>
 #include <QTextStream>
 
 CompiledSearch compileSearch(const SearchOptions &options)
@@ -200,20 +199,6 @@ SearchJobResult runSearch(const QString &root,
 WorkspaceSearch::WorkspaceSearch(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_watcher, &QFutureWatcher<SearchJobResult>::finished, this, [this]() {
-        if (m_destroying) {
-            return;
-        }
-        if (m_queued) {
-            startJob();
-            return;
-        }
-        SearchJobResult result = m_watcher.result();
-        if (!result.hits.isEmpty()) {
-            emit resultsReady(result.hits);
-        }
-        emit finished(result);
-    });
 }
 
 WorkspaceSearch::~WorkspaceSearch()
@@ -221,11 +206,15 @@ WorkspaceSearch::~WorkspaceSearch()
     m_destroying = true;
     m_queued = false;
     m_cancel.storeRelease(1);
-    m_watcher.disconnect();
-    if (m_watcher.future().isValid()) {
-        m_watcher.waitForFinished();
+    ++m_generation;
+    joinWorker();
+}
+
+void WorkspaceSearch::joinWorker()
+{
+    if (m_thread.joinable()) {
+        m_thread.join();
     }
-    m_watcher.setFuture({});
 }
 
 void WorkspaceSearch::start(const QString &root,
@@ -237,7 +226,7 @@ void WorkspaceSearch::start(const QString &root,
     m_request.excludedNames = excludedNames;
     m_request.options = options;
     m_request.openBuffers = openBuffers;
-    if (m_watcher.isRunning()) {
+    if (m_running) {
         m_queued = true;
         m_cancel.storeRelease(1);
         return;
@@ -253,21 +242,51 @@ void WorkspaceSearch::cancel()
 
 bool WorkspaceSearch::isRunning() const
 {
-    return m_watcher.isRunning();
+    return m_running;
 }
 
 void WorkspaceSearch::startJob()
 {
+    joinWorker();
     m_queued = false;
     m_cancel.storeRelease(0);
+    m_running = true;
+    const quint64 generation = ++m_generation;
     const Request request = m_request;
     QAtomicInt *cancel = &m_cancel;
-    m_watcher.setFuture(QtConcurrent::run([request, cancel]() {
-        return runSearch(request.root,
-                         request.excludedNames,
-                         request.options,
-                         request.openBuffers,
-                         cancel);
-    }));
+    m_thread = std::thread([this, request, cancel, generation]() {
+        SearchJobResult result = runSearch(request.root,
+                                           request.excludedNames,
+                                           request.options,
+                                           request.openBuffers,
+                                           cancel);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_handoff = std::move(result);
+        }
+        QMetaObject::invokeMethod(this, [this, generation]() { applyResult(generation); },
+                                  Qt::QueuedConnection);
+    });
     qCInfo(lcProject) << "Workspace search started" << request.root;
+}
+
+void WorkspaceSearch::applyResult(quint64 generation)
+{
+    if (m_destroying || generation != m_generation) {
+        return;
+    }
+    SearchJobResult result;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        result = std::move(m_handoff);
+    }
+    m_running = false;
+    if (m_queued) {
+        startJob();
+        return;
+    }
+    if (!result.hits.isEmpty()) {
+        emit resultsReady(result.hits);
+    }
+    emit finished(result);
 }
