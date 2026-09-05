@@ -9,3 +9,10 @@ called_from_lib:libQt6Test
 called_from_lib:libQt6Pdf
 called_from_lib:libQt6PdfWidgets
 called_from_lib:libQt6Concurrent
+# glibc 2.39 (Ubuntu 24.04) + libstdc++ non instrumenté : TSan prend les
+# internals de condition_variable pour un unlock de mutex. Faux positif au
+# démarrage de QTest, avant tout code Editerako.
+mutex:pthread_cond_wait
+mutex:pthread_cond_signal
+mutex:pthread_cond_broadcast
+mutex:std::condition_variable

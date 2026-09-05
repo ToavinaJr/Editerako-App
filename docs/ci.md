@@ -22,6 +22,8 @@ ctest --preset asan --output-on-failure
 
 Ne pas mélanger ASan et TSan dans le même build.
 
+Tree-sitter : le runtime appelle les scanners C `foo()` comme `void *(*)(void)` ; `-fsanitize=function` est désactivé sur la cible `tree_sitter`. TSan : Qt et les `condition_variable` glibc 2.39 (Ubuntu 24.04) sont filtrés dans `cmake/sanitizer-suppressions/tsan.supp`.
+
 ## Outils volontairement absents de la CI
 
 | Outil | Pourquoi |

@@ -164,6 +164,11 @@ if(MSVC)
     target_compile_options(tree_sitter PRIVATE /W0)
 else()
     target_compile_options(tree_sitter PRIVATE -w)
+    # Grammar scanners use C `foo()` (unspecified args). The runtime calls
+    # them as `void *(*)(void)`. UBSan -fsanitize=function treats that as fatal.
+    if(EDITERAKO_ENABLE_UBSAN)
+        target_compile_options(tree_sitter PRIVATE -fno-sanitize=function)
+    endif()
 endif()
 
 set_target_properties(tree_sitter PROPERTIES
